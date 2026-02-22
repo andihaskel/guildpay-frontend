@@ -79,6 +79,10 @@ class ApiClient {
     return this.get<User>('/me');
   }
 
+  async signOut(): Promise<void> {
+    return this.post<void>('/auth/logout');
+  }
+
   async getProducts(): Promise<Product[]> {
     return [];
   }

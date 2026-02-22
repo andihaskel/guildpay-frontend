@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   refetchUser: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await api.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
   }, []);
@@ -40,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         refetchUser: fetchUser,
+        signOut: handleSignOut,
       }}
     >
       {children}

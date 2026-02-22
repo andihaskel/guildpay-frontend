@@ -1,14 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, LogOut, Settings, User } from 'lucide-react';
 import { useAuth } from '@/contexts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 export function Topbar() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+  };
+
+  const handleAccountSettings = () => {
+    setUserMenuOpen(false);
+    router.push('/dashboard/settings');
+  };
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 border-b border-border bg-background z-30">
@@ -48,11 +60,17 @@ export function Topbar() {
                 />
                 <div className="absolute top-full right-0 mt-2 w-56 z-50 rounded-lg border border-border bg-popover shadow-lg">
                   <div className="p-2 space-y-1">
-                    <button className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm hover:bg-accent/50 transition-colors">
+                    <button
+                      onClick={handleAccountSettings}
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm hover:bg-accent/50 transition-colors"
+                    >
                       <Settings className="h-4 w-4" />
                       <span>Account Settings</span>
                     </button>
-                    <button className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
                       <LogOut className="h-4 w-4" />
                       <span>Sign Out</span>
                     </button>

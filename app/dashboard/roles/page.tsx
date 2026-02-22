@@ -94,20 +94,14 @@ export default function RolesPage() {
               Create subscription-based roles for this server.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowEmptyState(false)}
-              className="bg-slate-800/50 border-slate-700/50"
-            >
-              Show Roles
-            </Button>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add First Role
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmptyState(false)}
+            className="bg-slate-800/50 border-slate-700/50"
+          >
+            Show Roles
+          </Button>
         </div>
 
         <div className="flex flex-col items-center justify-center py-20">

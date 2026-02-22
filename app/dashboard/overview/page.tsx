@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DollarSign, Users, Shield, Eye, Edit, Trash2, Plus, Search, Check, ArrowRight, CreditCard, UserPlus, GraduationCap } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
@@ -33,6 +34,7 @@ interface RecentMember {
 }
 
 export default function OverviewPage() {
+  const router = useRouter();
   const { currentProduct } = useProduct();
   const [searchQuery, setSearchQuery] = useState('');
   const [guildFilter, setGuildFilter] = useState('All Guilds');
@@ -196,7 +198,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90">
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90" onClick={() => router.push('/dashboard/roles')}>
                 Create Your First Role
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -276,7 +278,7 @@ export default function OverviewPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Set pricing and link a Stripe plan to a Discord role.
               </p>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/dashboard/roles')}>
                 Create Role
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -319,7 +321,7 @@ export default function OverviewPage() {
           >
             Switch to Empty State
           </Button>
-          <Button size="lg">
+          <Button size="lg" onClick={() => router.push('/dashboard/roles')}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Role
           </Button>
