@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, Edit, Pause, Trash2, Play, UserPlus, X, Check } from 'lucide-react';
+import { Plus, Search, Edit, Pause, Trash2, Play, UserPlus, Check } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -287,22 +287,10 @@ export default function RolesPage() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <DialogTitle className="text-xl">Add Monetized Role</DialogTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Map a Discord role to a Stripe subscription
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowCreateModal(false)}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle className="text-xl">Add Monetized Role</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Map a Discord role to a Stripe subscription
+            </p>
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
