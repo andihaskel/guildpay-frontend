@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 export default function Home() {
   const handleDiscordLogin = () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    window.location.href = `${backendUrl}/auth/discord/start`;
+    window.open(`${backendUrl}/auth/discord/start`, '_blank', 'width=500,height=700');
   };
 
   return (
