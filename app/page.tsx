@@ -79,12 +79,13 @@ export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    checkAuth();
+    checkAuthAndRedirect();
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuthAndRedirect = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
         credentials: 'include',
@@ -93,11 +94,36 @@ export default function Home() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromDiscord = urlParams.get('from') === 'discord';
+
+        if (fromDiscord) {
+          setIsRedirecting(true);
+
+          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products`, {
+            credentials: 'include',
+          });
+
+          if (productsResponse.ok) {
+            const products = await productsResponse.json();
+
+            if (products && products.length > 0) {
+              router.push('/dashboard/overview');
+            } else {
+              router.push('/select-server');
+            }
+          } else {
+            router.push('/select-server');
+          }
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {
-      setLoading(false);
+      if (!isRedirecting) {
+        setLoading(false);
+      }
     }
   };
 
@@ -122,6 +148,18 @@ export default function Home() {
       console.error('Sign out failed:', error);
     }
   };
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <h2 className="text-lg font-semibold mb-2">Completing authentication...</h2>
+          <p className="text-sm text-muted-foreground">Please wait while we set up your account.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
