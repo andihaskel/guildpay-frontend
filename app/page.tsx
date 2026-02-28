@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Zap, Crown, Bot, ArrowRight } from 'lucide-react';
+import { Check, Zap, Crown, Bot, ArrowRight, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -11,6 +11,68 @@ interface User {
   id: string;
   email: string | null;
   avatar: string | null;
+}
+
+interface UserMenuProps {
+  user: User;
+  onSignOut: () => void;
+  onGoToDashboard: () => void;
+}
+
+function UserMenu({ user, onSignOut, onGoToDashboard }: UserMenuProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={user.avatar || undefined} alt={user.email || 'User'} />
+          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
+            {user.email?.[0]?.toUpperCase() || 'U'}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-sm font-medium hidden md:block">
+          {user.email || 'User'}
+        </span>
+      </button>
+
+      {menuOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="absolute top-full right-0 mt-2 w-56 z-50 rounded-lg border border-border bg-popover shadow-lg">
+            <div className="p-2 space-y-1">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onGoToDashboard();
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm hover:bg-accent/50 transition-colors"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Ir al Panel</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onSignOut();
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -48,6 +110,19 @@ export default function Home() {
     router.push('/dashboard/overview');
   };
 
+  const handleSignOut = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm">
@@ -72,16 +147,7 @@ export default function Home() {
             {loading ? (
               <div className="h-9 w-32 animate-pulse bg-muted rounded-md" />
             ) : user ? (
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar || undefined} alt={user.email || 'User'} />
-                  <AvatarFallback>{user.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-                </Avatar>
-                <Button size="sm" onClick={handleGoToDashboard}>
-                  Go to Dashboard
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
+              <UserMenu user={user} onSignOut={handleSignOut} onGoToDashboard={handleGoToDashboard} />
             ) : (
               <>
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -122,20 +188,20 @@ export default function Home() {
               {loading ? (
                 <div className="h-10 w-48 animate-pulse bg-muted rounded-md" />
               ) : user ? (
-                <Button className="text-sm px-6" onClick={handleGoToDashboard}>
-                  Go to Dashboard
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Button className="text-sm px-6" size="lg" onClick={handleGoToDashboard}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Ir al Panel
                 </Button>
               ) : (
                 <>
-                  <Button className="text-sm px-6" onClick={handleDiscordLogin}>
+                  <Button className="text-sm px-6" size="lg" onClick={handleDiscordLogin}>
                     <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                     </svg>
-                    Continue with Discord
+                    Continuar con Discord
                   </Button>
-                  <Button variant="ghost" className="text-sm px-6">
-                    Learn More
+                  <Button variant="ghost" className="text-sm px-6" size="lg">
+                    Saber Más
                   </Button>
                 </>
               )}
@@ -264,16 +330,16 @@ export default function Home() {
             {loading ? (
               <div className="h-10 w-48 mx-auto animate-pulse bg-muted rounded-md" />
             ) : user ? (
-              <Button className="text-sm px-6" onClick={handleGoToDashboard}>
-                Go to Dashboard
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="text-sm px-6" size="lg" onClick={handleGoToDashboard}>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Ir al Panel
               </Button>
             ) : (
-              <Button className="text-sm px-6" onClick={handleDiscordLogin}>
+              <Button className="text-sm px-6" size="lg" onClick={handleDiscordLogin}>
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                 </svg>
-                Continue with Discord
+                Continuar con Discord
               </Button>
             )}
           </div>
