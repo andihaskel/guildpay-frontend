@@ -86,21 +86,18 @@ export default function Home() {
   }, []);
 
   const checkAuthAndRedirect = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
-        credentials: 'include',
-      });
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromDiscord = urlParams.get('from') === 'discord';
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+    if (fromDiscord) {
+      setIsRedirecting(true);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fromDiscord = urlParams.get('from') === 'discord';
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
+          credentials: 'include',
+        });
 
-        if (fromDiscord) {
-          setIsRedirecting(true);
-
+        if (response.ok) {
           const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products`, {
             credentials: 'include',
           });
@@ -116,14 +113,29 @@ export default function Home() {
           } else {
             router.push('/select-server');
           }
+        } else {
+          router.push('/login');
         }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push('/login');
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {
-      if (!isRedirecting) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
