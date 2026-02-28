@@ -76,7 +76,7 @@ class ApiClient {
   }
 
   async getMe(): Promise<User> {
-    return this.get<User>('/me');
+    return this.get<User>('/auth/me');
   }
 
   async signOut(): Promise<void> {
