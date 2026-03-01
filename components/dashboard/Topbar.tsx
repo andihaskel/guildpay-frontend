@@ -44,11 +44,11 @@ export function Topbar() {
                   />
                 ) : null}
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
-                  {user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'SW'}
+                  {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">
-                {user?.discordUsername || user?.username || 'Sarah Wilson'}
+                {user?.email || user?.discordUsername || user?.username || 'User'}
               </span>
             </button>
 
