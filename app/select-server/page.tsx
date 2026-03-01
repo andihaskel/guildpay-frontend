@@ -1,34 +1,35 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { X, AlertTriangle, Check } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+
+interface DiscordGuild {
+  id: string;
+  name: string;
+}
 
 interface ServerCardProps {
   id: string;
   name: string;
-  icon?: string;
   initials: string;
-  memberCount: number;
-  botInstalled: boolean;
   isSelected: boolean;
   onSelect: () => void;
-  color: string;
 }
 
 function ServerCard({
   id,
   name,
-  icon,
   initials,
-  memberCount,
-  botInstalled,
   isSelected,
   onSelect,
-  color,
 }: ServerCardProps) {
+  const colors = ['#C084FC', '#3B82F6', '#F97316', '#10B981', '#A855F7', '#EC4899'];
+  const color = colors[Math.abs(id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % colors.length];
+
   return (
     <button
       onClick={onSelect}
@@ -39,41 +40,16 @@ function ServerCard({
       }`}
     >
       <div className="flex items-start gap-4">
-        {icon ? (
-          <img
-            src={icon}
-            alt={name}
-            className="w-14 h-14 rounded-xl"
-          />
-        ) : (
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold"
-            style={{ backgroundColor: color }}
-          >
-            {initials}
-          </div>
-        )}
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold"
+          style={{ backgroundColor: color }}
+        >
+          {initials}
+        </div>
 
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-lg mb-1">{name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {memberCount.toLocaleString()} members
-          </p>
         </div>
-      </div>
-
-      <div className="mt-4">
-        {botInstalled ? (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 border border-green-500/20">
-            <Check className="h-3.5 w-3.5 text-green-500" />
-            <span className="text-xs text-green-500 font-medium">Bot Installed</span>
-          </div>
-        ) : (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-orange-500/10 border border-orange-500/20">
-            <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-            <span className="text-xs text-orange-500 font-medium">Bot Not Installed</span>
-          </div>
-        )}
       </div>
     </button>
   );
@@ -81,77 +57,79 @@ function ServerCard({
 
 export default function SelectServerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
+  const [servers, setServers] = useState<DiscordGuild[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const mockServers = [
-    {
-      id: '1',
-      name: 'GuildPay Community',
-      initials: 'GP',
-      memberCount: 12453,
-      botInstalled: true,
-      color: '#C084FC',
-    },
-    {
-      id: '2',
-      name: 'Dev Community Hub',
-      initials: 'DC',
-      memberCount: 8921,
-      botInstalled: true,
-      color: '#3B82F6',
-    },
-    {
-      id: '3',
-      name: 'Premium Masterclass',
-      initials: 'PM',
-      memberCount: 3542,
-      botInstalled: false,
-      color: '#F97316',
-    },
-    {
-      id: '4',
-      name: 'Fitness Guild',
-      initials: 'FG',
-      memberCount: 6789,
-      botInstalled: true,
-      color: '#10B981',
-    },
-    {
-      id: '5',
-      name: 'Creative Collective',
-      initials: 'CC',
-      memberCount: 15234,
-      botInstalled: false,
-      color: '#A855F7',
-    },
-    {
-      id: '6',
-      name: 'Gaming Squad',
-      initials: 'GS',
-      memberCount: 22891,
-      botInstalled: true,
-      color: '#EC4899',
-    },
-  ];
+  useEffect(() => {
+    const initializePage = async () => {
+      try {
+        const guildsParam = searchParams.get('guilds');
 
-  const handleContinue = async () => {
+        if (guildsParam) {
+          const decodedGuilds = atob(guildsParam);
+          const guilds: DiscordGuild[] = JSON.parse(decodedGuilds);
+          setServers(guilds);
+          setLoading(false);
+        } else {
+          const user = await api.getMe();
+          setUserId(user.id);
+
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const redirectUrl = `${apiUrl}/discord/connect?user_id=${user.id}&redirect_to=/select-server`;
+          window.location.href = redirectUrl;
+        }
+      } catch (err) {
+        console.error('Error initializing select server page:', err);
+        setError('Failed to load servers. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    initializePage();
+  }, [searchParams]);
+
+  const handleContinue = () => {
     if (!selectedServerId) return;
 
-    const selectedServer = mockServers.find(s => s.id === selectedServerId);
+    const selectedServer = servers.find(s => s.id === selectedServerId);
     if (!selectedServer) return;
 
-    if (selectedServer.botInstalled) {
-      router.push(`/dashboard/overview`);
-    } else {
-      const params = new URLSearchParams({
-        id: selectedServer.id,
-        name: selectedServer.name,
-        members: selectedServer.memberCount.toString(),
-      });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+    const guildId = selectedServer.id;
+    const guildName = encodeURIComponent(selectedServer.name);
 
-      router.push(`/install-bot?${params.toString()}`);
-    }
+    const botAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands&guild_id=${guildId}&response_type=code&redirect_uri=${encodeURIComponent(`${apiUrl}/discord/bot-callback`)}&state=${guildName}`;
+
+    window.location.href = botAuthUrl;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <h2 className="text-lg font-semibold mb-2">Loading your servers...</h2>
+          <p className="text-sm text-muted-foreground">Please wait while we fetch your Discord servers.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-destructive mb-4">{error}</div>
+          <Button onClick={() => router.push('/login')}>Back to Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -184,31 +162,36 @@ export default function SelectServerPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {mockServers.map((server) => (
-              <ServerCard
-                key={server.id}
-                id={server.id}
-                name={server.name}
-                initials={server.initials}
-                memberCount={server.memberCount}
-                botInstalled={server.botInstalled}
-                isSelected={selectedServerId === server.id}
-                onSelect={() => setSelectedServerId(server.id)}
-                color={server.color}
-              />
-            ))}
-          </div>
+          {servers.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No servers found where you are the owner.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {servers.map((server) => (
+                  <ServerCard
+                    key={server.id}
+                    id={server.id}
+                    name={server.name}
+                    initials={server.name.substring(0, 2).toUpperCase()}
+                    isSelected={selectedServerId === server.id}
+                    onSelect={() => setSelectedServerId(server.id)}
+                  />
+                ))}
+              </div>
 
-          <div className="flex items-center justify-center">
-            <Button
-              size="lg"
-              onClick={handleContinue}
-              disabled={!selectedServerId}
-            >
-              Continue
-            </Button>
-          </div>
+              <div className="flex items-center justify-center">
+                <Button
+                  size="lg"
+                  onClick={handleContinue}
+                  disabled={!selectedServerId}
+                >
+                  Continue
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>

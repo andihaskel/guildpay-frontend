@@ -14,32 +14,39 @@ export default function AuthCallbackPage() {
 
   const handleAuthCallback = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
-        credentials: 'include',
-      });
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get('from');
 
-      if (!response.ok) {
-        setError('Authentication failed. Please try again.');
-        setTimeout(() => router.push('/login'), 2000);
-        return;
-      }
+      if (from === 'discord') {
+        const meResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          credentials: 'include',
+        });
 
-      const user = await response.json();
+        if (!meResponse.ok) {
+          setError('Authentication failed. Please try again.');
+          setTimeout(() => router.push('/login'), 2000);
+          return;
+        }
 
-      const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/creator/products`, {
-        credentials: 'include',
-      });
+        await meResponse.json();
 
-      if (productsResponse.ok) {
-        const products = await productsResponse.json();
+        const countResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/creator/products/count`, {
+          credentials: 'include',
+        });
 
-        if (products && products.length > 0) {
-          router.push('/dashboard/overview');
+        if (countResponse.ok) {
+          const { count } = await countResponse.json();
+
+          if (count === 0) {
+            router.push('/select-server');
+          } else {
+            router.push('/dashboard/overview');
+          }
         } else {
           router.push('/select-server');
         }
       } else {
-        router.push('/select-server');
+        router.push('/dashboard/overview');
       }
     } catch (error) {
       console.error('Auth callback error:', error);

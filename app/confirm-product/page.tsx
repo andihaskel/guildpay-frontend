@@ -22,16 +22,7 @@ export default function ConfirmProductPage() {
   };
 
   const handleCreateProduct = async () => {
-    if (!serverId) return;
-
-    setIsCreating(true);
-    try {
-      const product = await api.createProductFromServer(serverId);
-      router.push(`/dashboard/overview`);
-    } catch (error) {
-      console.error('Failed to create product:', error);
-      setIsCreating(false);
-    }
+    router.push(`/dashboard/overview`);
   };
 
   return (

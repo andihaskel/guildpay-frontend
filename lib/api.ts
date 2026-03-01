@@ -141,21 +141,8 @@ class ApiClient {
     return this.get<CreatorSubscription>('/billing');
   }
 
-  async getDiscordServers(): Promise<DiscordServer[]> {
-    return [];
-  }
-
-  async createProductFromServer(serverId: string): Promise<Product> {
-    const mockProduct: Product = {
-      id: 'mock-product-id',
-      name: 'Mock Server',
-      guildId: serverId,
-      guildName: 'Mock Server',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return Promise.resolve(mockProduct);
+  async getProductsCount(): Promise<{ count: number }> {
+    return this.get<{ count: number }>('/creator/products/count');
   }
 }
 
