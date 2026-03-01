@@ -1,56 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, Users, MoreHorizontal } from 'lucide-react';
+import { DollarSign, Users, MoreHorizontal, Loader2 } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-interface MonetizedRole {
-  id: string;
-  icon: string;
-  name: string;
-  price: string;
-  members: number;
-  revenue: string;
-  status: 'active' | 'disabled';
-}
+import { EmptyState } from '@/components/ui/empty-state';
+import { api } from '@/lib/api';
+import { Role } from '@/lib/types';
 
 export default function OverviewPage() {
   const router = useRouter();
   const { currentProduct } = useProduct();
+  const [overview, setOverview] = useState<{
+    payingMembers: number;
+    monthlyRevenue: number;
+  } | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const monetizedRoles: MonetizedRole[] = [
-    {
-      id: '1',
-      icon: '👑',
-      name: 'VIP Member',
-      price: '$9.99/month',
-      members: 247,
-      revenue: '$2,467/mo',
-      status: 'active',
-    },
-    {
-      id: '2',
-      icon: '⭐',
-      name: 'Elite Access',
-      price: '$19.99/month',
-      members: 156,
-      revenue: '$3,118/mo',
-      status: 'active',
-    },
-    {
-      id: '3',
-      icon: '💚',
-      name: 'Supporter',
-      price: '$4.99/month',
-      members: 89,
-      revenue: '$444/mo',
-      status: 'active',
-    },
-  ];
+  useEffect(() => {
+    if (currentProduct?.id) {
+      loadData();
+    }
+  }, [currentProduct?.id]);
+
+  const loadData = async () => {
+    if (!currentProduct?.id) return;
+
+    try {
+      setIsLoading(true);
+      const [overviewData, rolesData] = await Promise.all([
+        api.getProductOverview(currentProduct.id),
+        api.getRoles(currentProduct.id),
+      ]);
+
+      setOverview(overviewData);
+      setRoles(rolesData.filter(role => role.isActive).slice(0, 5));
+    } catch (error) {
+      console.error('Failed to load overview data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -70,81 +64,115 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-8 bg-slate-900/40 border-slate-800/50">
-          <div className="flex items-start justify-between mb-6">
-            <p className="text-sm text-slate-400 uppercase tracking-wide">Paying Members</p>
-            <div className="p-2.5 rounded-lg bg-violet-600/20">
-              <Users className="h-5 w-5 text-violet-400" />
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
+            <div className="h-32 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </div>
-          <p className="text-5xl font-semibold mb-3">1,247</p>
-          <p className="text-sm text-green-500">+89 this week</p>
-        </Card>
+          </Card>
+          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
+            <div className="h-32 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
+            <div className="flex items-start justify-between mb-6">
+              <p className="text-sm text-slate-400 uppercase tracking-wide">Paying Members</p>
+              <div className="p-2.5 rounded-lg bg-violet-600/20">
+                <Users className="h-5 w-5 text-violet-400" />
+              </div>
+            </div>
+            <p className="text-5xl font-semibold mb-3">
+              {overview?.payingMembers.toLocaleString() || '0'}
+            </p>
+          </Card>
 
-        <Card className="p-8 bg-slate-900/40 border-slate-800/50">
-          <div className="flex items-start justify-between mb-6">
-            <p className="text-sm text-slate-400 uppercase tracking-wide">Monthly Revenue</p>
-            <div className="p-2.5 rounded-lg bg-green-600/20">
-              <DollarSign className="h-5 w-5 text-green-400" />
+          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
+            <div className="flex items-start justify-between mb-6">
+              <p className="text-sm text-slate-400 uppercase tracking-wide">Monthly Revenue</p>
+              <div className="p-2.5 rounded-lg bg-green-600/20">
+                <DollarSign className="h-5 w-5 text-green-400" />
+              </div>
             </div>
-          </div>
-          <p className="text-5xl font-semibold mb-3">$8,456</p>
-          <p className="text-sm text-green-500">+12.5% vs last month</p>
-        </Card>
-      </div>
+            <p className="text-5xl font-semibold mb-3">
+              ${overview?.monthlyRevenue.toLocaleString() || '0'}
+            </p>
+          </Card>
+        </div>
+      )}
 
       <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50">
         <div className="p-6 border-b border-slate-800/50">
           <h2 className="text-xl font-semibold">Monetized Roles</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-800/30">
-              <tr className="text-left text-xs text-slate-400 uppercase tracking-wide">
-                <th className="py-4 px-6 font-medium">Role</th>
-                <th className="py-4 px-6 font-medium">Price</th>
-                <th className="py-4 px-6 font-medium">Members</th>
-                <th className="py-4 px-6 font-medium">Revenue</th>
-                <th className="py-4 px-6 font-medium">Status</th>
-                <th className="py-4 px-6 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monetizedRoles.map((role) => (
-                <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 flex items-center justify-center text-xl">
-                        {role.icon}
-                      </div>
-                      <span className="font-medium">{role.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span>{role.price}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-medium">{role.members}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-medium">{role.revenue}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
-                      Active
-                    </Badge>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </td>
+        {isLoading ? (
+          <div className="py-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : roles.length === 0 ? (
+          <div className="py-12">
+            <EmptyState
+              icon={Users}
+              title="No monetized roles yet"
+              description="Create your first role to start monetizing your Discord server"
+              action={{
+                label: '+ Create Role',
+                onClick: () => router.push('/dashboard/roles')
+              }}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-800/30">
+                <tr className="text-left text-xs text-slate-400 uppercase tracking-wide">
+                  <th className="py-4 px-6 font-medium">Role</th>
+                  <th className="py-4 px-6 font-medium">Price</th>
+                  <th className="py-4 px-6 font-medium">Members</th>
+                  <th className="py-4 px-6 font-medium">Revenue</th>
+                  <th className="py-4 px-6 font-medium">Status</th>
+                  <th className="py-4 px-6 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {roles.map((role) => (
+                  <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{role.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span>${(role.price / 100).toFixed(2)}/{role.interval}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium">{role.memberCount}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium">
+                        ${((role.price / 100) * role.memberCount).toFixed(2)}/mo
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
+                        Active
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -137,8 +137,31 @@ class ApiClient {
     return this.get<Member[]>(`/creator/products/${productId}/members`);
   }
 
+  async getProductOverview(productId: string): Promise<{
+    payingMembers: number;
+    monthlyRevenue: number;
+  }> {
+    return this.get<{ payingMembers: number; monthlyRevenue: number }>(
+      `/creator/products/${productId}/overview`
+    );
+  }
+
   async getBilling(): Promise<CreatorSubscription> {
     return this.get<CreatorSubscription>('/billing');
+  }
+
+  async getBillingPlan(): Promise<{
+    planName: string;
+    status: string;
+    maxProducts: number;
+    maxRoles: number;
+  }> {
+    return this.get<{
+      planName: string;
+      status: string;
+      maxProducts: number;
+      maxRoles: number;
+    }>('/billing/plan');
   }
 
   async getProductsCount(): Promise<{ count: number }> {

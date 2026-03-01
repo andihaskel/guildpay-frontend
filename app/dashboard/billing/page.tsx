@@ -1,17 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, ShoppingBag, Users, Check, FileText, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
-
-interface UsageStats {
-  products: { current: number; limit: number };
-  roles: { current: number; limit: number };
-  members: { current: number; limit: string };
-}
+import { api } from '@/lib/api';
 
 interface Plan {
   name: string;
@@ -25,12 +20,33 @@ interface Plan {
 }
 
 export default function BillingPage() {
-  const [currentPlan] = useState('FREE PLAN');
-  const [planStatus] = useState('Active');
+  const [billingPlan, setBillingPlan] = useState<{
+    planName: string;
+    status: string;
+    maxProducts: number;
+    maxRoles: number;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const usage: UsageStats = {
-    products: { current: 1, limit: 1 },
-    roles: { current: 2, limit: 2 },
+  useEffect(() => {
+    loadBillingPlan();
+  }, []);
+
+  const loadBillingPlan = async () => {
+    try {
+      setIsLoading(true);
+      const planData = await api.getBillingPlan();
+      setBillingPlan(planData);
+    } catch (error) {
+      console.error('Failed to load billing plan:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const usage = {
+    products: { current: 1, limit: billingPlan?.maxProducts || 1 },
+    roles: { current: 2, limit: billingPlan?.maxRoles || 2 },
     members: { current: 247, limit: 'unlimited' }
   };
 
@@ -93,25 +109,31 @@ export default function BillingPage() {
       </div>
 
       <Card className="p-6 bg-slate-900/40 border-slate-800/50">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold">{currentPlan}</h2>
-              <Badge className="bg-green-600 hover:bg-green-600 text-white">
-                {planStatus}
-              </Badge>
-            </div>
-            <p className="text-base text-muted-foreground mb-1">
-              Up to 1 product · 2 monetized roles
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Perfect for getting started with Discord monetization
-            </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            Upgrade to Pro
-          </Button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold">{billingPlan?.planName.toUpperCase() || 'FREE PLAN'}</h2>
+                <Badge className="bg-green-600 hover:bg-green-600 text-white">
+                  {billingPlan?.status || 'Active'}
+                </Badge>
+              </div>
+              <p className="text-base text-muted-foreground mb-1">
+                Up to {billingPlan?.maxProducts || 1} product · {billingPlan?.maxRoles || 2} monetized roles
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Perfect for getting started with Discord monetization
+              </p>
+            </div>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              Upgrade to Pro
+            </Button>
+          </div>
+        )}
       </Card>
 
       <div>

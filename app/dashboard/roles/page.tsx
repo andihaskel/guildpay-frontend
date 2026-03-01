@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Search, Edit, Pause, Trash2, Play, UserPlus, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Edit, Pause, Trash2, Play, UserPlus, Check, Loader2 } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface MonetizedRole {
-  id: string;
-  name: string;
-  color: string;
-  price: string;
-  interval: string;
-  members: number;
-  memberChange: number;
-  revenue: number;
-  status: 'active' | 'disabled';
-  created: string;
-}
+import { api } from '@/lib/api';
+import { Role } from '@/lib/types';
 
 export default function RolesPage() {
   const { currentProduct } = useProduct();
@@ -29,62 +18,41 @@ export default function RolesPage() {
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [sortBy, setSortBy] = useState('Sort by Revenue');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEmptyState, setShowEmptyState] = useState(false);
   const [selectedDiscordRole, setSelectedDiscordRole] = useState('');
   const [selectedStripePrice, setSelectedStripePrice] = useState('');
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const roles: MonetizedRole[] = [
-    {
-      id: '1',
-      name: 'VIP Member',
-      color: 'bg-yellow-500',
-      price: '$25',
-      interval: 'month',
-      members: 142,
-      memberChange: 12,
-      revenue: 3550,
-      status: 'active',
-      created: 'Mar 15, 2024'
-    },
-    {
-      id: '2',
-      name: 'Premium Access',
-      color: 'bg-purple-500',
-      price: '$15',
-      interval: 'month',
-      members: 89,
-      memberChange: 7,
-      revenue: 1335,
-      status: 'active',
-      created: 'Feb 8, 2024'
-    },
-    {
-      id: '3',
-      name: 'Supporter',
-      color: 'bg-blue-500',
-      price: '$5',
-      interval: 'month',
-      members: 256,
-      memberChange: 18,
-      revenue: 1280,
-      status: 'active',
-      created: 'Jan 12, 2024'
-    },
-    {
-      id: '4',
-      name: 'Elite Gaming',
-      color: 'bg-red-500',
-      price: '$50',
-      interval: 'month',
-      members: 0,
-      memberChange: 0,
-      revenue: 0,
-      status: 'disabled',
-      created: 'Apr 2, 2024'
+  useEffect(() => {
+    if (currentProduct?.id) {
+      loadRoles();
     }
-  ];
+  }, [currentProduct?.id]);
 
-  if (showEmptyState) {
+  const loadRoles = async () => {
+    if (!currentProduct?.id) return;
+
+    try {
+      setIsLoading(true);
+      const rolesData = await api.getRoles(currentProduct.id);
+      setRoles(rolesData);
+    } catch (error) {
+      console.error('Failed to load roles:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  if (!isLoading && roles.length === 0) {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
@@ -94,14 +62,6 @@ export default function RolesPage() {
               Create subscription-based roles for this server.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmptyState(false)}
-            className="bg-slate-800/50 border-slate-700/50"
-          >
-            Show Roles
-          </Button>
         </div>
 
         <div className="flex flex-col items-center justify-center py-20">
@@ -165,20 +125,10 @@ export default function RolesPage() {
             Manage subscription-based roles for this server.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmptyState(true)}
-            className="bg-slate-800/50 border-slate-700/50"
-          >
-            Show Empty State
-          </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Role
-          </Button>
-        </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Role
+        </Button>
       </div>
 
       <div className="flex items-center gap-4">
@@ -200,88 +150,92 @@ export default function RolesPage() {
       </div>
 
       <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-800/30">
-              <tr className="text-left text-sm text-muted-foreground">
-                <th className="py-4 px-6 font-medium">Role Name</th>
-                <th className="py-4 px-6 font-medium">Price</th>
-                <th className="py-4 px-6 font-medium">Active Members</th>
-                <th className="py-4 px-6 font-medium">Revenue</th>
-                <th className="py-4 px-6 font-medium">Status</th>
-                <th className="py-4 px-6 font-medium">Created</th>
-                <th className="py-4 px-6 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((role) => (
-                <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${role.color}`} />
-                      <span className="font-medium">{role.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{role.price} / {role.interval}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{role.members}</span>
-                      {role.memberChange > 0 && (
-                        <span className="text-xs text-green-500">+{role.memberChange}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="font-medium text-green-500">${role.revenue.toLocaleString()}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    {role.status === 'active' ? (
-                      <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-slate-700 text-slate-300">Disabled</Badge>
-                    )}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-muted-foreground">{role.created}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
-                        {role.status === 'active' ? (
-                          <Pause className="h-4 w-4" />
-                        ) : (
-                          <Play className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
+        {isLoading ? (
+          <div className="py-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-800/30">
+                <tr className="text-left text-sm text-muted-foreground">
+                  <th className="py-4 px-6 font-medium">Role Name</th>
+                  <th className="py-4 px-6 font-medium">Price</th>
+                  <th className="py-4 px-6 font-medium">Active Members</th>
+                  <th className="py-4 px-6 font-medium">Revenue</th>
+                  <th className="py-4 px-6 font-medium">Status</th>
+                  <th className="py-4 px-6 font-medium">Created</th>
+                  <th className="py-4 px-6 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {roles.map((role) => (
+                  <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{role.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-medium">${(role.price / 100).toFixed(2)} / {role.interval}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{role.memberCount}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium text-green-500">
+                        ${((role.price / 100) * role.memberCount).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {role.isActive ? (
+                        <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-slate-700 text-slate-300">Disabled</Badge>
+                      )}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-muted-foreground">{formatDate(role.createdAt)}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        >
+                          {role.isActive ? (
+                            <Pause className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
