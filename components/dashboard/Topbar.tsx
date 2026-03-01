@@ -34,9 +34,9 @@ export function Topbar() {
           <div className="relative">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="hover:opacity-80 transition-opacity"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-9 w-9">
                 {user?.discordAvatar ? (
                   <AvatarImage
                     src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.discordAvatar}.png`}
@@ -47,9 +47,6 @@ export function Topbar() {
                   {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium">
-                {user?.email || user?.discordUsername || user?.username || 'User'}
-              </span>
             </button>
 
             {userMenuOpen && (
@@ -58,7 +55,32 @@ export function Topbar() {
                   className="fixed inset-0 z-40"
                   onClick={() => setUserMenuOpen(false)}
                 />
-                <div className="absolute top-full right-0 mt-2 w-56 z-50 rounded-lg border border-border bg-popover shadow-lg">
+                <div className="absolute top-full right-0 mt-2 w-64 z-50 rounded-lg border border-border bg-popover shadow-lg">
+                  <div className="p-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        {user?.discordAvatar ? (
+                          <AvatarImage
+                            src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.discordAvatar}.png`}
+                            alt={user.discordUsername || user.username}
+                          />
+                        ) : null}
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
+                          {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        {(user?.discordUsername || user?.username) && (
+                          <p className="font-medium text-sm truncate">
+                            {user?.discordUsername || user?.username}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user?.email || 'user@example.com'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   <div className="p-2 space-y-1">
                     <button
                       onClick={handleAccountSettings}
