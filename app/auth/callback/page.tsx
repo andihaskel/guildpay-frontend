@@ -26,7 +26,7 @@ export default function AuthCallbackPage() {
 
       const user = await response.json();
 
-      const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products`, {
+      const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/creator/products`, {
         credentials: 'include',
       });
 

@@ -84,11 +84,11 @@ class ApiClient {
   }
 
   async getProducts(): Promise<Product[]> {
-    return [];
+    return this.get<Product[]>('/creator/products');
   }
 
   async getProduct(id: string): Promise<Product> {
-    return this.get<Product>(`/products/${id}`);
+    return this.get<Product>(`/creator/products/${id}`);
   }
 
   async createProduct(data: {
@@ -96,11 +96,11 @@ class ApiClient {
     guildId: string;
     description?: string;
   }): Promise<Product> {
-    return this.post<Product>('/products', data);
+    return this.post<Product>('/creator/products', data);
   }
 
   async getRoles(productId: string): Promise<Role[]> {
-    return this.get<Role[]>(`/products/${productId}/roles`);
+    return this.get<Role[]>(`/creator/products/${productId}/roles`);
   }
 
   async createRole(
@@ -113,7 +113,7 @@ class ApiClient {
       interval: 'month' | 'year';
     }
   ): Promise<Role> {
-    return this.post<Role>(`/products/${productId}/roles`, data);
+    return this.post<Role>(`/creator/products/${productId}/roles`, data);
   }
 
   async updateRole(
@@ -126,15 +126,15 @@ class ApiClient {
       isActive: boolean;
     }>
   ): Promise<Role> {
-    return this.put<Role>(`/products/${productId}/roles/${roleId}`, data);
+    return this.put<Role>(`/creator/products/${productId}/roles/${roleId}`, data);
   }
 
   async deleteRole(productId: string, roleId: string): Promise<void> {
-    return this.delete<void>(`/products/${productId}/roles/${roleId}`);
+    return this.delete<void>(`/creator/products/${productId}/roles/${roleId}`);
   }
 
   async getMembers(productId: string): Promise<Member[]> {
-    return this.get<Member[]>(`/products/${productId}/members`);
+    return this.get<Member[]>(`/creator/products/${productId}/members`);
   }
 
   async getBilling(): Promise<CreatorSubscription> {

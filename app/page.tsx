@@ -98,7 +98,7 @@ export default function Home() {
         });
 
         if (response.ok) {
-          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products`, {
+          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/creator/products`, {
             credentials: 'include',
           });
 
