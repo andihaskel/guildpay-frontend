@@ -87,7 +87,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              {overview?.payingMembers.toLocaleString() || '0'}
+              {overview?.payingMembers?.toLocaleString() ?? '0'}
             </p>
           </Card>
 
@@ -99,7 +99,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              ${overview?.monthlyRevenue.toLocaleString() || '0'}
+              ${overview?.monthlyRevenue?.toLocaleString() ?? '0'}
             </p>
           </Card>
         </div>
