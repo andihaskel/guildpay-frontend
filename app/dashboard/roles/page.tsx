@@ -52,72 +52,70 @@ export default function RolesPage() {
     });
   };
 
-  if (!isLoading && (!Array.isArray(roles) || roles.length === 0)) {
-    return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold mb-2">Monetized Roles</h1>
-            <p className="text-muted-foreground">
-              Create subscription-based roles for this server.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-6">
-            <UserPlus className="h-10 w-10 text-muted-foreground" />
-          </div>
-          <h2 className="text-2xl font-semibold mb-2">No monetized roles yet</h2>
-          <p className="text-muted-foreground mb-8">
-            Create a paid role to start accepting subscriptions.
-          </p>
-          <Button size="lg" onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add First Role
-          </Button>
-        </div>
-
-        <Card className="p-8 bg-slate-900/40 border-slate-800/50">
-          <div className="flex items-center gap-3 mb-6">
-            <h3 className="text-xl font-semibold">How it works</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
-                1
-              </div>
-              <h4 className="font-semibold mb-2">Select a Discord role</h4>
-              <p className="text-sm text-muted-foreground">
-                Choose an existing role from your server
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
-                2
-              </div>
-              <h4 className="font-semibold mb-2">Connect or choose a Stripe price</h4>
-              <p className="text-sm text-muted-foreground">
-                Set your subscription pricing
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
-                3
-              </div>
-              <h4 className="font-semibold mb-2">Members automatically receive access</h4>
-              <p className="text-sm text-muted-foreground">
-                Subscribers get the role instantly
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <>
+      {!isLoading && (!Array.isArray(roles) || roles.length === 0) ? (
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold mb-2">Monetized Roles</h1>
+              <p className="text-muted-foreground">
+                Create subscription-based roles for this server.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-6">
+              <UserPlus className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">No monetized roles yet</h2>
+            <p className="text-muted-foreground mb-8">
+              Create a paid role to start accepting subscriptions.
+            </p>
+            <Button size="lg" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add First Role
+            </Button>
+          </div>
+
+          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
+            <div className="flex items-center gap-3 mb-6">
+              <h3 className="text-xl font-semibold">How it works</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                  1
+                </div>
+                <h4 className="font-semibold mb-2">Select a Discord role</h4>
+                <p className="text-sm text-muted-foreground">
+                  Choose an existing role from your server
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                  2
+                </div>
+                <h4 className="font-semibold mb-2">Connect or choose a Stripe price</h4>
+                <p className="text-sm text-muted-foreground">
+                  Set your subscription pricing
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                  3
+                </div>
+                <h4 className="font-semibold mb-2">Members automatically receive access</h4>
+                <p className="text-sm text-muted-foreground">
+                  Subscribers get the role instantly
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold mb-2">Monetized Roles</h1>
@@ -237,6 +235,8 @@ export default function RolesPage() {
           </div>
         )}
       </Card>
+        </div>
+      )}
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800">
@@ -381,6 +381,6 @@ export default function RolesPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
