@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader as Loader2 } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

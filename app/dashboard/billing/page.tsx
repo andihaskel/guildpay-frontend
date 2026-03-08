@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText, Loader2 } from 'lucide-react';
+import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
