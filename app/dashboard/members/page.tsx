@@ -52,13 +52,13 @@ export default function MembersPage() {
     });
   };
 
-  const totalMembers = members?.length || 0;
+  const totalMembers = Array.isArray(members) ? members.length : 0;
   const membersPerPage = 10;
   const totalPages = Math.ceil(totalMembers / membersPerPage);
-  const paginatedMembers = members?.slice(
+  const paginatedMembers = Array.isArray(members) ? members.slice(
     (currentPage - 1) * membersPerPage,
     currentPage * membersPerPage
-  ) || [];
+  ) : [];
 
   const getStatusBadge = (status: string) => {
     if (status === 'active') {
@@ -104,7 +104,7 @@ export default function MembersPage() {
           <div className="py-12 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : members.length === 0 ? (
+        ) : totalMembers === 0 ? (
           <div className="py-12">
             <EmptyState
               icon={Users}
@@ -173,7 +173,7 @@ export default function MembersPage() {
         )}
       </Card>
 
-      {!isLoading && members.length > 0 && (
+      {!isLoading && totalMembers > 0 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {(currentPage - 1) * membersPerPage + 1} to{' '}

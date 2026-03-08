@@ -52,7 +52,7 @@ export default function RolesPage() {
     });
   };
 
-  if (!isLoading && (!roles || roles.length === 0)) {
+  if (!isLoading && (!Array.isArray(roles) || roles.length === 0)) {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
