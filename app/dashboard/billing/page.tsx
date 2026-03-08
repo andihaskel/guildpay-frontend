@@ -117,7 +117,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold">{billingPlan?.planName.toUpperCase() || 'FREE PLAN'}</h2>
+                <h2 className="text-2xl font-bold">{billingPlan?.planName?.toUpperCase() || 'FREE PLAN'}</h2>
                 <Badge className="bg-green-600 hover:bg-green-600 text-white">
                   {billingPlan?.status || 'Active'}
                 </Badge>

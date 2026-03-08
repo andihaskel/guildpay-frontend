@@ -52,13 +52,13 @@ export default function MembersPage() {
     });
   };
 
-  const totalMembers = members.length;
+  const totalMembers = members?.length || 0;
   const membersPerPage = 10;
   const totalPages = Math.ceil(totalMembers / membersPerPage);
-  const paginatedMembers = members.slice(
+  const paginatedMembers = members?.slice(
     (currentPage - 1) * membersPerPage,
     currentPage * membersPerPage
-  );
+  ) || [];
 
   const getStatusBadge = (status: string) => {
     if (status === 'active') {
