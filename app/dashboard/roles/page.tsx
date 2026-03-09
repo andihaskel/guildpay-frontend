@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api';
-import { Role } from '@/lib/types';
+import { Role, DiscordRole, StripePrice } from '@/lib/types';
 
 export default function RolesPage() {
   const { currentProduct } = useProduct();
@@ -22,12 +22,23 @@ export default function RolesPage() {
   const [selectedStripePrice, setSelectedStripePrice] = useState('');
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
+  const [stripePrices, setStripePrices] = useState<StripePrice[]>([]);
+  const [loadingDiscordRoles, setLoadingDiscordRoles] = useState(false);
+  const [loadingStripePrices, setLoadingStripePrices] = useState(false);
 
   useEffect(() => {
     if (currentProduct?.id) {
       loadRoles();
     }
   }, [currentProduct?.id]);
+
+  useEffect(() => {
+    if (showCreateModal && currentProduct?.guildId) {
+      loadDiscordRoles();
+      loadStripePrices();
+    }
+  }, [showCreateModal, currentProduct?.guildId]);
 
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
@@ -43,6 +54,32 @@ export default function RolesPage() {
     }
   };
 
+  const loadDiscordRoles = async () => {
+    if (!currentProduct?.guildId) return;
+
+    try {
+      setLoadingDiscordRoles(true);
+      const rolesData = await api.getDiscordGuildRoles(currentProduct.guildId);
+      setDiscordRoles(rolesData);
+    } catch (error) {
+      console.error('Failed to load Discord roles:', error);
+    } finally {
+      setLoadingDiscordRoles(false);
+    }
+  };
+
+  const loadStripePrices = async () => {
+    try {
+      setLoadingStripePrices(true);
+      const pricesData = await api.getStripePrices();
+      setStripePrices(pricesData);
+    } catch (error) {
+      console.error('Failed to load Stripe prices:', error);
+    } finally {
+      setLoadingStripePrices(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -50,6 +87,19 @@ export default function RolesPage() {
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const formatPrice = (price: StripePrice) => {
+    const amount = (price.unit_amount / 100).toFixed(2);
+    return `$${amount} / ${price.recurring.interval}`;
+  };
+
+  const getSelectedDiscordRole = () => {
+    return discordRoles.find(role => role.id === selectedDiscordRole);
+  };
+
+  const getSelectedStripePrice = () => {
+    return stripePrices.find(price => price.id === selectedStripePrice);
   };
 
   return (
@@ -255,7 +305,7 @@ export default function RolesPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">SELECTED SERVER</p>
-                  <p className="text-sm font-semibold">Gaming Community</p>
+                  <p className="text-sm font-semibold">{currentProduct?.guildName || 'Loading...'}</p>
                 </div>
               </div>
             </Card>
@@ -269,14 +319,16 @@ export default function RolesPage() {
                   <h3 className="font-semibold">Select Discord Role</h3>
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Discord Role</label>
-                    <Select value={selectedDiscordRole} onValueChange={setSelectedDiscordRole}>
+                    <Select value={selectedDiscordRole} onValueChange={setSelectedDiscordRole} disabled={loadingDiscordRoles}>
                       <SelectTrigger className="bg-slate-800/50 border-slate-700/50">
-                        <SelectValue placeholder="Choose a role..." />
+                        <SelectValue placeholder={loadingDiscordRoles ? "Loading roles..." : "Choose a role..."} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
-                        <SelectItem value="vip">VIP Member</SelectItem>
-                        <SelectItem value="premium">Premium Access</SelectItem>
-                        <SelectItem value="supporter">Supporter</SelectItem>
+                        {discordRoles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
@@ -294,14 +346,16 @@ export default function RolesPage() {
                   <h3 className="font-semibold">Select Stripe Price</h3>
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Stripe Subscription Price</label>
-                    <Select value={selectedStripePrice} onValueChange={setSelectedStripePrice}>
+                    <Select value={selectedStripePrice} onValueChange={setSelectedStripePrice} disabled={loadingStripePrices}>
                       <SelectTrigger className="bg-slate-800/50 border-slate-700/50">
-                        <SelectValue placeholder="Select a price..." />
+                        <SelectValue placeholder={loadingStripePrices ? "Loading prices..." : "Select a price..."} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
-                        <SelectItem value="price_1">$10.00 / month</SelectItem>
-                        <SelectItem value="price_2">$25.00 / month</SelectItem>
-                        <SelectItem value="price_3">$50.00 / month</SelectItem>
+                        {stripePrices.map((price) => (
+                          <SelectItem key={price.id} value={price.id}>
+                            {formatPrice(price)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
@@ -334,18 +388,22 @@ export default function RolesPage() {
                     <Card className="p-3 bg-slate-800/30 border-slate-700/50 space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Stripe Price</span>
-                        <span className="font-medium">$10.00 / month</span>
+                        <span className="font-medium">{getSelectedStripePrice() ? formatPrice(getSelectedStripePrice()!) : '-'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Discord Role</span>
+                        <span className="font-medium">{getSelectedDiscordRole()?.name || '-'}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Server</span>
-                        <span className="font-medium">Gaming Community</span>
+                        <span className="font-medium">{currentProduct?.guildName || '-'}</span>
                       </div>
                       <div className="flex items-start gap-2 pt-2 border-t border-slate-700/50">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-xs font-medium text-green-500">Ready to Create</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Members who subscribe to this price will automatically receive the VIP Member role
+                            Members who subscribe to this price will automatically receive the {getSelectedDiscordRole()?.name || 'selected'} role
                           </p>
                         </div>
                       </div>

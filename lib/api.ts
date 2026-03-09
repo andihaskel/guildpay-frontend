@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, StripePrice } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -166,6 +166,14 @@ class ApiClient {
 
   async getProductsCount(): Promise<{ count: number }> {
     return this.get<{ count: number }>('/creator/products/count');
+  }
+
+  async getDiscordGuildRoles(guildId: string): Promise<DiscordRole[]> {
+    return this.get<DiscordRole[]>(`/creator/discord/guilds/${guildId}/roles`);
+  }
+
+  async getStripePrices(): Promise<StripePrice[]> {
+    return this.get<StripePrice[]>('/billing/prices');
   }
 }
 

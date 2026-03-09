@@ -82,3 +82,22 @@ export interface DiscordServer {
   memberCount: number;
   botInstalled: boolean;
 }
+
+export interface DiscordRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+}
+
+export interface StripePrice {
+  id: string;
+  product: string;
+  currency: string;
+  unit_amount: number;
+  recurring: {
+    interval: string;
+    interval_count: number;
+  };
+  active: boolean;
+}
