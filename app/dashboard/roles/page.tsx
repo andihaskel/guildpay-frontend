@@ -30,17 +30,12 @@ export default function RolesPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    if (currentProduct?.id) {
+    if (currentProduct?.id && currentProduct?.guildId) {
       loadRoles();
-    }
-  }, [currentProduct?.id]);
-
-  useEffect(() => {
-    if (showCreateModal && currentProduct?.guildId) {
       loadDiscordRoles();
       loadStripePrices();
     }
-  }, [showCreateModal, currentProduct?.guildId]);
+  }, [currentProduct?.id, currentProduct?.guildId]);
 
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
