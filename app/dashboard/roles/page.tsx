@@ -99,7 +99,10 @@ export default function RolesPage() {
 
   const formatPrice = (price: StripePrice) => {
     const amount = (price.unit_amount / 100).toFixed(2);
-    return `$${amount} / ${price.recurring.interval}`;
+    if (price.recurring?.interval) {
+      return `$${amount} / ${price.recurring.interval}`;
+    }
+    return `$${amount}`;
   };
 
   const getSelectedDiscordRole = () => {
