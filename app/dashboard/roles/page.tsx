@@ -74,10 +74,17 @@ export default function RolesPage() {
   };
 
   useEffect(() => {
-    if (currentProduct?.id && currentProduct?.guildId) {
+    console.log('currentProduct:', currentProduct);
+
+    if (currentProduct?.id) {
+      console.log('Loading roles and stripe prices');
       loadRoles();
-      loadDiscordRoles();
       loadStripePrices();
+    }
+
+    if (currentProduct?.guildId) {
+      console.log('Loading discord roles for guild:', currentProduct.guildId);
+      loadDiscordRoles();
     }
   }, [currentProduct?.id, currentProduct?.guildId]);
 
