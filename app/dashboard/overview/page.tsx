@@ -37,10 +37,12 @@ export default function OverviewPage() {
         api.getRoles(currentProduct.id),
       ]);
 
-      setOverview(overviewData);
-      setRoles(rolesData.filter(role => role.isActive).slice(0, 5));
+      setOverview(overviewData || { payingMembers: 0, monthlyRevenue: 0 });
+      setRoles((rolesData || []).filter(role => role.isActive).slice(0, 5));
     } catch (error) {
       console.error('Failed to load overview data:', error);
+      setOverview({ payingMembers: 0, monthlyRevenue: 0 });
+      setRoles([]);
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +89,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              {overview?.payingMembers?.toLocaleString() ?? '0'}
+              {(overview?.payingMembers ?? 0).toLocaleString()}
             </p>
           </Card>
 
@@ -99,7 +101,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              ${overview?.monthlyRevenue?.toLocaleString() ?? '0'}
+              ${(overview?.monthlyRevenue ?? 0).toLocaleString()}
             </p>
           </Card>
         </div>
