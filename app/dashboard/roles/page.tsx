@@ -35,9 +35,11 @@ export default function RolesPage() {
     try {
       setIsLoading(true);
       const rolesData = await api.getRoles(currentProduct.id);
-      setRoles(rolesData);
+      console.log('Roles loaded:', rolesData);
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
     } catch (error) {
       console.error('Failed to load roles:', error);
+      setRoles([]);
     } finally {
       setIsLoading(false);
     }
@@ -135,9 +137,12 @@ export default function RolesPage() {
     }
   };
 
+  const hasRoles = Array.isArray(roles) && roles.length > 0;
+  const showEmptyState = !isLoading && !hasRoles;
+
   return (
     <>
-      {!isLoading && (!Array.isArray(roles) || roles.length === 0) ? (
+      {showEmptyState ? (
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div>
@@ -250,69 +255,79 @@ export default function RolesPage() {
                 </tr>
               </thead>
               <tbody>
-                {roles.map((role) => (
-                  <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{role.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col">
-                        <span className="font-medium">${(role.price / 100).toFixed(2)} / {role.interval}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{role.memberCount}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-medium text-green-500">
-                        ${((role.price / 100) * role.memberCount).toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      {role.isActive ? (
-                        <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-slate-700 text-slate-300">Disabled</Badge>
-                      )}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-muted-foreground">{formatDate(role.createdAt)}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          {role.isActive ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {roles.map((role) => {
+                  const price = role.price || 0;
+                  const memberCount = role.memberCount || 0;
+                  const revenue = (price / 100) * memberCount;
+
+                  return (
+                    <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{role.name || 'Unnamed Role'}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            ${(price / 100).toFixed(2)} / {role.interval || 'month'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{memberCount}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="font-medium text-green-500">
+                          ${revenue.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        {role.isActive ? (
+                          <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-slate-700 text-slate-300">Disabled</Badge>
+                        )}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm text-muted-foreground">
+                          {role.createdAt ? formatDate(role.createdAt) : 'N/A'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            {role.isActive ? (
+                              <Pause className="h-4 w-4" />
+                            ) : (
+                              <Play className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

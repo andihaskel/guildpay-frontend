@@ -24,17 +24,17 @@ export interface Product {
 
 export interface Role {
   id: string;
-  productId: string;
-  discordRoleId: string;
-  name: string;
+  productId?: string;
+  discordRoleId?: string;
+  name?: string;
   description?: string;
-  price: number;
-  interval: 'month' | 'year';
+  price?: number;
+  interval?: 'month' | 'year';
   stripePriceId?: string;
-  isActive: boolean;
-  memberCount: number;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  memberCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Member {

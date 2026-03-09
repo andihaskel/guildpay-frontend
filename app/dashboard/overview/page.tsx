@@ -141,36 +141,42 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {roles.map((role) => (
-                  <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{role.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span>${(role.price / 100).toFixed(2)}/{role.interval}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-medium">{role.memberCount}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-medium">
-                        ${((role.price / 100) * role.memberCount).toFixed(2)}/mo
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
-                        Active
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
-                        <MoreHorizontal className="h-4 w-4" />
+                {roles.map((role) => {
+                  const price = role.price || 0;
+                  const memberCount = role.memberCount || 0;
+                  const revenue = (price / 100) * memberCount;
+
+                  return (
+                    <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{role.name || 'Unnamed Role'}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span>${(price / 100).toFixed(2)}/{role.interval || 'month'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="font-medium">{memberCount}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="font-medium">
+                          ${revenue.toFixed(2)}/mo
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
+                          Active
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-6">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
+                          <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
