@@ -26,6 +26,7 @@ export default function RolesPage() {
   const [stripePrices, setStripePrices] = useState<StripePrice[]>([]);
   const [loadingDiscordRoles, setLoadingDiscordRoles] = useState(false);
   const [loadingStripePrices, setLoadingStripePrices] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (currentProduct?.id) {
@@ -100,6 +101,34 @@ export default function RolesPage() {
 
   const getSelectedStripePrice = () => {
     return stripePrices.find(price => price.id === selectedStripePrice);
+  };
+
+  const handleCreateRole = async () => {
+    if (!currentProduct?.id || !selectedDiscordRole || !selectedStripePrice) return;
+
+    const selectedRole = getSelectedDiscordRole();
+    const selectedPrice = getSelectedStripePrice();
+
+    if (!selectedRole || !selectedPrice) return;
+
+    try {
+      setIsCreating(true);
+      await api.createRole(currentProduct.id, {
+        discordRoleId: selectedRole.id,
+        name: selectedRole.name,
+        price: selectedPrice.unit_amount / 100,
+        interval: selectedPrice.recurring.interval as 'month' | 'year',
+      });
+
+      setShowCreateModal(false);
+      setSelectedDiscordRole('');
+      setSelectedStripePrice('');
+      await loadRoles();
+    } catch (error) {
+      console.error('Failed to create role:', error);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -428,12 +457,21 @@ export default function RolesPage() {
                 Cancel
               </Button>
               <Button
-                onClick={() => setShowCreateModal(false)}
-                disabled={!selectedDiscordRole || !selectedStripePrice}
+                onClick={handleCreateRole}
+                disabled={!selectedDiscordRole || !selectedStripePrice || isCreating}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                <Check className="h-4 w-4 mr-2" />
-                Create Monetized Role
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Create Monetized Role
+                  </>
+                )}
               </Button>
             </div>
           </div>
