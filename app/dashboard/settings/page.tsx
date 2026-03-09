@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, RefreshCw, ExternalLink, Trash2, AlertTriangle } from 'lucide-react';
+import { Check, RefreshCw, ExternalLink, Trash2, TriangleAlert as AlertTriangle } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
