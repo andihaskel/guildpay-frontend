@@ -11,14 +11,15 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
-  guildId: string;
-  guildName: string;
+  discord_guild_id: string;
+  bot_installed: boolean;
+  guildName?: string;
   guildIcon?: string;
   description?: string;
-  isActive: boolean;
+  isActive?: boolean;
   stripeAccountId?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Role {

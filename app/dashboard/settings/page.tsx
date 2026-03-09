@@ -38,7 +38,7 @@ export default function SettingsPage() {
               {currentProduct?.guildName || 'Gaming Community'}
             </h3>
             <p className="text-sm text-muted-foreground mb-1">
-              Guild ID: {currentProduct?.guildId || '847392018394728'}
+              Guild ID: {currentProduct?.discord_guild_id || '847392018394728'}
             </p>
             <p className="text-sm text-muted-foreground mb-3">
               Created: March 15, 2024

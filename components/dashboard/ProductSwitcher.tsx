@@ -26,19 +26,19 @@ export function ProductSwitcher() {
       >
         {currentProduct.guildIcon ? (
           <img
-            src={`https://cdn.discordapp.com/icons/${currentProduct.guildId}/${currentProduct.guildIcon}.png`}
-            alt={currentProduct.guildName}
+            src={`https://cdn.discordapp.com/icons/${currentProduct.discord_guild_id}/${currentProduct.guildIcon}.png`}
+            alt={currentProduct.guildName || currentProduct.name}
             className="h-6 w-6 rounded"
           />
         ) : (
           <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
             <span className="text-xs text-primary-foreground font-medium">
-              {currentProduct.guildName.charAt(0).toUpperCase()}
+              {(currentProduct.guildName || currentProduct.name).charAt(0).toUpperCase()}
             </span>
           </div>
         )}
         <span className="text-sm font-medium flex-1 text-left truncate">
-          {currentProduct.guildName}
+          {currentProduct.guildName || currentProduct.name}
         </span>
         <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
       </button>
@@ -69,19 +69,19 @@ export function ProductSwitcher() {
                   >
                     {product.guildIcon ? (
                       <img
-                        src={`https://cdn.discordapp.com/icons/${product.guildId}/${product.guildIcon}.png`}
-                        alt={product.guildName}
+                        src={`https://cdn.discordapp.com/icons/${product.discord_guild_id}/${product.guildIcon}.png`}
+                        alt={product.guildName || product.name}
                         className="h-5 w-5 rounded"
                       />
                     ) : (
                       <div className="h-5 w-5 rounded bg-primary flex items-center justify-center">
                         <span className="text-xs text-primary-foreground font-medium">
-                          {product.guildName.charAt(0).toUpperCase()}
+                          {(product.guildName || product.name).charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                     <span className="flex-1 text-left truncate">
-                      {product.guildName}
+                      {product.guildName || product.name}
                     </span>
                     {isSelected && <Check className="h-4 w-4" />}
                   </button>

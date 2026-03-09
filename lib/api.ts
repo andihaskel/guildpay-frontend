@@ -93,7 +93,7 @@ class ApiClient {
 
   async createProduct(data: {
     name: string;
-    guildId: string;
+    discord_guild_id: string;
     description?: string;
   }): Promise<Product> {
     return this.post<Product>('/creator/products', data);

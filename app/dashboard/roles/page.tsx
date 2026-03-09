@@ -44,11 +44,11 @@ export default function RolesPage() {
   };
 
   const loadDiscordRoles = async () => {
-    if (!currentProduct?.guildId) return;
+    if (!currentProduct?.discord_guild_id) return;
 
     try {
       setLoadingDiscordRoles(true);
-      const rolesData = await api.getDiscordGuildRoles(currentProduct.guildId);
+      const rolesData = await api.getDiscordGuildRoles(currentProduct.discord_guild_id);
       console.log('Discord roles loaded:', rolesData);
       setDiscordRoles(rolesData);
     } catch (error) {
@@ -82,11 +82,11 @@ export default function RolesPage() {
       loadStripePrices();
     }
 
-    if (currentProduct?.guildId) {
-      console.log('Loading discord roles for guild:', currentProduct.guildId);
+    if (currentProduct?.discord_guild_id) {
+      console.log('Loading discord roles for guild:', currentProduct.discord_guild_id);
       loadDiscordRoles();
     }
-  }, [currentProduct?.id, currentProduct?.guildId]);
+  }, [currentProduct?.id, currentProduct?.discord_guild_id]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
