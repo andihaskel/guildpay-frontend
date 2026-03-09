@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, Users, MoreHorizontal, Loader2 } from 'lucide-react';
+import { DollarSign, Users, MoveHorizontal as MoreHorizontal, Loader as Loader2 } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
