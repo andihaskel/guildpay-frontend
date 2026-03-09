@@ -29,14 +29,6 @@ export default function RolesPage() {
   const [loadingStripePrices, setLoadingStripePrices] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    if (currentProduct?.id && currentProduct?.guildId) {
-      loadRoles();
-      loadDiscordRoles();
-      loadStripePrices();
-    }
-  }, [currentProduct?.id, currentProduct?.guildId]);
-
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
 
@@ -80,6 +72,14 @@ export default function RolesPage() {
       setLoadingStripePrices(false);
     }
   };
+
+  useEffect(() => {
+    if (currentProduct?.id && currentProduct?.guildId) {
+      loadRoles();
+      loadDiscordRoles();
+      loadStripePrices();
+    }
+  }, [currentProduct?.id, currentProduct?.guildId]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
