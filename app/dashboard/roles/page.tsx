@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, CreditCard as Edit, Pause, Trash2, Play, UserPlus, Check, Loader as Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Pause, Trash2, Play, UserPlus, Check, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
