@@ -22,7 +22,7 @@ export default function RolesPage() {
   const [selectedDiscordRole, setSelectedDiscordRole] = useState('');
   const [selectedStripePrice, setSelectedStripePrice] = useState('');
   const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
   const [stripePrices, setStripePrices] = useState<StripePrice[]>([]);
   const [loadingDiscordRoles, setLoadingDiscordRoles] = useState(false);
