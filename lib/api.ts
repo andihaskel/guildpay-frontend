@@ -106,11 +106,9 @@ class ApiClient {
   async createRole(
     productId: string,
     data: {
-      discordRoleId: string;
-      name: string;
-      description?: string;
-      price: number;
-      interval: 'month' | 'year';
+      stripe_price_id: string;
+      guild_id: string;
+      role_id: string;
     }
   ): Promise<Role> {
     return this.post<Role>(`/creator/products/${productId}/roles`, data);

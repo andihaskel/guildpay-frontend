@@ -114,20 +114,14 @@ export default function RolesPage() {
   };
 
   const handleCreateRole = async () => {
-    if (!currentProduct?.id || !selectedDiscordRole || !selectedStripePrice) return;
-
-    const selectedRole = getSelectedDiscordRole();
-    const selectedPrice = getSelectedStripePrice();
-
-    if (!selectedRole || !selectedPrice) return;
+    if (!currentProduct?.id || !currentProduct?.discord_guild_id || !selectedDiscordRole || !selectedStripePrice) return;
 
     try {
       setIsCreating(true);
       await api.createRole(currentProduct.id, {
-        discordRoleId: selectedRole.id,
-        name: selectedRole.name,
-        price: selectedPrice.unit_amount / 100,
-        interval: selectedPrice.recurring.interval as 'month' | 'year',
+        stripe_price_id: selectedStripePrice,
+        guild_id: currentProduct.discord_guild_id,
+        role_id: selectedDiscordRole,
       });
 
       setShowCreateModal(false);
@@ -337,18 +331,6 @@ export default function RolesPage() {
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
-            <Card className="p-3 bg-slate-800/50 border-slate-700/50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <UserPlus className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">SELECTED SERVER</p>
-                  <p className="text-sm font-semibold">{currentProduct?.guildName || 'Loading...'}</p>
-                </div>
-              </div>
-            </Card>
-
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 mt-1">
