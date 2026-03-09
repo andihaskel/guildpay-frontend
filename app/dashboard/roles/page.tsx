@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, CreditCard as Edit, Pause, Trash2, Play, UserPlus, Check, Loader as Loader2 } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Pause, Trash2, Play, UserPlus, Check, Loader as Loader2, AlertCircle } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api } from '@/lib/api';
 import { Role, DiscordRole, StripePrice } from '@/lib/types';
 
@@ -61,9 +62,11 @@ export default function RolesPage() {
     try {
       setLoadingDiscordRoles(true);
       const rolesData = await api.getDiscordGuildRoles(currentProduct.guildId);
+      console.log('Discord roles loaded:', rolesData);
       setDiscordRoles(rolesData);
     } catch (error) {
       console.error('Failed to load Discord roles:', error);
+      setDiscordRoles([]);
     } finally {
       setLoadingDiscordRoles(false);
     }
@@ -73,9 +76,11 @@ export default function RolesPage() {
     try {
       setLoadingStripePrices(true);
       const pricesData = await api.getStripePrices();
+      console.log('Stripe prices loaded:', pricesData);
       setStripePrices(pricesData);
     } catch (error) {
       console.error('Failed to load Stripe prices:', error);
+      setStripePrices([]);
     } finally {
       setLoadingStripePrices(false);
     }
@@ -353,16 +358,30 @@ export default function RolesPage() {
                         <SelectValue placeholder={loadingDiscordRoles ? "Loading roles..." : "Choose a role..."} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
-                        {discordRoles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
+                        {discordRoles.length === 0 && !loadingDiscordRoles ? (
+                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                            No roles available
+                          </div>
+                        ) : (
+                          discordRoles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
                       Select the role members will receive upon subscription
                     </p>
+                    {!loadingDiscordRoles && discordRoles.length === 0 && (
+                      <Alert className="bg-yellow-900/20 border-yellow-900/50">
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                        <AlertDescription className="text-sm text-yellow-200/90">
+                          No Discord roles found. Make sure the bot has access to your server.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 </div>
               </div>
@@ -380,16 +399,30 @@ export default function RolesPage() {
                         <SelectValue placeholder={loadingStripePrices ? "Loading prices..." : "Select a price..."} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">
-                        {stripePrices.map((price) => (
-                          <SelectItem key={price.id} value={price.id}>
-                            {formatPrice(price)}
-                          </SelectItem>
-                        ))}
+                        {stripePrices.length === 0 && !loadingStripePrices ? (
+                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                            No prices available
+                          </div>
+                        ) : (
+                          stripePrices.map((price) => (
+                            <SelectItem key={price.id} value={price.id}>
+                              {formatPrice(price)}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
                       Choose an existing Stripe price from your connected account
                     </p>
+                    {!loadingStripePrices && stripePrices.length === 0 && (
+                      <Alert className="bg-yellow-900/20 border-yellow-900/50">
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                        <AlertDescription className="text-sm text-yellow-200/90">
+                          No Stripe prices found. Create subscription prices in your Stripe Dashboard first.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   <Card className="p-3 bg-slate-800/30 border-slate-700/50">
                     <div className="flex items-start gap-2">
