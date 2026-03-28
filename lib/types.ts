@@ -39,15 +39,15 @@ export interface Role {
 
 export interface Member {
   id: string;
-  product_id?: string;
+  email?: string;
   discord_user_id: string;
   discord_username?: string;
   discord_avatar?: string;
+  role_identifier?: string;
   role_id: string;
-  role_name?: string;
-  subscription_id?: string;
+  price: number;
   status: 'active' | 'canceled' | 'past_due' | 'trialing';
-  current_period_end: string;
+  current_period_end?: string;
   created_at: string;
 }
 

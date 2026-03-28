@@ -86,13 +86,24 @@ export default function MembersPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${(price / 100).toFixed(2)}`;
+  };
+
+  const getRoleName = (roleIdentifier?: string) => {
+    if (!roleIdentifier) return 'Unknown Role';
+    const role = roles.find(r => r.id === roleIdentifier);
+    return role?.name || 'Unknown Role';
   };
 
   const totalPages = Math.ceil(totalMembers / membersPerPage);
@@ -239,22 +250,27 @@ export default function MembersPage() {
                           {member.discord_avatar && member.discord_user_id && (
                             <AvatarImage
                               src={`https://cdn.discordapp.com/avatars/${member.discord_user_id}/${member.discord_avatar}.png`}
-                              alt={member.discord_username || 'User'}
+                              alt={member.discord_username || member.email || 'User'}
                             />
                           )}
                           <AvatarFallback>
-                            {member.discord_username?.[0]?.toUpperCase() || 'U'}
+                            {(member.discord_username?.[0] || member.email?.[0] || 'U').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold">{member.discord_username || 'Unknown User'}</div>
-                          <div className="text-xs text-muted-foreground">{member.discord_user_id || 'No Discord ID'}</div>
+                          <div className="font-semibold">
+                            {member.discord_username || member.email || 'Unknown User'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {member.discord_user_id || member.email || 'No identifier'}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{member.role_name || 'Unknown Role'}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm">{getRoleName(member.role_identifier)}</span>
+                        <span className="text-xs text-muted-foreground">{formatPrice(member.price)}/mo</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
