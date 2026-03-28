@@ -383,14 +383,29 @@ export default function RolesPage() {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteClick(role)}
-                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleShareRole(role.id)}
+                            disabled={sharingRoleId === role.id}
+                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30"
+                          >
+                            {sharingRoleId === role.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(role)}
+                            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
