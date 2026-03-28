@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api } from '@/lib/api';
@@ -30,6 +31,8 @@ export default function RolesPage() {
   const [loadingStripePrices, setLoadingStripePrices] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
 
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
@@ -149,13 +152,21 @@ export default function RolesPage() {
     }
   };
 
-  const handleDeleteRole = async (roleId: string) => {
-    if (!currentProduct?.id) return;
+  const handleDeleteClick = (role: Role) => {
+    setRoleToDelete(role);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!currentProduct?.id || !roleToDelete?.id) return;
 
     try {
-      setDeletingRoleId(roleId);
-      await api.deleteRole(currentProduct.id, roleId);
+      setDeletingRoleId(roleToDelete.id);
+      await api.deleteRole(currentProduct.id, roleToDelete.id);
       await loadRoles();
+
+      setShowDeleteModal(false);
+      setRoleToDelete(null);
 
       toast({
         title: 'Role deleted',
@@ -171,6 +182,11 @@ export default function RolesPage() {
     } finally {
       setDeletingRoleId(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setRoleToDelete(null);
   };
 
   const hasRoles = Array.isArray(roles) && roles.length > 0;
@@ -328,15 +344,10 @@ export default function RolesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteRole(role.id)}
-                          disabled={deletingRoleId === role.id}
-                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30 disabled:opacity-50"
+                          onClick={() => handleDeleteClick(role)}
+                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
                         >
-                          {deletingRoleId === role.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
@@ -526,6 +537,40 @@ export default function RolesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <AlertDialogContent className="bg-slate-900 border-slate-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Monetized Role</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Are you sure you want to delete <span className="font-semibold text-white">{roleToDelete?.name || 'this role'}</span>?
+              This action cannot be undone and will remove the role mapping from your server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={handleDeleteCancel}
+              className="bg-slate-800 border-slate-700 hover:bg-slate-700"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deletingRoleId !== null}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletingRoleId ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Role'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
