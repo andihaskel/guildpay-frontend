@@ -167,7 +167,7 @@ export default function MembersPage() {
             <DropdownMenuItem onClick={() => handleRoleFilter('')}>
               All Roles
             </DropdownMenuItem>
-            {roles.map((role) => (
+            {roles?.map((role) => (
               <DropdownMenuItem
                 key={role.id}
                 onClick={() => handleRoleFilter(role.id)}
@@ -231,7 +231,7 @@ export default function MembersPage() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((member) => (
+                {members?.map((member) => (
                   <tr key={member.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
