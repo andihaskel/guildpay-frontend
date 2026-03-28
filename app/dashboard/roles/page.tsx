@@ -532,7 +532,7 @@ export default function RolesPage() {
                       <div className="flex-1">
                         <p className="text-xs font-medium mb-0.5">Need to create a new price?</p>
                         <p className="text-xs text-muted-foreground">
-                          Visit your <span className="text-blue-400 underline cursor-pointer">Stripe Dashboard</span> to create new subscription prices
+                          Visit your <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline cursor-pointer hover:text-blue-300">Stripe Dashboard</a> to create new subscription prices
                         </p>
                       </div>
                     </div>
