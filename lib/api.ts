@@ -131,6 +131,10 @@ class ApiClient {
     return this.delete<void>(`/creator/products/${productId}/roles/${roleId}`);
   }
 
+  async createRoleCheckoutSession(productId: string, roleId: string): Promise<{ checkout_url: string }> {
+    return this.post<{ checkout_url: string }>(`/creator/products/${productId}/roles/${roleId}/checkout-session`);
+  }
+
   async getMembers(productId: string): Promise<Member[]> {
     return this.get<Member[]>(`/creator/products/${productId}/members`);
   }

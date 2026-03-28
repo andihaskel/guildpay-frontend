@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, UserPlus, Check, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
+import { Plus, Search, Trash2, UserPlus, Check, Loader as Loader2, CircleAlert as AlertCircle, Send, Copy } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,9 @@ export default function RolesPage() {
   const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string>('');
+  const [sharingRoleId, setSharingRoleId] = useState<string | null>(null);
 
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
@@ -187,6 +190,45 @@ export default function RolesPage() {
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
     setRoleToDelete(null);
+  };
+
+  const handleShareRole = async (roleId: string) => {
+    if (!currentProduct?.id) return;
+
+    try {
+      setSharingRoleId(roleId);
+      const response = await api.createRoleCheckoutSession(currentProduct.id, roleId);
+
+      if (response.checkout_url) {
+        setCheckoutUrl(response.checkout_url);
+        setShowShareModal(true);
+      }
+    } catch (error) {
+      console.error('Failed to create checkout session:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create checkout link. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSharingRoleId(null);
+    }
+  };
+
+  const handleCopyCheckoutUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(checkoutUrl);
+      toast({
+        title: 'Copied!',
+        description: 'Checkout link copied to clipboard.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to copy link. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const hasRoles = Array.isArray(roles) && roles.length > 0;
@@ -534,6 +576,28 @@ export default function RolesPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Share checkout link</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+              <p className="text-sm text-slate-300 break-all font-mono">
+                {checkoutUrl}
+              </p>
+            </div>
+            <Button
+              onClick={handleCopyCheckoutUrl}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Link
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
