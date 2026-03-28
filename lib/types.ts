@@ -43,10 +43,13 @@ export interface Member {
   discord_user_id: string;
   discord_username?: string;
   discord_avatar?: string;
+  discord_connect_url?: string;
+  checkout_url?: string;
   role_identifier?: string;
   role_id: string;
   price: number;
-  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing';
+  status: 'active' | 'pending_discord' | 'pending_stripe' | 'canceled' | 'past_due' | 'trialing';
   current_period_end?: string;
   created_at: string;
 }

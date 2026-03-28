@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Loader as Loader2, Filter } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader as Loader2, Filter, Share2, Copy, Check } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { Member, Role } from '@/lib/types';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -29,6 +36,9 @@ export default function MembersPage() {
   const [totalMembers, setTotalMembers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const membersPerPage = 20;
 
   useEffect(() => {
@@ -111,6 +121,10 @@ export default function MembersPage() {
   const getStatusBadge = (status: string) => {
     if (status === 'active') {
       return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
+    } else if (status === 'pending_discord') {
+      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Pending Discord</Badge>;
+    } else if (status === 'pending_stripe') {
+      return <Badge variant="secondary" className="bg-purple-600/20 text-purple-400 hover:bg-purple-600/20">Pending Stripe</Badge>;
     } else if (status === 'canceled') {
       return <Badge variant="secondary" className="bg-red-600/20 text-red-400 hover:bg-red-600/20">Canceled</Badge>;
     } else if (status === 'past_due') {
@@ -134,6 +148,21 @@ export default function MembersPage() {
   const handleRoleFilter = (roleId: string) => {
     setRoleFilter(roleId === roleFilter ? '' : roleId);
     setCurrentPage(1);
+  };
+
+  const handleShareClick = (member: Member) => {
+    setSelectedMember(member);
+    setShareDialogOpen(true);
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   const getSelectedRoleName = () => {
@@ -239,6 +268,7 @@ export default function MembersPage() {
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Status</th>
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Renewal Date</th>
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Joined Date</th>
+                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,6 +317,19 @@ export default function MembersPage() {
                       <span className="text-sm text-muted-foreground">
                         {formatDate(member.created_at)}
                       </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {(member.discord_connect_url || member.checkout_url) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleShareClick(member)}
+                          className="gap-2"
+                        >
+                          <Share2 className="h-4 w-4" />
+                          Share
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -393,6 +436,77 @@ export default function MembersPage() {
           </div>
         </div>
       )}
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Share Links</DialogTitle>
+            <DialogDescription>
+              Share these links with {selectedMember?.email || selectedMember?.discord_username || 'the member'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {selectedMember?.discord_connect_url && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">
+                  Discord Connect Link
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={selectedMember.discord_connect_url}
+                    readOnly
+                    className="bg-slate-800/50 border-slate-700"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(selectedMember.discord_connect_url!, 'discord')}
+                    className="shrink-0"
+                  >
+                    {copiedField === 'discord' ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This link allows the user to connect their Discord account
+                </p>
+              </div>
+            )}
+            {selectedMember?.checkout_url && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">
+                  Checkout Link
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={selectedMember.checkout_url}
+                    readOnly
+                    className="bg-slate-800/50 border-slate-700"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(selectedMember.checkout_url!, 'checkout')}
+                    className="shrink-0"
+                  >
+                    {copiedField === 'checkout' ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This link takes the user to complete their payment
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
