@@ -203,11 +203,27 @@ export default function RolesPage() {
         setCheckoutUrl(response.checkout_url);
         setShowShareModal(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create checkout session:', error);
+
+      if (error?.response?.status === 422) {
+        const errorData = error.response.data;
+
+        if (errorData?.code === 'stripe_connect_required' && errorData?.connect_url) {
+          const shouldConnect = window.confirm(
+            'You need to connect your Stripe account to share checkout links. Would you like to connect now?'
+          );
+
+          if (shouldConnect) {
+            window.location.href = errorData.connect_url;
+          }
+          return;
+        }
+      }
+
       toast({
         title: 'Error',
-        description: 'Failed to create checkout link. Please try again.',
+        description: error?.response?.data?.error || 'Failed to create checkout link. Please try again.',
         variant: 'destructive',
       });
     } finally {
