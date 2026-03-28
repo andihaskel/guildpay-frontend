@@ -1,20 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, CreditCard as Edit, Pause, Trash2, Play, UserPlus, Check, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
+import { Plus, Search, Trash2, UserPlus, Check, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api } from '@/lib/api';
 import { Role, DiscordRole, StripePrice } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function RolesPage() {
   const { currentProduct } = useProduct();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [sortBy, setSortBy] = useState('Sort by Revenue');
@@ -28,6 +29,7 @@ export default function RolesPage() {
   const [loadingDiscordRoles, setLoadingDiscordRoles] = useState(false);
   const [loadingStripePrices, setLoadingStripePrices] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
 
   const loadRoles = async () => {
     if (!currentProduct?.id) return;
@@ -130,10 +132,44 @@ export default function RolesPage() {
       setSelectedDiscordRole('');
       setSelectedStripePrice('');
       await loadRoles();
+
+      toast({
+        title: 'Role created',
+        description: 'The monetized role has been created successfully.',
+      });
     } catch (error) {
       console.error('Failed to create role:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create role. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    if (!currentProduct?.id) return;
+
+    try {
+      setDeletingRoleId(roleId);
+      await api.deleteRole(currentProduct.id, roleId);
+      await loadRoles();
+
+      toast({
+        title: 'Role deleted',
+        description: 'The monetized role has been deleted successfully.',
+      });
+    } catch (error) {
+      console.error('Failed to delete role:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete role. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingRoleId(null);
     }
   };
 
@@ -249,7 +285,6 @@ export default function RolesPage() {
                   <th className="py-4 px-6 font-medium">Price</th>
                   <th className="py-4 px-6 font-medium">Active Members</th>
                   <th className="py-4 px-6 font-medium">Revenue</th>
-                  <th className="py-4 px-6 font-medium">Status</th>
                   <th className="py-4 px-6 font-medium">Created</th>
                   <th className="py-4 px-6 font-medium">Actions</th>
                 </tr>
@@ -285,45 +320,24 @@ export default function RolesPage() {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        {role.isActive ? (
-                          <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-slate-700 text-slate-300">Disabled</Badge>
-                        )}
-                      </td>
-                      <td className="py-4 px-6">
                         <span className="text-sm text-muted-foreground">
                           {role.createdAt ? formatDate(role.createdAt) : 'N/A'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          >
-                            {role.isActive ? (
-                              <Pause className="h-4 w-4" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteRole(role.id)}
+                          disabled={deletingRoleId === role.id}
+                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30 disabled:opacity-50"
+                        >
+                          {deletingRoleId === role.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
                             <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                          )}
+                        </Button>
                       </td>
                     </tr>
                   );
