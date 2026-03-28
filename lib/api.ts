@@ -135,8 +135,30 @@ class ApiClient {
     return this.post<{ checkout_url: string }>(`/creator/products/${productId}/roles/${roleId}/checkout-session`);
   }
 
-  async getMembers(productId: string): Promise<Member[]> {
-    return this.get<Member[]>(`/creator/products/${productId}/members`);
+  async getMembers(
+    productId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      role_id?: string;
+      search?: string;
+    }
+  ): Promise<{ members: Member[]; total: number; page: number; limit: number }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.role_id) queryParams.append('role_id', params.role_id);
+    if (params?.search) queryParams.append('search', params.search);
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/creator/products/${productId}/members?${queryString}`
+      : `/creator/products/${productId}/members`;
+
+    return this.get<{ members: Member[]; total: number; page: number; limit: number }>(endpoint);
   }
 
   async getProductOverview(productId: string): Promise<{
