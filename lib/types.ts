@@ -39,16 +39,16 @@ export interface Role {
 
 export interface Member {
   id: string;
-  productId: string;
-  discordUserId: string;
-  discordUsername: string;
-  discordAvatar?: string;
-  roleId: string;
-  roleName: string;
-  subscriptionId: string;
+  product_id?: string;
+  discord_user_id: string;
+  discord_username?: string;
+  discord_avatar?: string;
+  role_id: string;
+  role_name?: string;
+  subscription_id?: string;
   status: 'active' | 'canceled' | 'past_due' | 'trialing';
-  currentPeriodEnd: string;
-  createdAt: string;
+  current_period_end: string;
+  created_at: string;
 }
 
 export interface BillingPlan {

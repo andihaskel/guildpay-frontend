@@ -236,25 +236,25 @@ export default function MembersPage() {
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          {member.discordAvatar && (
+                          {member.discord_avatar && member.discord_user_id && (
                             <AvatarImage
-                              src={`https://cdn.discordapp.com/avatars/${member.discordUserId}/${member.discordAvatar}.png`}
-                              alt={member.discordUsername}
+                              src={`https://cdn.discordapp.com/avatars/${member.discord_user_id}/${member.discord_avatar}.png`}
+                              alt={member.discord_username || 'User'}
                             />
                           )}
                           <AvatarFallback>
-                            {member.discordUsername[0]?.toUpperCase() || 'U'}
+                            {member.discord_username?.[0]?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold">{member.discordUsername}</div>
-                          <div className="text-xs text-muted-foreground">{member.discordUserId}</div>
+                          <div className="font-semibold">{member.discord_username || 'Unknown User'}</div>
+                          <div className="text-xs text-muted-foreground">{member.discord_user_id || 'No Discord ID'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">{member.roleName}</span>
+                        <span className="text-sm">{member.role_name || 'Unknown Role'}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -263,13 +263,13 @@ export default function MembersPage() {
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
                         <span className="text-sm">
-                          {formatDate(member.currentPeriodEnd)}
+                          {formatDate(member.current_period_end)}
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-sm text-muted-foreground">
-                        {formatDate(member.createdAt)}
+                        {formatDate(member.created_at)}
                       </span>
                     </td>
                   </tr>

@@ -158,7 +158,14 @@ class ApiClient {
       ? `/creator/products/${productId}/members?${queryString}`
       : `/creator/products/${productId}/members`;
 
-    return this.get<{ members: Member[]; total: number; page: number; limit: number }>(endpoint);
+    const response = await this.get<{ data: Member[]; pagination: { page: number; limit: number; total: number } }>(endpoint);
+
+    return {
+      members: response.data,
+      total: response.pagination.total,
+      page: response.pagination.page,
+      limit: response.pagination.limit
+    };
   }
 
   async getProductOverview(productId: string): Promise<{
