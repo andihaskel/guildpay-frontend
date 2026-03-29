@@ -121,3 +121,26 @@ export interface TopRoleByRevenue {
   members_count: number;
   revenue: number;
 }
+
+export interface AccessPage {
+  id: string;
+  productId: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  price: number;
+  interval: 'month' | 'year';
+  url: string;
+  isActive: boolean;
+  activeMembers: number;
+  trialingMembers: number;
+  cancelingMembers: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingStatus {
+  discordConnected: boolean;
+  firstPageCreated: boolean;
+  linkShared: boolean;
+}
