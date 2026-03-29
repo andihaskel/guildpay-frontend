@@ -8,14 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
-import { AccessPageCard } from '@/components/dashboard/AccessPageCard';
+import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
 import { AccessPage, OnboardingStatus } from '@/lib/types';
-
-const gradients = [
-  'bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700',
-  'bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600',
-  'bg-gradient-to-br from-orange-500 via-orange-600 to-red-600',
-];
 
 export default function HomePage() {
   const router = useRouter();
@@ -23,7 +17,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [pages, setPages] = useState<AccessPage[]>([]);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus>({
-    discordConnected: false,
+    discordConnected: true,
     firstPageCreated: false,
     linkShared: false,
   });
@@ -92,7 +86,7 @@ export default function HomePage() {
       setPages(mockPages);
 
       setOnboardingStatus({
-        discordConnected: currentProduct.bot_installed || false,
+        discordConnected: true,
         firstPageCreated: false,
         linkShared: false,
       });
@@ -116,20 +110,14 @@ export default function HomePage() {
     onboardingStatus.firstPageCreated &&
     onboardingStatus.linkShared;
 
+  const totalMembers = pages.reduce((sum, page) => sum + page.activeMembers, 0);
+  const totalRevenue = pages.reduce((sum, page) => sum + (page.price * page.activeMembers) / 100, 0);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          {currentProduct?.name || 'Gaming Community'}
-        </h1>
-        <Button
-          className="bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={() => router.push('/dashboard/pages/create')}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create page
-        </Button>
-      </div>
+      <h1 className="text-2xl font-semibold">
+        {currentProduct?.name || 'Gaming Community'}
+      </h1>
 
       {!onboardingDismissed && !isOnboardingComplete && (
         <OnboardingChecklist
@@ -139,7 +127,16 @@ export default function HomePage() {
       )}
 
       <div>
-        <h2 className="text-xl font-semibold mb-6">Your access pages</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Your access pages</h2>
+          <Button
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => router.push('/dashboard/pages/create')}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create page
+          </Button>
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -158,15 +155,23 @@ export default function HomePage() {
             />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pages.map((page, index) => (
-              <AccessPageCard
-                key={page.id}
-                page={page}
-                gradientClass={gradients[index % gradients.length]}
-              />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center gap-6 mb-4 text-sm">
+              <span>
+                <span className="font-semibold text-lg">{totalMembers}</span> <span className="text-slate-400">paying members</span>
+              </span>
+              <span className="text-slate-600">•</span>
+              <span>
+                <span className="font-semibold text-lg">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> <span className="text-slate-400">/mo</span>
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {pages.map((page) => (
+                <AccessPageListItem key={page.id} page={page} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
