@@ -50,33 +50,35 @@ export default function PagesPage() {
             Manage your community access pages
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center border border-slate-700 rounded-lg p-1">
+        {!isLoading && pages.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border border-slate-700 rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 ${viewMode === 'grid' ? 'bg-slate-800' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 ${viewMode === 'list' ? 'bg-slate-800' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
             <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 w-8 p-0 ${viewMode === 'grid' ? 'bg-slate-800' : ''}`}
-              onClick={() => setViewMode('grid')}
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => router.push('/dashboard/pages/edit')}
             >
-              <Grid3x3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 w-8 p-0 ${viewMode === 'list' ? 'bg-slate-800' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" />
+              Create page
             </Button>
           </div>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => router.push('/dashboard/pages/edit')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create page
-          </Button>
-        </div>
+        )}
       </div>
 
       {isLoading ? (

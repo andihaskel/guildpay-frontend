@@ -162,11 +162,11 @@ export interface CreatePageRequest {
   offer_name: string;
   hero_image_url?: string;
   description: any;
-  features: any[];
+  features: any;
   media_gallery_enabled: boolean;
   discord_role_id: string;
   discord_welcome_channel_id?: string;
-  accepts_signups: boolean;
+  accepts_signups?: boolean;
   monthly_amount_minor: number;
   yearly_amount_minor?: number;
   currency: string;

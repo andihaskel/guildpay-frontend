@@ -87,17 +87,19 @@ export default function HomePage() {
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Your access pages</h2>
-          <Button
-            variant="outline"
-            className="border-slate-700 hover:bg-slate-800"
-            onClick={() => router.push('/dashboard/pages/edit')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create page
-          </Button>
-        </div>
+        {!isLoading && pages.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Your access pages</h2>
+            <Button
+              variant="outline"
+              className="border-slate-700 hover:bg-slate-800"
+              onClick={() => router.push('/dashboard/pages/edit')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create page
+            </Button>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
