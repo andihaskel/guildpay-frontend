@@ -132,7 +132,7 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="border-slate-700 hover:bg-slate-800"
-            onClick={() => router.push('/dashboard/pages/create')}
+            onClick={() => router.push('/dashboard/pages/edit')}
           >
             <Plus className="h-4 w-4 mr-2" />
             Create page
@@ -151,7 +151,7 @@ export default function HomePage() {
               description="Set up a page where your community members can purchase access to exclusive content and perks"
               action={{
                 label: '+ Create page',
-                onClick: () => router.push('/dashboard/pages/create'),
+                onClick: () => router.push('/dashboard/pages/edit'),
               }}
             />
           </Card>

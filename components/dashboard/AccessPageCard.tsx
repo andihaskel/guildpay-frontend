@@ -81,14 +81,8 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
             className="border-slate-700 hover:bg-slate-800"
             onClick={() => router.push(`/dashboard/pages/edit?id=${page.id}`)}
           >
+            <Edit className="h-4 w-4 mr-1" />
             Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-slate-700 hover:bg-slate-800"
-          >
-            <Code className="h-4 w-4" />
           </Button>
         </div>
       </div>
