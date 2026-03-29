@@ -106,9 +106,13 @@ export default function PagesPage() {
           />
         </Card>
       ) : (
-        <div className="space-y-4">
-          {pages.map((page) => (
-            <AccessPageCard key={page.id} page={page} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {pages.map((page, index) => (
+            <AccessPageCard
+              key={page.id}
+              page={page}
+              gradientClass={['bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700', 'bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600', 'bg-gradient-to-br from-orange-500 via-orange-600 to-red-600'][index % 3]}
+            />
           ))}
         </div>
       )}

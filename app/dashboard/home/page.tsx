@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Users, DollarSign, Loader as Loader2 } from 'lucide-react';
+import { Plus, FileText, Loader as Loader2 } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,12 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
 import { AccessPageCard } from '@/components/dashboard/AccessPageCard';
 import { AccessPage, OnboardingStatus } from '@/lib/types';
+
+const gradients = [
+  'bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700',
+  'bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600',
+  'bg-gradient-to-br from-orange-500 via-orange-600 to-red-600',
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -22,10 +28,6 @@ export default function HomePage() {
     linkShared: false,
   });
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const [metrics, setMetrics] = useState({
-    totalMembers: 0,
-    monthlyRevenue: 0,
-  });
 
   useEffect(() => {
     if (currentProduct?.id) {
@@ -43,46 +45,51 @@ export default function HomePage() {
         {
           id: '1',
           productId: currentProduct.id,
-          name: 'VIP Access',
+          name: 'VIP Member',
           description: 'Premium community access with exclusive perks',
-          coverImage: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400',
-          price: 1000,
+          price: 999,
           interval: 'month',
-          url: `https://guildpay.io/${currentProduct.name.toLowerCase().replace(/\s+/g, '-')}/vip`,
+          url: `guildpay.com/vip-member`,
           isActive: true,
-          activeMembers: 24,
-          trialingMembers: 3,
-          cancelingMembers: 1,
+          activeMembers: 247,
+          trialingMembers: 12,
+          cancelingMembers: 3,
           createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
           updatedAt: new Date().toISOString(),
         },
         {
           id: '2',
           productId: currentProduct.id,
-          name: 'Early Access',
+          name: 'Pro Creator',
           description: 'Get early access to new features and content',
-          coverImage: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400',
-          price: 500,
+          price: 1999,
           interval: 'month',
-          url: `https://guildpay.io/${currentProduct.name.toLowerCase().replace(/\s+/g, '-')}/early-access`,
+          url: `guildpay.com/pro-creator`,
           isActive: true,
-          activeMembers: 42,
-          trialingMembers: 5,
+          activeMembers: 156,
+          trialingMembers: 8,
           cancelingMembers: 2,
           createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          productId: currentProduct.id,
+          name: 'Premium Access',
+          description: 'Full access to all premium features',
+          price: 499,
+          interval: 'month',
+          url: `guildpay.com/premium-access`,
+          isActive: true,
+          activeMembers: 89,
+          trialingMembers: 12,
+          cancelingMembers: 1,
+          createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
           updatedAt: new Date().toISOString(),
         },
       ];
 
       setPages(mockPages);
-
-      const totalMembers = mockPages.reduce((sum, page) => sum + page.activeMembers, 0);
-      const totalRevenue = mockPages.reduce((sum, page) => sum + (page.price * page.activeMembers), 0);
-
-      setMetrics({
-        totalMembers,
-        monthlyRevenue: totalRevenue,
-      });
 
       setOnboardingStatus({
         discordConnected: currentProduct.bot_installed,
@@ -112,16 +119,11 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold mb-1">
-            Hi {currentProduct?.name || 'there'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your access pages and grow your community
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold">
+          {currentProduct?.name || 'Gaming Community'}
+        </h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
           onClick={() => router.push('/dashboard/pages/create')}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -137,9 +139,7 @@ export default function HomePage() {
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">Your access pages</h2>
-        </div>
+        <h2 className="text-xl font-semibold mb-6">Your access pages</h2>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -148,7 +148,7 @@ export default function HomePage() {
         ) : pages.length === 0 ? (
           <Card className="p-12 bg-slate-900/40 border-slate-800/50">
             <EmptyState
-              icon={Users}
+              icon={FileText}
               title="Create your first access page"
               description="Set up a page where your community members can purchase access to exclusive content and perks"
               action={{
@@ -158,41 +158,17 @@ export default function HomePage() {
             />
           </Card>
         ) : (
-          <div className="space-y-4">
-            {pages.map((page) => (
-              <AccessPageCard key={page.id} page={page} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pages.map((page, index) => (
+              <AccessPageCard
+                key={page.id}
+                page={page}
+                gradientClass={gradients[index % gradients.length]}
+              />
             ))}
           </div>
         )}
       </div>
-
-      {pages.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
-            <div className="flex items-start justify-between mb-6">
-              <p className="text-sm text-slate-400 uppercase tracking-wide">Total Paying Members</p>
-              <div className="p-2.5 rounded-lg bg-violet-600/20">
-                <Users className="h-5 w-5 text-violet-400" />
-              </div>
-            </div>
-            <p className="text-5xl font-semibold mb-3">
-              {metrics.totalMembers.toLocaleString()}
-            </p>
-          </Card>
-
-          <Card className="p-8 bg-slate-900/40 border-slate-800/50">
-            <div className="flex items-start justify-between mb-6">
-              <p className="text-sm text-slate-400 uppercase tracking-wide">Monthly Revenue</p>
-              <div className="p-2.5 rounded-lg bg-green-600/20">
-                <DollarSign className="h-5 w-5 text-green-400" />
-              </div>
-            </div>
-            <p className="text-5xl font-semibold mb-3">
-              ${(metrics.monthlyRevenue / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
