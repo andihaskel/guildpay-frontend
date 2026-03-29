@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Share2, CreditCard as Edit, Code, Copy, Shield, Crown, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ interface AccessPageCardProps {
 }
 
 export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -77,6 +79,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
             variant="outline"
             size="sm"
             className="border-slate-700 hover:bg-slate-800"
+            onClick={() => router.push(`/dashboard/pages/edit?id=${page.id}`)}
           >
             Edit
           </Button>
