@@ -60,14 +60,6 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Get started</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-slate-400 hover:text-white"
-          onClick={onDismiss}
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
