@@ -38,7 +38,7 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
       completed: status.firstPageCreated,
       isPrimary: status.discordConnected && !status.firstPageCreated,
       action: status.firstPageCreated ? null : {
-        label: 'Create page',
+        label: 'Link Stripe',
         onClick: () => window.location.href = '/dashboard/pages/create',
       },
     },
@@ -50,7 +50,7 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
       completed: status.linkShared,
       isPrimary: status.discordConnected && status.firstPageCreated && !status.linkShared,
       action: status.linkShared ? null : {
-        label: 'Share link',
+        label: 'Start now',
         onClick: () => window.location.href = '/dashboard/pages',
       },
     },
