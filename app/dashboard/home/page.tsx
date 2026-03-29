@@ -92,13 +92,13 @@ export default function HomePage() {
       setPages(mockPages);
 
       setOnboardingStatus({
-        discordConnected: currentProduct.bot_installed,
-        firstPageCreated: mockPages.length > 0,
-        linkShared: mockPages.some(p => p.activeMembers > 0),
+        discordConnected: currentProduct.bot_installed || false,
+        firstPageCreated: false,
+        linkShared: false,
       });
 
       const dismissed = localStorage.getItem('onboarding_dismissed');
-      setOnboardingDismissed(dismissed === 'true');
+      setOnboardingDismissed(false);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Chrome as HomeIcon, Users, ChartBar as BarChart3, Settings, ChevronDown, Plus } from 'lucide-react';
+import { Chrome as HomeIcon, Users, ChartBar as BarChart3, CreditCard, Settings, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Home', href: '/dashboard/home', icon: HomeIcon },
   { name: 'Members', href: '/dashboard/members', icon: Users },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
