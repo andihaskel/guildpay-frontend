@@ -107,9 +107,13 @@ export interface StripePrice {
 }
 
 export interface ProductOverview {
+  onboarding: {
+    has_published_page: boolean;
+    stripe_connected: boolean;
+    has_guildpay_subscription: boolean;
+  };
   paying_members: number;
   monthly_revenue: number;
-  top_roles_by_revenue: TopRoleByRevenue[];
 }
 
 export interface TopRoleByRevenue {
@@ -122,21 +126,52 @@ export interface TopRoleByRevenue {
   revenue: number;
 }
 
+export interface PageMemberCounts {
+  active: number;
+  trialing: number;
+  canceling: number;
+}
+
 export interface AccessPage {
   id: string;
-  productId: string;
-  name: string;
-  description?: string;
-  coverImage?: string;
-  price: number;
-  interval: 'month' | 'year';
-  url: string;
-  isActive: boolean;
-  activeMembers: number;
-  trialingMembers: number;
-  cancelingMembers: number;
-  createdAt: string;
-  updatedAt: string;
+  slug: string;
+  offer_name: string;
+  hero_image_url?: string;
+  description: any;
+  features: any;
+  media_gallery_enabled: boolean;
+  discord_role_id: string;
+  discord_welcome_channel_id?: string;
+  published: boolean;
+  accepts_signups: boolean;
+  stripe_product_id?: string;
+  monthly_amount_minor: number;
+  yearly_amount_minor?: number;
+  currency: string;
+  trial_days?: number;
+  settings: any;
+  created_at: string;
+  updated_at: string;
+  member_counts: PageMemberCounts;
+  public_path?: string;
+  active?: boolean;
+}
+
+export interface CreatePageRequest {
+  slug: string;
+  offer_name: string;
+  hero_image_url?: string;
+  description: any;
+  features: any[];
+  media_gallery_enabled: boolean;
+  discord_role_id: string;
+  discord_welcome_channel_id?: string;
+  accepts_signups: boolean;
+  monthly_amount_minor: number;
+  yearly_amount_minor?: number;
+  currency: string;
+  trial_days?: number;
+  settings?: any;
 }
 
 export interface OnboardingStatus {

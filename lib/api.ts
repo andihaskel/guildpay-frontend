@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, StripePrice, ProductOverview } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, StripePrice, ProductOverview, AccessPage, CreatePageRequest } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -202,6 +202,29 @@ class ApiClient {
 
   async getStripePrices(): Promise<StripePrice[]> {
     return this.get<StripePrice[]>('/billing/prices');
+  }
+
+  async getPages(productId: string, mode?: 'popular'): Promise<AccessPage[]> {
+    const endpoint = mode
+      ? `/creator/products/${productId}/pages?mode=${mode}`
+      : `/creator/products/${productId}/pages`;
+    return this.get<AccessPage[]>(endpoint);
+  }
+
+  async getPage(productId: string, pageId: string): Promise<AccessPage> {
+    return this.get<AccessPage>(`/creator/products/${productId}/pages/${pageId}`);
+  }
+
+  async createPage(productId: string, data: CreatePageRequest): Promise<AccessPage> {
+    return this.post<AccessPage>(`/creator/products/${productId}/pages`, data);
+  }
+
+  async updatePage(productId: string, pageId: string, data: Partial<CreatePageRequest>): Promise<AccessPage> {
+    return this.put<AccessPage>(`/creator/products/${productId}/pages/${pageId}`, data);
+  }
+
+  async deletePage(productId: string, pageId: string): Promise<void> {
+    return this.delete<void>(`/creator/products/${productId}/pages/${pageId}`);
   }
 }
 

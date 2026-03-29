@@ -22,8 +22,10 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
   const [copied, setCopied] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
+  const pageUrl = page.public_path || `https://guildpay.io/p/${page.slug}`;
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(page.url);
+    await navigator.clipboard.writeText(pageUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -36,45 +38,43 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
     setShareDialogOpen(true);
   };
 
-  const coverImages: Record<string, string> = {
-    '1': 'https://images.pexels.com/photos/3945683/pexels-photo-3945683.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',
-    '2': 'https://images.pexels.com/photos/7862602/pexels-photo-7862602.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',
-    '3': 'https://images.pexels.com/photos/7862600/pexels-photo-7862600.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop',
-  };
-
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors">
       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-700">
-        <img
-          src={coverImages[page.id] || coverImages['1']}
-          alt={page.name}
-          className="w-full h-full object-cover"
-        />
+        {page.hero_image_url ? (
+          <img
+            src={page.hero_image_url}
+            alt={page.offer_name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800" />
+        )}
       </div>
 
       <div className="flex-1 min-w-0 w-full sm:w-auto">
-        <h3 className="font-semibold text-lg mb-1">{page.name}</h3>
+        <h3 className="font-semibold text-lg mb-1">{page.offer_name}</h3>
         <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
           <div className="px-2 py-0.5 rounded bg-green-950/50 border border-green-900/50">
-            <span className="text-green-400">Active: {page.activeMembers}</span>
+            <span className="text-green-400">Active: {page.member_counts.active}</span>
           </div>
           <div className="px-2 py-0.5 rounded bg-blue-950/50 border border-blue-900/50">
-            <span className="text-blue-400">Trialing: {page.trialingMembers}</span>
+            <span className="text-blue-400">Trialing: {page.member_counts.trialing}</span>
           </div>
           <div className="px-2 py-0.5 rounded bg-orange-950/50 border border-orange-900/50">
-            <span className="text-orange-400">Canceling: {page.cancelingMembers}</span>
+            <span className="text-orange-400">Canceling: {page.member_counts.canceling}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <Copy className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate">{page.url}</span>
+          <span className="truncate">{pageUrl}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
         <div className="text-left sm:text-right sm:mr-4 flex-1 sm:flex-initial">
-          <div className="text-2xl font-bold">${(page.price / 100).toFixed(2)}</div>
-          <div className="text-xs text-slate-400">/{page.interval}</div>
+          <div className="text-2xl font-bold">${(page.monthly_amount_minor / 100).toFixed(2)}</div>
+          <div className="text-xs text-slate-400">/month</div>
         </div>
 
         <div className="flex items-center gap-2 ml-auto sm:ml-0">
@@ -103,12 +103,12 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
           <DialogHeader>
             <DialogTitle>Share access page</DialogTitle>
             <DialogDescription>
-              Share this link with your community to allow them to purchase access to {page.name}.
+              Share this link with your community to allow them to purchase access to {page.offer_name}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="flex items-center gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              <code className="text-sm text-slate-300 flex-1 truncate">{page.url}</code>
+              <code className="text-sm text-slate-300 flex-1 truncate">{pageUrl}</code>
               <Button
                 variant="ghost"
                 size="sm"

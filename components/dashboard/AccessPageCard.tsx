@@ -24,8 +24,10 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
   const [copied, setCopied] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
+  const pageUrl = page.public_path || `https://guildpay.io/p/${page.slug}`;
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(page.url);
+    await navigator.clipboard.writeText(pageUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -35,7 +37,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
   };
 
   const getIcon = () => {
-    const name = page.name.toLowerCase();
+    const name = page.offer_name.toLowerCase();
     if (name.includes('vip') || name.includes('premium')) return Shield;
     if (name.includes('pro') || name.includes('creator')) return Crown;
     return Zap;
@@ -46,36 +48,40 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
   return (
     <Card className="overflow-hidden bg-slate-900/60 border-slate-800/50 hover:border-slate-700/50 transition-all hover:shadow-lg">
       <div className={`h-40 ${gradientClass} relative flex items-center justify-center`}>
-        <Icon className="h-16 w-16 text-white/30" />
+        {page.hero_image_url ? (
+          <img src={page.hero_image_url} alt={page.offer_name} className="w-full h-full object-cover" />
+        ) : (
+          <Icon className="h-16 w-16 text-white/30" />
+        )}
       </div>
 
       <div className="p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-semibold mb-2">{page.name}</h3>
+          <h3 className="text-xl font-semibold mb-2">{page.offer_name}</h3>
           <p className="text-3xl font-bold mb-3">
-            ${(page.price / 100).toFixed(2)}
-            <span className="text-base font-normal text-slate-400">/{page.interval}</span>
+            ${(page.monthly_amount_minor / 100).toFixed(2)}
+            <span className="text-base font-normal text-slate-400">/month</span>
           </p>
         </div>
 
         <div className="flex items-center gap-4 mb-4 text-sm">
           <div>
             <span className="text-slate-400">Active: </span>
-            <span className="font-semibold">{page.activeMembers}</span>
+            <span className="font-semibold">{page.member_counts.active}</span>
           </div>
           <div>
             <span className="text-slate-400">Trialing: </span>
-            <span className="font-semibold">{page.trialingMembers}</span>
+            <span className="font-semibold">{page.member_counts.trialing}</span>
           </div>
           <div>
             <span className="text-slate-400">Canceling: </span>
-            <span className="font-semibold">{page.cancelingMembers}</span>
+            <span className="font-semibold">{page.member_counts.canceling}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50">
           <Copy className="h-4 w-4 text-slate-400 flex-shrink-0" />
-          <code className="text-xs text-slate-300 flex-1 truncate">{page.url}</code>
+          <code className="text-xs text-slate-300 flex-1 truncate">{pageUrl}</code>
         </div>
 
         <div className="flex items-center gap-2">
@@ -104,12 +110,12 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
           <DialogHeader>
             <DialogTitle>Share access page</DialogTitle>
             <DialogDescription>
-              Share this link with your community to allow them to purchase access to {page.name}.
+              Share this link with your community to allow them to purchase access to {page.offer_name}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="flex items-center gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              <code className="text-sm text-slate-300 flex-1 truncate">{page.url}</code>
+              <code className="text-sm text-slate-300 flex-1 truncate">{pageUrl}</code>
               <Button
                 variant="ghost"
                 size="sm"

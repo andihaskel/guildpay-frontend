@@ -10,12 +10,15 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
 import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
 import { AccessPage, OnboardingStatus } from '@/lib/types';
+import { api } from '@/lib/api';
 
 export default function HomePage() {
   const router = useRouter();
   const { currentProduct } = useProduct();
   const [isLoading, setIsLoading] = useState(true);
   const [pages, setPages] = useState<AccessPage[]>([]);
+  const [payingMembers, setPayingMembers] = useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus>({
     discordConnected: true,
     firstPageCreated: false,
@@ -35,64 +38,23 @@ export default function HomePage() {
     try {
       setIsLoading(true);
 
-      const mockPages: AccessPage[] = [
-        {
-          id: '1',
-          productId: currentProduct.id,
-          name: 'VIP Member',
-          description: 'Premium community access with exclusive perks',
-          price: 999,
-          interval: 'month',
-          url: `guildpay.com/vip-member`,
-          isActive: true,
-          activeMembers: 247,
-          trialingMembers: 12,
-          cancelingMembers: 3,
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          productId: currentProduct.id,
-          name: 'Pro Creator',
-          description: 'Get early access to new features and content',
-          price: 1999,
-          interval: 'month',
-          url: `guildpay.com/pro-creator`,
-          isActive: true,
-          activeMembers: 156,
-          trialingMembers: 8,
-          cancelingMembers: 2,
-          createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          productId: currentProduct.id,
-          name: 'Premium Access',
-          description: 'Full access to all premium features',
-          price: 499,
-          interval: 'month',
-          url: `guildpay.com/premium-access`,
-          isActive: true,
-          activeMembers: 89,
-          trialingMembers: 12,
-          cancelingMembers: 1,
-          createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
+      const [overview, pagesData] = await Promise.all([
+        api.getProductOverview(currentProduct.id),
+        api.getPages(currentProduct.id, 'popular'),
+      ]);
 
-      setPages(mockPages);
+      setPages(pagesData);
+      setPayingMembers(overview.paying_members);
+      setMonthlyRevenue(overview.monthly_revenue);
 
       setOnboardingStatus({
-        discordConnected: true,
-        firstPageCreated: false,
-        linkShared: false,
+        discordConnected: overview.onboarding.stripe_connected,
+        firstPageCreated: overview.onboarding.has_published_page,
+        linkShared: overview.onboarding.has_guildpay_subscription,
       });
 
-      const dismissed = localStorage.getItem('onboarding_dismissed');
-      setOnboardingDismissed(false);
+      const dismissed = localStorage.getItem(`onboarding_dismissed_${currentProduct.id}`);
+      setOnboardingDismissed(dismissed === 'true');
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -101,17 +63,15 @@ export default function HomePage() {
   };
 
   const handleDismissOnboarding = () => {
+    if (!currentProduct?.id) return;
     setOnboardingDismissed(true);
-    localStorage.setItem('onboarding_dismissed', 'true');
+    localStorage.setItem(`onboarding_dismissed_${currentProduct.id}`, 'true');
   };
 
   const isOnboardingComplete =
     onboardingStatus.discordConnected &&
     onboardingStatus.firstPageCreated &&
     onboardingStatus.linkShared;
-
-  const totalMembers = pages.reduce((sum, page) => sum + page.activeMembers, 0);
-  const totalRevenue = pages.reduce((sum, page) => sum + (page.price * page.activeMembers) / 100, 0);
 
   return (
     <div className="space-y-6">
@@ -159,11 +119,11 @@ export default function HomePage() {
           <>
             <div className="flex items-center gap-6 mb-4 text-sm">
               <span>
-                <span className="font-semibold text-lg">{totalMembers}</span> <span className="text-slate-400">paying members</span>
+                <span className="font-semibold text-lg">{payingMembers}</span> <span className="text-slate-400">paying members</span>
               </span>
               <span className="text-slate-600">•</span>
               <span>
-                <span className="font-semibold text-lg">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> <span className="text-slate-400">/mo</span>
+                <span className="font-semibold text-lg">${(monthlyRevenue / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> <span className="text-slate-400">/mo</span>
               </span>
             </div>
 

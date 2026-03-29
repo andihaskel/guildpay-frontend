@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { AccessPageCard } from '@/components/dashboard/AccessPageCard';
 import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
 import { AccessPage } from '@/lib/types';
+import { api } from '@/lib/api';
 
 type ViewMode = 'grid' | 'list';
 
@@ -31,43 +32,8 @@ export default function PagesPage() {
 
     try {
       setIsLoading(true);
-
-      const mockPages: AccessPage[] = [
-        {
-          id: '1',
-          productId: currentProduct.id,
-          name: 'VIP Access',
-          description: 'Premium community access with exclusive perks',
-          coverImage: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400',
-          price: 1000,
-          interval: 'month',
-          url: `https://guildpay.io/${currentProduct.name.toLowerCase().replace(/\s+/g, '-')}/vip`,
-          isActive: true,
-          activeMembers: 24,
-          trialingMembers: 3,
-          cancelingMembers: 1,
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          productId: currentProduct.id,
-          name: 'Early Access',
-          description: 'Get early access to new features and content',
-          coverImage: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400',
-          price: 500,
-          interval: 'month',
-          url: `https://guildpay.io/${currentProduct.name.toLowerCase().replace(/\s+/g, '-')}/early-access`,
-          isActive: true,
-          activeMembers: 42,
-          trialingMembers: 5,
-          cancelingMembers: 2,
-          createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-
-      setPages(mockPages);
+      const pagesData = await api.getPages(currentProduct.id);
+      setPages(pagesData);
     } catch (error) {
       console.error('Failed to load pages:', error);
     } finally {
