@@ -24,6 +24,7 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
       title: 'Connect Discord',
       description: 'Link your Discord server to start monetizing',
       completed: status.discordConnected,
+      isPrimary: !status.discordConnected,
       action: status.discordConnected ? null : {
         label: 'Connect',
         onClick: () => window.location.href = '/install-bot',
@@ -35,6 +36,7 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
       title: 'Create access page',
       description: 'Set up your first paid membership tier',
       completed: status.firstPageCreated,
+      isPrimary: status.discordConnected && !status.firstPageCreated,
       action: status.firstPageCreated ? null : {
         label: 'Create page',
         onClick: () => window.location.href = '/dashboard/pages/create',
@@ -46,6 +48,7 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
       title: 'Share your link',
       description: 'Start earning by sharing with your community',
       completed: status.linkShared,
+      isPrimary: status.discordConnected && status.firstPageCreated && !status.linkShared,
       action: status.linkShared ? null : {
         label: 'Share link',
         onClick: () => window.location.href = '/dashboard/pages',
@@ -88,8 +91,12 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
               )}
 
               <div className="mb-4">
-                <div className="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center mb-4">
-                  <Icon className="h-6 w-6 text-purple-400" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
+                  step.isPrimary ? 'bg-purple-600/20' : 'bg-slate-700/40'
+                }`}>
+                  <Icon className={`h-6 w-6 ${
+                    step.isPrimary ? 'text-purple-400' : 'text-slate-400'
+                  }`} />
                 </div>
                 <h3 className="font-semibold mb-2">{step.title}</h3>
                 <p className="text-sm text-slate-400">{step.description}</p>
@@ -97,7 +104,11 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
 
               {step.action && (
                 <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  className={`w-full ${
+                    step.isPrimary
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                  }`}
                   onClick={step.action.onClick}
                 >
                   {step.action.label}

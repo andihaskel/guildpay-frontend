@@ -130,7 +130,8 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Your access pages</h2>
           <Button
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            variant="outline"
+            className="border-slate-700 hover:bg-slate-800"
             onClick={() => router.push('/dashboard/pages/create')}
           >
             <Plus className="h-4 w-4 mr-2" />
