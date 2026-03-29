@@ -21,8 +21,8 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
     {
       id: 'discord',
       icon: FileText,
-      title: 'Connect Discord',
-      description: 'Link your Discord server to start monetizing',
+      title: 'Publish your first page',
+      description: 'Create a signup page to allow your users to join your community',
       completed: status.discordConnected,
       isPrimary: !status.discordConnected,
       action: status.discordConnected ? null : {
@@ -33,8 +33,8 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
     {
       id: 'page',
       icon: FileText,
-      title: 'Create access page',
-      description: 'Set up your first paid membership tier',
+      title: 'Link your stripe account',
+      description: 'Start accepting payments by connecting your Stripe account',
       completed: status.firstPageCreated,
       isPrimary: status.discordConnected && !status.firstPageCreated,
       action: status.firstPageCreated ? null : {
@@ -45,8 +45,8 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
     {
       id: 'share',
       icon: CreditCard,
-      title: 'Share your link',
-      description: 'Start earning by sharing with your community',
+      title: 'Start your 14 day free trial',
+      description: 'Enjoy all the benefits of our premium tier free for 14 days',
       completed: status.linkShared,
       isPrimary: status.discordConnected && status.firstPageCreated && !status.linkShared,
       action: status.linkShared ? null : {
