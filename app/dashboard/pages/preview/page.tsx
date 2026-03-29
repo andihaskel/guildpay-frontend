@@ -1,0 +1,305 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Check, Crown, MessageSquare, Zap, Lock, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+export default function PreviewPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pageId = searchParams.get('id');
+
+  const [previewData] = useState({
+    offerImage: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=800',
+    offerName: 'Artistry Collective',
+    businessName: 'testandi',
+    description: `# Welcome to Testandi! 👋
+
+Dive into a vibrant community dedicated to the world of art! Testandi is all about connection, inspiration, and creativity. Here's what makes us special:
+
+• **Passionate Artists Unite**: Furthers your artistic journey alongside like-minded individuals who share your love for creativity.
+• **Diverse Art Forms**: Explore various genres including painting, digital art, sculpture, and beyond!
+• **Showcase Your Work**: A supportive environment for sharing and receiving feedback on your creations.
+• **Workshops and Challenges**: Participate in collaborative projects, themed challenges, and skill-building workshops to enhance your craft.
+• **Inspiring Discussions**: Engage in stimulating conversations about techniques, inspirations, and the art world at large.
+• **Friendship and Collaboration**: Build lasting connections with fellow artists and collaborate on exciting new projects.
+
+Join us in a space where creativity flourishes and every artist feels at home! 🎨✨`,
+    price: 30.00,
+    yearlyPrice: 300.00,
+    currency: 'USD',
+    interval: 'Monthly',
+    businessFeatures: [
+      { icon: '💬', title: 'Access to Group Chats:', description: 'Join a private space where you can participate in group conversations with other members.' },
+      { icon: '⚡', title: 'Real-Time Updates:', description: 'Stay connected with instant messages and updates from the community.' },
+      { icon: '🔒', title: 'Community-Only Content:', description: 'Get access to conversations, resources, and discussions available exclusively to members.' },
+    ],
+  });
+
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+
+  const renderDescription = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      if (line.startsWith('# ')) {
+        return <h1 key={i} className="text-2xl font-bold mb-4">{line.substring(2)}</h1>;
+      }
+      if (line.startsWith('## ')) {
+        return <h2 key={i} className="text-xl font-semibold mb-3">{line.substring(3)}</h2>;
+      }
+      if (line.startsWith('• **')) {
+        const match = line.match(/• \*\*(.*?)\*\*: (.*)/);
+        if (match) {
+          return (
+            <li key={i} className="mb-2">
+              <strong>{match[1]}</strong>: {match[2]}
+            </li>
+          );
+        }
+      }
+      if (line.startsWith('• ')) {
+        return <li key={i} className="mb-2">{line.substring(2)}</li>;
+      }
+      if (line.trim() === '') {
+        return <br key={i} />;
+      }
+      return <p key={i} className="mb-3">{line}</p>;
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/dashboard/pages/edit' + (pageId ? `?id=${pageId}` : ''))}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Editor
+          </Button>
+          <Badge variant="outline" className="border-blue-500/50 text-blue-400">
+            Preview Mode
+          </Badge>
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            Publish
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="space-y-8">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <img
+                  src={previewData.offerImage}
+                  alt={previewData.offerName}
+                  className="w-20 h-20 rounded-xl object-cover border-2 border-slate-700"
+                />
+                <div>
+                  <h1 className="text-3xl font-bold">{previewData.offerName}</h1>
+                  <p className="text-slate-400">by {previewData.businessName}</p>
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-5xl font-bold">
+                  ${selectedPlan === 'monthly' ? previewData.price.toFixed(2) : previewData.yearlyPrice.toFixed(2)}
+                </span>
+                <span className="text-xl text-slate-400">
+                  / {selectedPlan === 'monthly' ? 'month' : 'year'}
+                </span>
+              </div>
+            </div>
+
+            <Card className="p-6 bg-slate-900/40 border-slate-800/50">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-500" />
+                What's Included
+              </h2>
+              <div className="space-y-4">
+                {previewData.businessFeatures.map((feature, index) => (
+                  <div key={index} className="flex gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-800/60 flex items-center justify-center text-xl">
+                      {feature.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">{feature.title}</h3>
+                      <p className="text-sm text-slate-400">{feature.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-slate-900/40 border-slate-800/50">
+              <div className="prose prose-invert max-w-none">
+                <div className="text-slate-300 leading-relaxed">
+                  {renderDescription(previewData.description)}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-slate-900/40 border-slate-800/50">
+              <h2 className="text-xl font-semibold mb-4">Frequently Asked Questions</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">How does billing work?</h3>
+                  <p className="text-sm text-slate-400">
+                    You'll be charged {selectedPlan === 'monthly' ? 'monthly' : 'annually'} and can cancel anytime. No hidden fees.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Can I change my plan later?</h3>
+                  <p className="text-sm text-slate-400">
+                    Yes! You can upgrade, downgrade, or cancel your subscription at any time from your account settings.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
+                  <p className="text-sm text-slate-400">
+                    We accept all major credit cards, debit cards, and digital wallets through Stripe.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div>
+            <div className="sticky top-24">
+              <Card className="p-6 bg-slate-900/60 border-slate-800/50">
+                <h2 className="text-2xl font-bold mb-6">Join {previewData.offerName}</h2>
+
+                <Tabs value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as 'monthly' | 'yearly')} className="mb-6">
+                  <TabsList className="grid w-full grid-cols-2 bg-slate-800/60">
+                    <TabsTrigger value="monthly" className="data-[state=active]:bg-slate-700">
+                      Monthly
+                    </TabsTrigger>
+                    <TabsTrigger value="yearly" className="data-[state=active]:bg-slate-700">
+                      Yearly
+                      <Badge className="ml-2 bg-green-600 text-white border-0 text-xs">
+                        Save 17%
+                      </Badge>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                <div className="mb-6 p-4 rounded-lg bg-slate-800/40 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-slate-400">
+                      {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'} Subscription
+                    </span>
+                    <span className="text-xl font-bold">
+                      ${selectedPlan === 'monthly' ? previewData.price.toFixed(2) : previewData.yearlyPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  {selectedPlan === 'yearly' && (
+                    <p className="text-sm text-green-400">
+                      You save ${((previewData.price * 12) - previewData.yearlyPrice).toFixed(2)} per year
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-6 p-6 rounded-lg border-2 border-dashed border-slate-700 bg-slate-800/20">
+                  <div className="text-center">
+                    <div className="mb-4">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 mb-3">
+                        <Lock className="h-8 w-8 text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Stripe Payment Form</h3>
+                      <p className="text-sm text-slate-400 mb-4">
+                        Secure payment processing powered by Stripe
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-700/50 text-left">
+                        <label className="text-xs text-slate-400 block mb-2">Card Number</label>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-10 bg-slate-800/50 rounded border border-slate-700 flex items-center px-3">
+                            <span className="text-slate-500">•••• •••• •••• ••••</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="w-8 h-6 bg-slate-700 rounded flex items-center justify-center text-xs">💳</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-700/50 text-left">
+                          <label className="text-xs text-slate-400 block mb-2">Expiry</label>
+                          <div className="h-10 bg-slate-800/50 rounded border border-slate-700 flex items-center px-3">
+                            <span className="text-slate-500">MM / YY</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-700/50 text-left">
+                          <label className="text-xs text-slate-400 block mb-2">CVC</label>
+                          <div className="h-10 bg-slate-800/50 rounded border border-slate-700 flex items-center px-3">
+                            <span className="text-slate-500">•••</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-700/50 text-left">
+                        <label className="text-xs text-slate-400 block mb-2">Email</label>
+                        <div className="h-10 bg-slate-800/50 rounded border border-slate-700 flex items-center px-3">
+                          <span className="text-slate-500">your@email.com</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold">
+                      Subscribe Now
+                    </Button>
+
+                    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+                      <Lock className="h-3 w-3" />
+                      <span>Secured by Stripe</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-slate-300">Cancel anytime, no questions asked</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-slate-300">Instant access to all features</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-slate-300">24/7 community support</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-slate-300">Secure payment processing</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-700">
+                  <p className="text-xs text-slate-400 text-center">
+                    By subscribing, you agree to our Terms of Service and Privacy Policy.
+                    Your subscription will renew automatically until cancelled.
+                  </p>
+                </div>
+              </Card>
+
+              <div className="mt-6 text-center">
+                <Button variant="link" className="text-slate-400 hover:text-slate-300">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View in new tab
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

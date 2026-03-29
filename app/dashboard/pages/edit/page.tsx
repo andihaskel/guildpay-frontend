@@ -51,6 +51,7 @@ export default function EditPagePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    router.push('/dashboard/pages/preview' + (pageId ? `?id=${pageId}` : ''));
   };
 
   const addBusinessFeature = () => {
