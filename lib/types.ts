@@ -114,6 +114,7 @@ export interface ProductOverview {
   };
   paying_members: number;
   monthly_revenue: number;
+  discord_guild_id: string;
 }
 
 export interface TopRoleByRevenue {

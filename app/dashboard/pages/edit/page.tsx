@@ -13,12 +13,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/dashboard/RichTextEditor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useProduct } from '@/contexts';
+import { api } from '@/lib/api';
+import { DiscordRole } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EditPagePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { currentProduct } = useProduct();
+  const { toast } = useToast();
   const pageId = searchParams.get('id');
   const isEditing = !!pageId;
+
+  const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true);
 
   const [formData, setFormData] = useState({
     offerImage: '',
@@ -33,7 +42,7 @@ export default function EditPagePage() {
     yearlyOption: 'yes',
     yearlyPrice: '300.00',
     welcomeChannel: 'welcome',
-    roleToAssign: 'premium',
+    roleToAssign: '',
     mediaGalleryEnabled: false,
     couponsEnabled: false,
     cryptoEnabled: false,
@@ -50,8 +59,54 @@ export default function EditPagePage() {
   const [premiumFeaturesOpen, setPremiumFeaturesOpen] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
 
+  useEffect(() => {
+    const loadDiscordRoles = async () => {
+      if (!currentProduct?.id) return;
+
+      try {
+        setIsLoadingRoles(true);
+        const overview = await api.getProductOverview(currentProduct.id);
+
+        if (overview.discord_guild_id) {
+          const roles = await api.getDiscordGuildRoles(overview.discord_guild_id);
+          setDiscordRoles(roles);
+        }
+      } catch (error) {
+        console.error('Failed to load Discord roles:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load Discord roles',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingRoles(false);
+      }
+    };
+
+    loadDiscordRoles();
+  }, [currentProduct]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.offerUrl.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Offer URL is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.roleToAssign) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a role to assign',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const params = new URLSearchParams();
     if (pageId) params.append('id', pageId);
     params.append('data', JSON.stringify(formData));
@@ -122,13 +177,16 @@ export default function EditPagePage() {
               </div>
 
               <div className="flex-1">
-                <Label htmlFor="offerUrl" className="mb-3 block">Offer URL</Label>
+                <Label htmlFor="offerUrl" className="mb-3 block">
+                  Offer URL <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="offerUrl"
                   value={formData.offerUrl}
                   onChange={(e) => setFormData({ ...formData, offerUrl: e.target.value })}
                   placeholder="artistry-collective"
                   className="mb-2 bg-slate-800/50 border-slate-700"
+                  required
                 />
                 <p className="text-sm text-slate-400 flex items-center gap-2">
                   🔗 launchpass.com/testandi/{formData.offerUrl || 'artistry-collective'}
@@ -343,15 +401,27 @@ export default function EditPagePage() {
               </div>
 
               <div>
-                <Label htmlFor="roleToAssign" className="mb-3 block">Role to Assign</Label>
-                <Select value={formData.roleToAssign} onValueChange={(value) => setFormData({ ...formData, roleToAssign: value })}>
+                <Label htmlFor="roleToAssign" className="mb-3 block">
+                  Role to Assign <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.roleToAssign}
+                  onValueChange={(value) => setFormData({ ...formData, roleToAssign: value })}
+                  disabled={isLoadingRoles}
+                >
                   <SelectTrigger id="roleToAssign" className="bg-slate-800/50 border-slate-700">
-                    <SelectValue />
+                    <SelectValue placeholder={isLoadingRoles ? "Loading roles..." : "Select a role"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="premium">premium</SelectItem>
-                    <SelectItem value="member">member</SelectItem>
-                    <SelectItem value="subscriber">subscriber</SelectItem>
+                    {discordRoles.length === 0 && !isLoadingRoles ? (
+                      <SelectItem value="_empty" disabled>No roles available</SelectItem>
+                    ) : (
+                      discordRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-slate-400 mt-2">
