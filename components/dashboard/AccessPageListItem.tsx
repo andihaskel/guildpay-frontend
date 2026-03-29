@@ -25,7 +25,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors">
       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-700">
         <img
           src={coverImages[page.id] || coverImages['1']}
@@ -34,9 +34,9 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
         />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-full sm:w-auto">
         <h3 className="font-semibold text-lg mb-1">{page.name}</h3>
-        <div className="flex items-center gap-3 text-sm mb-2">
+        <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
           <div className="px-2 py-0.5 rounded bg-green-950/50 border border-green-900/50">
             <span className="text-green-400">Active: {page.activeMembers}</span>
           </div>
@@ -48,41 +48,43 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Copy className="h-3 w-3" />
+          <Copy className="h-3 w-3 flex-shrink-0" />
           <span className="truncate">{page.url}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div className="text-right mr-4">
+      <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
+        <div className="text-left sm:text-right sm:mr-4 flex-1 sm:flex-initial">
           <div className="text-2xl font-bold">${(page.price / 100).toFixed(2)}</div>
           <div className="text-xs text-slate-400">/{page.interval}</div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-slate-400 hover:text-white"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2 ml-auto sm:ml-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-slate-400 hover:text-white"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-slate-400 hover:text-white"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-slate-400 hover:text-white"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-slate-400 hover:text-white"
-          onClick={handleCopy}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-slate-400 hover:text-white"
+            onClick={handleCopy}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
