@@ -30,7 +30,7 @@ export default function EditPagePage() {
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
 
   const [formData, setFormData] = useState({
-    offerImage: '',
+    offerImage: 'https://api.dicebear.com/9.x/shapes/svg?seed=default',
     offerUrl: '',
     offerName: '',
     businessName: '',
@@ -58,6 +58,7 @@ export default function EditPagePage() {
 
   const [premiumFeaturesOpen, setPremiumFeaturesOpen] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [hasCustomImage, setHasCustomImage] = useState(false);
 
   useEffect(() => {
     const loadDiscordRoles = async () => {
@@ -85,6 +86,31 @@ export default function EditPagePage() {
 
     loadDiscordRoles();
   }, [currentProduct]);
+
+  useEffect(() => {
+    if (formData.offerName && !hasCustomImage) {
+      const seed = encodeURIComponent(formData.offerName);
+      setFormData(prev => ({
+        ...prev,
+        offerImage: `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`
+      }));
+    }
+  }, [formData.offerName, hasCustomImage]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          offerImage: reader.result as string
+        }));
+        setHasCustomImage(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,13 +193,26 @@ export default function EditPagePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <Label className="mb-3 block">Offer Image</Label>
-                <div className="w-32 h-32 rounded-lg border-2 border-dashed border-slate-700 hover:border-slate-600 transition-colors flex items-center justify-center cursor-pointer bg-slate-800/50">
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="w-32 h-32 rounded-lg border-2 border-dashed border-slate-700 hover:border-slate-600 transition-colors flex items-center justify-center cursor-pointer bg-slate-800/50 block"
+                >
                   {formData.offerImage ? (
                     <img src={formData.offerImage} alt="Offer" className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     <Upload className="h-8 w-8 text-slate-500" />
                   )}
-                </div>
+                </label>
+                <p className="text-xs text-slate-500 mt-2">
+                  {hasCustomImage ? 'Custom image uploaded' : 'Auto-generated from name'}
+                </p>
               </div>
 
               <div className="flex-1">
