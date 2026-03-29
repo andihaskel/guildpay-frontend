@@ -2,9 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Share2, CreditCard as Edit, Code, Copy, Shield, Crown, Zap } from 'lucide-react';
+import { Share2, Pencil, Copy, Shield, Crown, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { AccessPage } from '@/lib/types';
 
 interface AccessPageCardProps {
@@ -15,11 +22,16 @@ interface AccessPageCardProps {
 export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(page.url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = () => {
+    setShareDialogOpen(true);
   };
 
   const getIcon = () => {
@@ -70,7 +82,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
           <Button
             size="sm"
             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-            onClick={handleCopy}
+            onClick={handleShare}
           >
             <Share2 className="h-4 w-4 mr-1" />
             Share
@@ -81,11 +93,35 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
             className="border-slate-700 hover:bg-slate-800"
             onClick={() => router.push(`/dashboard/pages/edit?id=${page.id}`)}
           >
-            <Edit className="h-4 w-4 mr-1" />
+            <Pencil className="h-4 w-4 mr-1" />
             Edit
           </Button>
         </div>
       </div>
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle>Share access page</DialogTitle>
+            <DialogDescription>
+              Share this link with your community to allow them to purchase access to {page.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+              <code className="text-sm text-slate-300 flex-1 truncate">{page.url}</code>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="flex-shrink-0"
+              >
+                {copied ? 'Copied!' : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

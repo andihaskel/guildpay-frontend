@@ -39,6 +39,7 @@ export default function EditPagePage() {
     cryptoEnabled: false,
     requireNameOnCard: false,
     termsAndConditions: false,
+    isActive: true,
     businessFeatures: [
       { id: '1', icon: '💬', title: 'Access to Group Chats:', description: 'Join a private space where you can participate in group conversations with other members.' },
       { id: '2', icon: '⚡', title: 'Real-Time Updates:', description: 'Stay connected with instant messages and updates from the community.' },
@@ -46,7 +47,7 @@ export default function EditPagePage() {
     ],
   });
 
-  const [premiumFeaturesOpen, setPremiumFeaturesOpen] = useState(true);
+  const [premiumFeaturesOpen, setPremiumFeaturesOpen] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -409,8 +410,18 @@ export default function EditPagePage() {
                 <Plus className={`h-5 w-5 transition-transform ${advancedSettingsOpen ? 'rotate-45' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="px-6 pb-6">
-                  <p className="text-sm text-slate-400">Advanced configuration options will appear here.</p>
+                <div className="px-6 pb-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="isActive" className="cursor-pointer">Page Active</Label>
+                      <p className="text-sm text-slate-400 mt-1">When disabled, the page will not be accessible to new members</p>
+                    </div>
+                    <Switch
+                      id="isActive"
+                      checked={formData.isActive}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                    />
+                  </div>
                 </div>
               </CollapsibleContent>
             </Card>
