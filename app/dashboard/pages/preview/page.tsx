@@ -2,16 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, Crown, MessageSquare, Zap, Lock, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Check, Crown, MessageSquare, Zap, Lock, ExternalLink, Loader as Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useProduct } from '@/contexts';
+import { api } from '@/lib/api';
+import { CreatePageRequest } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PreviewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { currentProduct } = useProduct();
+  const { toast } = useToast();
   const pageId = searchParams.get('id');
+  const dataParam = searchParams.get('data');
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const [formData, setFormData] = useState<any>(null);
+
+  useEffect(() => {
+    if (dataParam) {
+      try {
+        const parsed = JSON.parse(dataParam);
+        setFormData(parsed);
+      } catch (error) {
+        console.error('Failed to parse form data:', error);
+      }
+    }
+  }, [dataParam]);
 
   const [previewData] = useState({
     offerImage: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -41,6 +62,79 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
   });
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+
+  const handlePublish = async () => {
+    if (!currentProduct?.id || !formData) {
+      toast({
+        title: 'Error',
+        description: 'Missing product or form data',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsPublishing(true);
+
+      const parsePrice = (price: string): number => {
+        const parsed = parseFloat(price);
+        return Math.round(parsed * 100);
+      };
+
+      const parseTrialDays = (trial: string): number | undefined => {
+        if (trial === 'None') return undefined;
+        const match = trial.match(/\d+/);
+        return match ? parseInt(match[0]) : undefined;
+      };
+
+      const createPageData: CreatePageRequest = {
+        slug: formData.offerUrl,
+        offer_name: formData.offerName,
+        hero_image_url: formData.offerImage || undefined,
+        description: formData.description,
+        features: formData.businessFeatures,
+        media_gallery_enabled: formData.mediaGalleryEnabled,
+        discord_role_id: formData.roleToAssign,
+        discord_welcome_channel_id: formData.welcomeChannel || undefined,
+        accepts_signups: formData.isActive,
+        monthly_amount_minor: parsePrice(formData.price),
+        yearly_amount_minor: formData.yearlyOption === 'yes' ? parsePrice(formData.yearlyPrice) : undefined,
+        currency: formData.currency.toLowerCase(),
+        trial_days: parseTrialDays(formData.freeTrialPeriod),
+        settings: {
+          coupons_enabled: formData.couponsEnabled,
+          crypto_enabled: formData.cryptoEnabled,
+          require_name_on_card: formData.requireNameOnCard,
+          terms_and_conditions: formData.termsAndConditions,
+        },
+      };
+
+      if (pageId) {
+        await api.updatePage(currentProduct.id, pageId, createPageData);
+        toast({
+          title: 'Success',
+          description: 'Page updated successfully',
+        });
+      } else {
+        await api.createPage(currentProduct.id, createPageData);
+        toast({
+          title: 'Success',
+          description: 'Page created successfully',
+        });
+      }
+
+      router.push('/dashboard/pages');
+    } catch (error: any) {
+      console.error('Failed to publish page:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to publish page',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   const renderDescription = (text: string) => {
     return text.split('\n').map((line, i) => {
@@ -84,8 +178,19 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
           <Badge variant="outline" className="border-blue-500/50 text-blue-400">
             Preview Mode
           </Badge>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            Publish
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handlePublish}
+            disabled={isPublishing || !formData}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Publishing...
+              </>
+            ) : (
+              'Publish'
+            )}
           </Button>
         </div>
       </div>
@@ -96,19 +201,21 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <img
-                  src={previewData.offerImage}
-                  alt={previewData.offerName}
+                  src={(formData?.offerImage || previewData.offerImage)}
+                  alt={(formData?.offerName || previewData.offerName)}
                   className="w-20 h-20 rounded-xl object-cover border-2 border-slate-700"
                 />
                 <div>
-                  <h1 className="text-3xl font-bold">{previewData.offerName}</h1>
-                  <p className="text-slate-400">by {previewData.businessName}</p>
+                  <h1 className="text-3xl font-bold">{formData?.offerName || previewData.offerName}</h1>
+                  <p className="text-slate-400">by {formData?.businessName || previewData.businessName}</p>
                 </div>
               </div>
 
               <div className="flex items-baseline gap-2 mb-6">
                 <span className="text-5xl font-bold">
-                  ${selectedPlan === 'monthly' ? previewData.price.toFixed(2) : previewData.yearlyPrice.toFixed(2)}
+                  ${selectedPlan === 'monthly'
+                    ? parseFloat(formData?.price || previewData.price).toFixed(2)
+                    : parseFloat(formData?.yearlyPrice || previewData.yearlyPrice).toFixed(2)}
                 </span>
                 <span className="text-xl text-slate-400">
                   / {selectedPlan === 'monthly' ? 'month' : 'year'}
@@ -122,7 +229,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
                 What's Included
               </h2>
               <div className="space-y-4">
-                {previewData.businessFeatures.map((feature, index) => (
+                {(formData?.businessFeatures || previewData.businessFeatures).map((feature: any, index: number) => (
                   <div key={index} className="flex gap-3">
                     <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-800/60 flex items-center justify-center text-xl">
                       {feature.icon}
@@ -139,7 +246,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
             <Card className="p-6 bg-slate-900/40 border-slate-800/50">
               <div className="prose prose-invert max-w-none">
                 <div className="text-slate-300 leading-relaxed">
-                  {renderDescription(previewData.description)}
+                  {renderDescription(formData?.description || previewData.description)}
                 </div>
               </div>
             </Card>
@@ -172,7 +279,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
           <div>
             <div className="sticky top-24">
               <Card className="p-6 bg-slate-900/60 border-slate-800/50">
-                <h2 className="text-2xl font-bold mb-6">Join {previewData.offerName}</h2>
+                <h2 className="text-2xl font-bold mb-6">Join {formData?.offerName || previewData.offerName}</h2>
 
                 <Tabs value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as 'monthly' | 'yearly')} className="mb-6">
                   <TabsList className="grid w-full grid-cols-2 bg-slate-800/60">
@@ -194,12 +301,14 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
                       {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'} Subscription
                     </span>
                     <span className="text-xl font-bold">
-                      ${selectedPlan === 'monthly' ? previewData.price.toFixed(2) : previewData.yearlyPrice.toFixed(2)}
+                      ${selectedPlan === 'monthly'
+                        ? parseFloat(formData?.price || previewData.price).toFixed(2)
+                        : parseFloat(formData?.yearlyPrice || previewData.yearlyPrice).toFixed(2)}
                     </span>
                   </div>
                   {selectedPlan === 'yearly' && (
                     <p className="text-sm text-green-400">
-                      You save ${((previewData.price * 12) - previewData.yearlyPrice).toFixed(2)} per year
+                      You save ${((parseFloat(formData?.price || previewData.price) * 12) - parseFloat(formData?.yearlyPrice || previewData.yearlyPrice)).toFixed(2)} per year
                     </p>
                   )}
                 </div>
