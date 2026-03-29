@@ -9,16 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
-import { Role } from '@/lib/types';
+import { ProductOverview } from '@/lib/types';
 
 export default function OverviewPage() {
   const router = useRouter();
   const { currentProduct } = useProduct();
-  const [overview, setOverview] = useState<{
-    payingMembers: number;
-    monthlyRevenue: number;
-  } | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [overview, setOverview] = useState<ProductOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -32,17 +28,11 @@ export default function OverviewPage() {
 
     try {
       setIsLoading(true);
-      const [overviewData, rolesData] = await Promise.all([
-        api.getProductOverview(currentProduct.id),
-        api.getRoles(currentProduct.id),
-      ]);
-
-      setOverview(overviewData || { payingMembers: 0, monthlyRevenue: 0 });
-      setRoles((rolesData || []).filter(role => role.isActive).slice(0, 5));
+      const overviewData = await api.getProductOverview(currentProduct.id);
+      setOverview(overviewData);
     } catch (error) {
       console.error('Failed to load overview data:', error);
-      setOverview({ payingMembers: 0, monthlyRevenue: 0 });
-      setRoles([]);
+      setOverview({ paying_members: 0, monthly_revenue: 0, top_roles_by_revenue: [] });
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +79,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              {(overview?.payingMembers ?? 0).toLocaleString()}
+              {(overview?.paying_members ?? 0).toLocaleString()}
             </p>
           </Card>
 
@@ -101,7 +91,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <p className="text-5xl font-semibold mb-3">
-              ${(overview?.monthlyRevenue ?? 0).toLocaleString()}
+              ${((overview?.monthly_revenue ?? 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </Card>
         </div>
@@ -115,7 +105,7 @@ export default function OverviewPage() {
           <div className="py-12 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : roles.length === 0 ? (
+        ) : !overview || overview.top_roles_by_revenue.length === 0 ? (
           <div className="py-12">
             <EmptyState
               icon={Users}
@@ -141,42 +131,36 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {roles.map((role) => {
-                  const price = role.price || 0;
-                  const memberCount = role.memberCount || 0;
-                  const revenue = (price / 100) * memberCount;
-
-                  return (
-                    <tr key={role.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium">{role.name || 'Unnamed Role'}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span>${(price / 100).toFixed(2)}/{role.interval || 'month'}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="font-medium">{memberCount}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="font-medium">
-                          ${revenue.toFixed(2)}/mo
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
-                          Active
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-6">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
-                          <MoreHorizontal className="h-4 w-4" />
+                {overview.top_roles_by_revenue.map((role) => (
+                  <tr key={role.guild_config_id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{role.role_identifier || 'Unnamed Role'}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span>${(role.price / 100).toFixed(2)}/month</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium">{role.members_count}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-medium">
+                        ${(role.revenue / 100).toFixed(2)}/mo
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Badge className="bg-green-600/20 text-green-400 hover:bg-green-600/20 border-0">
+                        Active
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </td>
                   </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>

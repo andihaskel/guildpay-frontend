@@ -105,3 +105,19 @@ export interface StripePrice {
   };
   active: boolean;
 }
+
+export interface ProductOverview {
+  paying_members: number;
+  monthly_revenue: number;
+  top_roles_by_revenue: TopRoleByRevenue[];
+}
+
+export interface TopRoleByRevenue {
+  guild_config_id: string;
+  role_identifier: string;
+  role_id: string;
+  stripe_price_id: string;
+  price: number;
+  members_count: number;
+  revenue: number;
+}
