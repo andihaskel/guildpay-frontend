@@ -71,8 +71,13 @@ export default function PublicPage() {
 
     const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-    if (!stripePublishableKey || stripePublishableKey === 'pk_test_your_key_here') {
-      toast.error('Stripe is not configured. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your environment.');
+    if (!stripePublishableKey) {
+      toast.error('Stripe publishable key is missing. Please configure NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.');
+      return;
+    }
+
+    if (!stripePublishableKey.startsWith('pk_test_') && !stripePublishableKey.startsWith('pk_live_')) {
+      toast.error('Invalid Stripe publishable key format. Key should start with pk_test_ or pk_live_');
       return;
     }
 
