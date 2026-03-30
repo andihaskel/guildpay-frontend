@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader as Loader2, Check, ArrowRight } from 'lucide-react';
+import { Loader as Loader2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface PageData {
   creator_slug: string;
@@ -28,6 +31,10 @@ interface PageData {
   has_yearly: boolean;
 }
 
+type Step = 'details' | 'checkout';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+
 export default function PublicPage() {
   const params = useParams();
   const router = useRouter();
@@ -35,6 +42,11 @@ export default function PublicPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const [step, setStep] = useState<Step>('details');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+
+  const publicPath = `/p/${params.creator}/${params.slug}`;
 
   useEffect(() => {
     const loadPageData = async () => {
@@ -42,7 +54,6 @@ export default function PublicPage() {
 
       try {
         setIsLoading(true);
-        const publicPath = `/p/${params.creator}/${params.slug}`;
         const data = await api.getPublicPage(publicPath);
         setPageData(data);
       } catch (err) {
@@ -54,7 +65,44 @@ export default function PublicPage() {
     };
 
     loadPageData();
-  }, [params.creator, params.slug]);
+  }, [params.creator, params.slug, publicPath]);
+
+  const handleGetAccess = async () => {
+    if (!pageData) return;
+
+    try {
+      setIsCreatingSession(true);
+      const { client_secret } = await api.createPublicCheckoutSession(
+        publicPath,
+        billingInterval
+      );
+      setClientSecret(client_secret);
+      setStep('checkout');
+    } catch (err: any) {
+      console.error('Failed to create checkout session:', err);
+      toast.error(err.message || 'Failed to start checkout. Please try again.');
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
+  const handleBackToDetails = () => {
+    setStep('details');
+    setClientSecret(null);
+  };
+
+  const handleBillingIntervalChange = (interval: 'monthly' | 'yearly') => {
+    setBillingInterval(interval);
+    if (step === 'checkout') {
+      setStep('details');
+      setClientSecret(null);
+    }
+  };
+
+  const fetchClientSecret = useCallback(async () => {
+    if (!clientSecret) return '';
+    return clientSecret;
+  }, [clientSecret]);
 
   if (isLoading) {
     return (
@@ -82,6 +130,41 @@ export default function PublicPage() {
 
   const formattedPrice = (currentPrice / 100).toFixed(2);
   const currencySymbol = pageData.currency === 'usd' ? '$' : pageData.currency.toUpperCase();
+
+  if (step === 'checkout' && clientSecret) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <div className="container mx-auto px-4 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBackToDetails}
+            className="mb-6 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to details
+          </Button>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-bold mb-2">{pageData.offer_name}</h1>
+              <p className="text-slate-400">
+                {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
+              </p>
+            </div>
+
+            <Card className="p-8 bg-slate-900/80 border-slate-800/50">
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={{ clientSecret }}
+              >
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -160,7 +243,7 @@ export default function PublicPage() {
                 {pageData.has_yearly && (
                   <div className="flex gap-2 p-1 bg-slate-800/50 rounded-lg mt-4">
                     <button
-                      onClick={() => setBillingInterval('monthly')}
+                      onClick={() => handleBillingIntervalChange('monthly')}
                       className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                         billingInterval === 'monthly'
                           ? 'bg-purple-600 text-white'
@@ -170,7 +253,7 @@ export default function PublicPage() {
                       Monthly
                     </button>
                     <button
-                      onClick={() => setBillingInterval('yearly')}
+                      onClick={() => handleBillingIntervalChange('yearly')}
                       className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                         billingInterval === 'yearly'
                           ? 'bg-purple-600 text-white'
@@ -187,9 +270,20 @@ export default function PublicPage() {
                 <Button
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white h-12 text-lg font-semibold"
                   size="lg"
+                  onClick={handleGetAccess}
+                  disabled={isCreatingSession}
                 >
-                  Get Access
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  {isCreatingSession ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      Get Access
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
                 </Button>
               ) : (
                 <div className="text-center p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">

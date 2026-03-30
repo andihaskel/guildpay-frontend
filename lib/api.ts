@@ -249,6 +249,16 @@ class ApiClient {
   }> {
     return this.get<any>(publicPath);
   }
+
+  async createPublicCheckoutSession(
+    publicPath: string,
+    priceKind: 'monthly' | 'yearly'
+  ): Promise<{ client_secret: string }> {
+    return this.post<{ client_secret: string }>(
+      `${publicPath}/checkout-session`,
+      { price_kind: priceKind }
+    );
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
