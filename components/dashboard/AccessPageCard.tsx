@@ -24,7 +24,8 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
   const [copied, setCopied] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const pageUrl = page.public_path || `https://guildpay.io/p/${page.slug}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const pageUrl = page.public_path ? `${baseUrl}${page.public_path}` : `${baseUrl}/p/${page.slug}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(pageUrl);

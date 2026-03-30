@@ -226,6 +226,29 @@ class ApiClient {
   async deletePage(productId: string, pageId: string): Promise<void> {
     return this.delete<void>(`/creator/products/${productId}/pages/${pageId}`);
   }
+
+  async getPublicPage(publicPath: string): Promise<{
+    creator_slug: string;
+    page_slug: string;
+    offer_name: string;
+    hero_image_url: string;
+    cover_url: string;
+    description: string;
+    features: Array<{
+      id: string;
+      icon: string;
+      title: string;
+      description: string;
+    }>;
+    media_gallery_enabled: boolean;
+    monthly_amount_minor: number;
+    yearly_amount_minor: number;
+    currency: string;
+    accepts_signups: boolean;
+    has_yearly: boolean;
+  }> {
+    return this.get<any>(publicPath);
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
