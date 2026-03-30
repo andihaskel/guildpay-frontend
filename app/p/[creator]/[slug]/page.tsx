@@ -33,8 +33,6 @@ interface PageData {
 
 type Step = 'details' | 'checkout';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
-
 export default function PublicPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,6 +43,7 @@ export default function PublicPage() {
   const [step, setStep] = useState<Step>('details');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
 
   const publicPath = `/p/${params.creator}/${params.slug}`;
 
@@ -70,12 +69,21 @@ export default function PublicPage() {
   const handleGetAccess = async () => {
     if (!pageData) return;
 
+    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+    if (!stripePublishableKey || stripePublishableKey === 'pk_test_your_key_here') {
+      toast.error('Stripe is not configured. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your environment.');
+      return;
+    }
+
     try {
       setIsCreatingSession(true);
       const { client_secret } = await api.createPublicCheckoutSession(
         publicPath,
         billingInterval
       );
+
+      setStripePromise(loadStripe(stripePublishableKey));
       setClientSecret(client_secret);
       setStep('checkout');
     } catch (err: any) {
@@ -131,7 +139,7 @@ export default function PublicPage() {
   const formattedPrice = (currentPrice / 100).toFixed(2);
   const currencySymbol = pageData.currency === 'usd' ? '$' : pageData.currency.toUpperCase();
 
-  if (step === 'checkout' && clientSecret) {
+  if (step === 'checkout' && clientSecret && stripePromise) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
         <div className="container mx-auto px-4 py-8">
