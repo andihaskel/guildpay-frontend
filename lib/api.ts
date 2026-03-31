@@ -158,18 +158,24 @@ class ApiClient {
     params?: {
       page?: number;
       limit?: number;
-      status?: string;
-      role_id?: string;
-      search?: string;
+      page_id?: string;
+      payment_status?: string;
+      access_status?: string;
+      email?: string;
+      sort_by?: string;
+      sort_order?: 'asc' | 'desc';
     }
   ): Promise<{ members: Member[]; total: number; page: number; limit: number }> {
     const queryParams = new URLSearchParams();
 
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.role_id) queryParams.append('role_id', params.role_id);
-    if (params?.search) queryParams.append('search', params.search);
+    if (params?.page_id) queryParams.append('page_id', params.page_id);
+    if (params?.payment_status) queryParams.append('payment_status', params.payment_status);
+    if (params?.access_status) queryParams.append('access_status', params.access_status);
+    if (params?.email) queryParams.append('email', params.email);
+    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
 
     const queryString = queryParams.toString();
     const endpoint = queryString

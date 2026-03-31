@@ -39,17 +39,18 @@ export interface Role {
 
 export interface Member {
   id: string;
-  email?: string;
-  discord_user_id: string;
+  email: string;
+  discord_user_id?: string;
   discord_username?: string;
   discord_avatar?: string;
   discord_connect_url?: string;
-  checkout_url?: string;
-  role_identifier?: string;
-  role_id: string;
+  page_id?: string;
+  page_name?: string;
+  page_offer_name?: string;
+  role_name?: string;
   price: number;
-  subscription_status?: 'active' | 'canceled' | 'past_due' | 'trialing';
-  status: 'active' | 'pending_discord' | 'pending_stripe' | 'canceled' | 'past_due' | 'trialing';
+  payment_status: 'active' | 'trialing' | 'canceling' | 'free';
+  access_status: 'active' | 'onboarding' | 'free';
   current_period_end?: string;
   created_at: string;
 }

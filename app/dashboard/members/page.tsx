@@ -29,13 +29,14 @@ import { Users } from 'lucide-react';
 export default function MembersPage() {
   const { currentProduct } = useProduct();
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [pageFilter, setPageFilter] = useState<string>('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('');
+  const [accessStatusFilter, setAccessStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [members, setMembers] = useState<Member[]>([]);
   const [totalMembers, setTotalMembers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [pages, setPages] = useState<any[]>([]);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export default function MembersPage() {
 
   useEffect(() => {
     if (currentProduct?.id) {
-      loadRoles();
+      loadPages();
     }
   }, [currentProduct?.id]);
 
@@ -51,16 +52,16 @@ export default function MembersPage() {
     if (currentProduct?.id) {
       loadMembers();
     }
-  }, [currentProduct?.id, currentPage, searchQuery, roleFilter, statusFilter]);
+  }, [currentProduct?.id, currentPage, searchQuery, pageFilter, paymentStatusFilter, accessStatusFilter]);
 
-  const loadRoles = async () => {
+  const loadPages = async () => {
     if (!currentProduct?.id) return;
 
     try {
-      const rolesData = await api.getRoles(currentProduct.id);
-      setRoles(rolesData);
+      const pagesData = await api.getPages(currentProduct.id);
+      setPages(pagesData);
     } catch (error) {
-      console.error('Failed to load roles:', error);
+      console.error('Failed to load pages:', error);
     }
   };
 
@@ -72,17 +73,23 @@ export default function MembersPage() {
       const params: {
         page: number;
         limit: number;
-        status?: string;
-        role_id?: string;
-        search?: string;
+        page_id?: string;
+        payment_status?: string;
+        access_status?: string;
+        email?: string;
+        sort_by?: string;
+        sort_order?: 'asc' | 'desc';
       } = {
         page: currentPage,
         limit: membersPerPage,
+        sort_by: 'created_at',
+        sort_order: 'desc',
       };
 
-      if (statusFilter) params.status = statusFilter;
-      if (roleFilter) params.role_id = roleFilter;
-      if (searchQuery) params.search = searchQuery;
+      if (pageFilter) params.page_id = pageFilter;
+      if (paymentStatusFilter) params.payment_status = paymentStatusFilter;
+      if (accessStatusFilter) params.access_status = accessStatusFilter;
+      if (searchQuery) params.email = searchQuery;
 
       const response = await api.getMembers(currentProduct.id, params);
       setMembers(response.members);
@@ -110,27 +117,28 @@ export default function MembersPage() {
     return `$${(price / 100).toFixed(2)}`;
   };
 
-  const getRoleName = (roleIdentifier?: string) => {
-    if (!roleIdentifier) return 'Unknown Role';
-    const role = roles.find(r => r.id === roleIdentifier);
-    return role?.name || 'Unknown Role';
-  };
-
   const totalPages = Math.ceil(totalMembers / membersPerPage);
 
-  const getStatusBadge = (status: string) => {
+  const getPaymentStatusBadge = (status: string) => {
     if (status === 'active') {
       return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
-    } else if (status === 'pending_discord') {
-      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Pending Discord</Badge>;
-    } else if (status === 'pending_stripe') {
-      return <Badge variant="secondary" className="bg-purple-600/20 text-purple-400 hover:bg-purple-600/20">Pending Stripe</Badge>;
-    } else if (status === 'canceled') {
-      return <Badge variant="secondary" className="bg-red-600/20 text-red-400 hover:bg-red-600/20">Canceled</Badge>;
-    } else if (status === 'past_due') {
-      return <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400 hover:bg-yellow-600/20">Past Due</Badge>;
     } else if (status === 'trialing') {
       return <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/20">Trialing</Badge>;
+    } else if (status === 'canceling') {
+      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Canceling</Badge>;
+    } else if (status === 'free') {
+      return <Badge variant="secondary" className="bg-slate-600/20 text-slate-400 hover:bg-slate-600/20">Free</Badge>;
+    }
+    return <Badge variant="secondary">Unknown</Badge>;
+  };
+
+  const getAccessStatusBadge = (status: string) => {
+    if (status === 'active') {
+      return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
+    } else if (status === 'onboarding') {
+      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Onboarding</Badge>;
+    } else if (status === 'free') {
+      return <Badge variant="secondary" className="bg-slate-600/20 text-slate-400 hover:bg-slate-600/20">Free</Badge>;
     }
     return <Badge variant="secondary">Unknown</Badge>;
   };
@@ -140,13 +148,18 @@ export default function MembersPage() {
     setCurrentPage(1);
   };
 
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status === statusFilter ? '' : status);
+  const handlePaymentStatusFilter = (status: string) => {
+    setPaymentStatusFilter(status === paymentStatusFilter ? '' : status);
     setCurrentPage(1);
   };
 
-  const handleRoleFilter = (roleId: string) => {
-    setRoleFilter(roleId === roleFilter ? '' : roleId);
+  const handleAccessStatusFilter = (status: string) => {
+    setAccessStatusFilter(status === accessStatusFilter ? '' : status);
+    setCurrentPage(1);
+  };
+
+  const handlePageFilter = (pageId: string) => {
+    setPageFilter(pageId === pageFilter ? '' : pageId);
     setCurrentPage(1);
   };
 
@@ -165,15 +178,20 @@ export default function MembersPage() {
     }
   };
 
-  const getSelectedRoleName = () => {
-    if (!roleFilter) return 'All Roles';
-    const role = roles.find((r) => r.id === roleFilter);
-    return role?.name || 'All Roles';
+  const getSelectedPageName = () => {
+    if (!pageFilter) return 'All Pages';
+    const page = pages.find((p) => p.id === pageFilter);
+    return page?.offer_name || 'All Pages';
   };
 
-  const getSelectedStatusName = () => {
-    if (!statusFilter) return 'All Status';
-    return statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1);
+  const getSelectedPaymentStatusName = () => {
+    if (!paymentStatusFilter) return 'Payment Status';
+    return paymentStatusFilter.charAt(0).toUpperCase() + paymentStatusFilter.slice(1);
+  };
+
+  const getSelectedAccessStatusName = () => {
+    if (!accessStatusFilter) return 'Access Status';
+    return accessStatusFilter.charAt(0).toUpperCase() + accessStatusFilter.slice(1);
   };
 
   return (
@@ -189,7 +207,7 @@ export default function MembersPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by Discord username or ID..."
+            placeholder="Search by email..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-9 bg-slate-900/40 border-slate-800/50"
@@ -200,19 +218,19 @@ export default function MembersPage() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
               <Filter className="h-4 w-4 mr-2" />
-              {getSelectedRoleName()}
+              {getSelectedPageName()}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleRoleFilter('')}>
-              All Roles
+            <DropdownMenuItem onClick={() => handlePageFilter('')}>
+              All Pages
             </DropdownMenuItem>
-            {roles?.map((role) => (
+            {pages?.map((page) => (
               <DropdownMenuItem
-                key={role.id}
-                onClick={() => handleRoleFilter(role.id)}
+                key={page.id}
+                onClick={() => handlePageFilter(page.id)}
               >
-                {role.name}
+                {page.offer_name}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -222,24 +240,47 @@ export default function MembersPage() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
               <Filter className="h-4 w-4 mr-2" />
-              {getSelectedStatusName()}
+              {getSelectedPaymentStatusName()}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleStatusFilter('')}>
-              All Status
+            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('')}>
+              All Payment Status
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusFilter('active')}>
+            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('active')}>
               Active
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusFilter('canceled')}>
-              Canceled
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusFilter('past_due')}>
-              Past Due
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusFilter('trialing')}>
+            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('trialing')}>
               Trialing
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('canceling')}>
+              Canceling
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('free')}>
+              Free
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
+              <Filter className="h-4 w-4 mr-2" />
+              {getSelectedAccessStatusName()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => handleAccessStatusFilter('')}>
+              All Access Status
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAccessStatusFilter('active')}>
+              Active
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAccessStatusFilter('onboarding')}>
+              Onboarding
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAccessStatusFilter('free')}>
+              Free
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -263,11 +304,12 @@ export default function MembersPage() {
             <table className="w-full">
               <thead className="bg-slate-800/30">
                 <tr className="text-left text-sm text-muted-foreground">
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Member</th>
+                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Email</th>
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Role</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Status</th>
+                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Price</th>
+                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Payment Status</th>
+                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Access Status</th>
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Renewal Date</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Joined Date</th>
                   <th className="py-4 px-6 font-medium uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -275,51 +317,34 @@ export default function MembersPage() {
                 {members?.map((member) => (
                   <tr key={member.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          {member.discord_avatar && member.discord_user_id && (
-                            <AvatarImage
-                              src={`https://cdn.discordapp.com/avatars/${member.discord_user_id}/${member.discord_avatar}.png`}
-                              alt={member.discord_username || member.email || 'User'}
-                            />
-                          )}
-                          <AvatarFallback>
-                            {(member.discord_username?.[0] || member.email?.[0] || 'U').toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-semibold">
-                            {member.discord_username || member.email || 'Unknown User'}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {member.discord_user_id || member.email || 'No identifier'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm">{getRoleName(member.role_identifier)}</span>
-                        <span className="text-xs text-muted-foreground">{formatPrice(member.price)}/mo</span>
+                        <div className="font-medium">{member.email}</div>
+                        {member.discord_user_id && (
+                          <div className="text-xs text-muted-foreground">
+                            Discord: {member.discord_user_id}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      {getStatusBadge(member.status)}
+                      <span className="text-sm">{member.role_name || 'N/A'}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex flex-col">
-                        <span className="text-sm">
-                          {formatDate(member.current_period_end)}
-                        </span>
-                      </div>
+                      <span className="text-sm font-medium">{formatPrice(member.price)}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(member.created_at)}
+                      {getPaymentStatusBadge(member.payment_status)}
+                    </td>
+                    <td className="py-4 px-6">
+                      {getAccessStatusBadge(member.access_status)}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm">
+                        {formatDate(member.current_period_end)}
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      {(member.discord_connect_url || member.checkout_url) && (
+                      {member.access_status === 'onboarding' && member.discord_connect_url && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -438,14 +463,20 @@ export default function MembersPage() {
       )}
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800">
+        <DialogContent className="bg-slate-900 border-slate-800 max-w-xl">
           <DialogHeader>
-            <DialogTitle>Share Links</DialogTitle>
+            <DialogTitle>Share Discord Connection Link</DialogTitle>
             <DialogDescription>
-              Share these links with {selectedMember?.email || selectedMember?.discord_username || 'the member'}
+              This member has completed payment but hasn't connected their Discord account yet.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
+            <div className="p-4 bg-blue-600/10 border border-blue-600/20 rounded-lg">
+              <p className="text-sm text-slate-300">
+                Send this link to <strong>{selectedMember?.email}</strong> so they can connect their Discord account and gain access to the server.
+              </p>
+            </div>
+
             {selectedMember?.discord_connect_url && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">
@@ -455,7 +486,7 @@ export default function MembersPage() {
                   <Input
                     value={selectedMember.discord_connect_url}
                     readOnly
-                    className="bg-slate-800/50 border-slate-700"
+                    className="bg-slate-800/50 border-slate-700 font-mono text-xs"
                   />
                   <Button
                     variant="outline"
@@ -471,36 +502,7 @@ export default function MembersPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  This link allows the user to connect their Discord account
-                </p>
-              </div>
-            )}
-            {selectedMember?.checkout_url && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Checkout Link
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    value={selectedMember.checkout_url}
-                    readOnly
-                    className="bg-slate-800/50 border-slate-700"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(selectedMember.checkout_url!, 'checkout')}
-                    className="shrink-0"
-                  >
-                    {copiedField === 'checkout' ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  This link takes the user to complete their payment
+                  Once they click this link and authorize Discord, they'll automatically receive their role and access.
                 </p>
               </div>
             )}
