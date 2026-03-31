@@ -28,7 +28,7 @@ export default function SubscribeSuccessPage() {
       return;
     }
 
-    const stripeAccount = sessionStorage.getItem('stripe_account');
+    const stripeAccount = searchParams.get('stripe_account') || sessionStorage.getItem('stripe_account');
 
     if (!stripeAccount) {
       setStatus('error');
