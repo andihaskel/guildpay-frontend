@@ -253,8 +253,8 @@ class ApiClient {
   async createPublicCheckoutSession(
     publicPath: string,
     priceKind: 'monthly' | 'yearly'
-  ): Promise<{ client_secret: string }> {
-    return this.post<{ client_secret: string }>(
+  ): Promise<{ client_secret: string; stripe_account: string }> {
+    return this.post<{ client_secret: string; stripe_account: string }>(
       `${publicPath}/checkout-session`,
       { price_kind: priceKind }
     );

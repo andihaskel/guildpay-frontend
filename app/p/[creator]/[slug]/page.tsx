@@ -83,10 +83,12 @@ export default function PublicPage() {
 
     try {
       setIsCreatingSession(true);
-      const { client_secret } = await api.createPublicCheckoutSession(
+      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(
         publicPath,
         billingInterval
       );
+
+      sessionStorage.setItem('stripe_account', stripe_account);
 
       setStripePromise(loadStripe(stripePublishableKey));
       setClientSecret(client_secret);
