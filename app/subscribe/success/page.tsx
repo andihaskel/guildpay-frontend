@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CircleCheck as CheckCircle, Loader as Loader2, ArrowRight, CircleAlert as AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://guildpay-production.up.railway.app';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
@@ -42,6 +42,7 @@ function SubscribeSuccessContent() {
   const fetchCheckoutStatus = async (sessionId: string, stripeAccount: string, attempt = 1) => {
     try {
       const url = `${API_URL}/subscribe/checkout-session-status?session_id=${encodeURIComponent(sessionId)}&stripe_account=${encodeURIComponent(stripeAccount)}`;
+      console.log('Fetching checkout status from:', url);
 
       const response = await fetch(url);
 
