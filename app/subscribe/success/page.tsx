@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
-export default function SubscribeSuccessPage() {
+function SubscribeSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -167,5 +167,22 @@ export default function SubscribeSuccessPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function SubscribeSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 bg-slate-900/80 border-slate-800/50 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-16 w-16 text-purple-500 animate-spin" />
+            <h2 className="text-2xl font-bold">Loading...</h2>
+          </div>
+        </Card>
+      </div>
+    }>
+      <SubscribeSuccessContent />
+    </Suspense>
   );
 }
