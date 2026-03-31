@@ -25,7 +25,15 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(url, config);
+      console.log('API Request:', { url, method: config.method || 'GET' });
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+      const response = await fetch(url, { ...config, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      console.log('API Response:', { url, status: response.status, ok: response.ok });
 
       if (!response.ok) {
         const error: ApiError = await response.json().catch(() => ({
@@ -33,6 +41,7 @@ class ApiClient {
           message: `HTTP ${response.status}: ${response.statusText}`,
           statusCode: response.status,
         }));
+        console.error('API Error:', error);
         throw error;
       }
 
@@ -41,10 +50,19 @@ class ApiClient {
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.error('Request timeout:', url);
+        throw {
+          error: 'Timeout',
+          message: 'Request timed out after 15 seconds',
+          statusCode: 408,
+        } as ApiError;
+      }
       if ((error as ApiError).statusCode) {
         throw error;
       }
+      console.error('Network error:', error);
       throw {
         error: 'Network error',
         message: 'Failed to connect to the server',

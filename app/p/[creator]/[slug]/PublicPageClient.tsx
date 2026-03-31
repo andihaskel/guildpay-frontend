@@ -49,15 +49,26 @@ export default function PublicPageClient() {
 
   useEffect(() => {
     const loadPageData = async () => {
-      if (!params.creator || !params.slug) return;
+      if (!params.creator || !params.slug) {
+        console.log('Missing params:', { creator: params.creator, slug: params.slug });
+        return;
+      }
 
       try {
         setIsLoading(true);
+        console.log('Fetching page data from:', publicPath);
         const data = await api.getPublicPage(publicPath);
+        console.log('Page data loaded:', data);
         setPageData(data);
-      } catch (err) {
+        setError(null);
+      } catch (err: any) {
         console.error('Failed to load page:', err);
-        setError('Page not found');
+        console.error('Error details:', {
+          message: err.message,
+          statusCode: err.statusCode,
+          error: err.error
+        });
+        setError(err.message || 'Page not found');
       } finally {
         setIsLoading(false);
       }
