@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/dashboard/RichTextEditor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
 import { DiscordRole } from '@/lib/types';
@@ -383,12 +384,9 @@ export default function EditPagePage() {
                       </div>
                       <div className="flex-1 space-y-3">
                         <div className="flex gap-2">
-                          <Input
+                          <EmojiPicker
                             value={feature.icon}
-                            onChange={(e) => updateBusinessFeature(feature.id, 'icon', e.target.value)}
-                            placeholder="📌"
-                            className="w-16 bg-slate-900/50 border-slate-600 text-center text-xl"
-                            maxLength={2}
+                            onChange={(emoji) => updateBusinessFeature(feature.id, 'icon', emoji)}
                           />
                           <Input
                             value={feature.title}
@@ -485,13 +483,7 @@ export default function EditPagePage() {
                 <Label className="mb-3 block">Free Trial Period</Label>
                 <Select
                   value={formData.freeTrialPeriod}
-                  onValueChange={(value) => {
-                    setFormData({
-                      ...formData,
-                      freeTrialPeriod: value,
-                      yearlyOption: value !== 'None' ? 'no' : formData.yearlyOption
-                    });
-                  }}
+                  onValueChange={(value) => setFormData({ ...formData, freeTrialPeriod: value })}
                 >
                   <SelectTrigger className="bg-slate-800/50 border-slate-700">
                     <SelectValue />
@@ -508,26 +500,26 @@ export default function EditPagePage() {
 
             <div>
               <Label className="mb-3 block">Yearly option?</Label>
-              {formData.freeTrialPeriod !== 'None' && (
+              {formData.interval === 'Yearly' && (
                 <p className="text-sm text-amber-400 mb-3">
-                  Yearly pricing is not available when a free trial is enabled.
+                  Yearly pricing option is not available when the base interval is set to Yearly.
                 </p>
               )}
               <RadioGroup
                 value={formData.yearlyOption}
                 onValueChange={(value) => setFormData({ ...formData, yearlyOption: value })}
-                disabled={formData.freeTrialPeriod !== 'None'}
+                disabled={formData.interval === 'Yearly'}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.freeTrialPeriod !== 'None' ? 'opacity-50' : ''}`}>
+                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.interval === 'Yearly' ? 'opacity-50' : ''}`}>
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="no" id="no-yearly" disabled={formData.freeTrialPeriod !== 'None'} />
+                      <RadioGroupItem value="no" id="no-yearly" disabled={formData.interval === 'Yearly'} />
                       <Label htmlFor="no-yearly" className="cursor-pointer flex-1">No yearly option</Label>
                     </div>
                   </Card>
-                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.freeTrialPeriod !== 'None' ? 'opacity-50' : ''}`}>
+                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.interval === 'Yearly' ? 'opacity-50' : ''}`}>
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="yes" id="yes-yearly" disabled={formData.freeTrialPeriod !== 'None'} />
+                      <RadioGroupItem value="yes" id="yes-yearly" disabled={formData.interval === 'Yearly'} />
                       <Label htmlFor="yes-yearly" className="cursor-pointer">Yes, priced at</Label>
                       <Input
                         type="number"
@@ -535,7 +527,7 @@ export default function EditPagePage() {
                         onChange={(e) => setFormData({ ...formData, yearlyPrice: e.target.value })}
                         className="w-32 bg-slate-900/50 border-slate-600"
                         step="0.01"
-                        disabled={formData.yearlyOption === 'no' || formData.freeTrialPeriod !== 'None'}
+                        disabled={formData.yearlyOption === 'no' || formData.interval === 'Yearly'}
                       />
                     </div>
                   </Card>

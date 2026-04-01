@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Link as LinkIcon, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,9 +13,10 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const [headingLevel, setHeadingLevel] = useState('normal');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const applyFormat = (prefix: string, suffix: string = '') => {
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+  const applyFormat = (prefix: string, suffix?: string) => {
+    const textarea = textareaRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -24,15 +25,15 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     const beforeText = value.substring(0, start);
     const afterText = value.substring(end);
 
-    const newText = beforeText + prefix + selectedText + (suffix || prefix) + afterText;
+    const actualSuffix = suffix !== undefined ? suffix : prefix;
+    const newText = beforeText + prefix + selectedText + actualSuffix + afterText;
+    const newCursorPos = start + prefix.length + selectedText.length + actualSuffix.length;
+
     onChange(newText);
 
     setTimeout(() => {
       textarea.focus({ preventScroll: true });
-      textarea.setSelectionRange(
-        start + prefix.length,
-        end + prefix.length
-      );
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   };
 
@@ -103,7 +104,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => applyFormat('- ', '\n')}
+          onClick={() => applyFormat('- ', '')}
           title="Bullet List"
         >
           <List className="h-4 w-4" />
@@ -113,7 +114,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => applyFormat('1. ', '\n')}
+          onClick={() => applyFormat('1. ', '')}
           title="Numbered List"
         >
           <ListOrdered className="h-4 w-4" />
@@ -123,7 +124,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => applyFormat('> ')}
+          onClick={() => applyFormat('> ', '')}
           title="Quote"
         >
           <Quote className="h-4 w-4" />
@@ -167,6 +168,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       </div>
 
       <Textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Welcome to Testandi! 👋
