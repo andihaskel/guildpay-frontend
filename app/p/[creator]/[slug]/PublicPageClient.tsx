@@ -29,6 +29,7 @@ interface PageData {
   currency: string;
   accepts_signups: boolean;
   has_yearly: boolean;
+  trial_days?: number;
 }
 
 type Step = 'details' | 'checkout';
@@ -173,9 +174,20 @@ export default function PublicPageClient() {
           <div className="max-w-4xl mx-auto">
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-bold mb-2">{pageData.offer_name}</h1>
-              <p className="text-slate-400">
-                {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
-              </p>
+              {pageData.trial_days && pageData.trial_days > 0 ? (
+                <div>
+                  <p className="text-emerald-400 font-semibold mb-1">
+                    🎉 {pageData.trial_days}-day free trial
+                  </p>
+                  <p className="text-slate-400 text-sm">
+                    Then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-slate-400">
+                  {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
+                </p>
+              )}
             </div>
 
             <Card className="p-8 bg-slate-900/80 border-slate-800/50">
@@ -258,6 +270,13 @@ export default function PublicPageClient() {
 
           <div className="lg:col-span-1">
             <Card className="p-6 bg-slate-900/80 border-slate-800/50 sticky top-6">
+              {pageData.trial_days && pageData.trial_days > 0 && (
+                <div className="mb-4 -mt-2 -mx-2 px-4 py-2 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30 rounded-lg">
+                  <p className="text-emerald-400 font-semibold text-sm text-center">
+                    🎉 {pageData.trial_days}-day free trial included
+                  </p>
+                </div>
+              )}
               <div className="mb-6">
                 <div className="text-4xl font-bold mb-2">
                   {currencySymbol}{formattedPrice}
@@ -265,6 +284,11 @@ export default function PublicPageClient() {
                     /{billingInterval === 'monthly' ? 'month' : 'year'}
                   </span>
                 </div>
+                {pageData.trial_days && pageData.trial_days > 0 && (
+                  <p className="text-sm text-slate-400 mt-1">
+                    Try free for {pageData.trial_days} days, then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'mo' : 'yr'}
+                  </p>
+                )}
 
                 {pageData.has_yearly && (
                   <div className="flex gap-2 p-1 bg-slate-800/50 rounded-lg mt-4">
@@ -319,6 +343,12 @@ export default function PublicPageClient() {
 
               <div className="mt-6 pt-6 border-t border-slate-800">
                 <div className="space-y-3 text-sm">
+                  {pageData.trial_days && pageData.trial_days > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-emerald-400 font-medium">{pageData.trial_days}-day free trial</span>
+                      <Check className="h-4 w-4 text-emerald-500" />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Instant access</span>
                     <Check className="h-4 w-4 text-green-500" />
