@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, LogOut, Settings, User } from 'lucide-react';
+import { Bell, LogOut, Settings, User, Menu } from 'lucide-react';
 import { useAuth, useProduct } from '@/contexts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { currentProduct, isLoading } = useProduct();
@@ -24,9 +28,15 @@ export function Topbar() {
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 border-b border-border bg-background z-30">
-      <div className="flex items-center justify-between h-full px-6">
+    <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 border-b border-border bg-background z-30">
+      <div className="flex items-center justify-between h-full px-4 lg:px-6">
         <div className="flex items-center gap-3">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="flex items-center gap-3">

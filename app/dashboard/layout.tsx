@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sidebar, Topbar } from '@/components/dashboard';
 import { useProduct } from '@/contexts';
 import { syncStripeUnmatched } from '@/lib/stripe-sync';
@@ -13,6 +13,7 @@ export default function DashboardLayout({
   const { currentProduct } = useProduct();
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitiatedSync = useRef(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!currentProduct?.id || hasInitiatedSync.current) {
@@ -38,9 +39,9 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <Topbar />
-      <main className="ml-64 mt-16 p-8">{children}</main>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Topbar onMenuClick={() => setSidebarOpen(true)} />
+      <main className="lg:ml-64 mt-16 p-4 lg:p-8">{children}</main>
     </div>
   );
 }
