@@ -28,7 +28,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     onChange(newText);
 
     setTimeout(() => {
-      textarea.focus();
+      textarea.focus({ preventScroll: true });
       textarea.setSelectionRange(
         start + prefix.length,
         end + prefix.length

@@ -231,7 +231,7 @@ export default function EditPagePage() {
     });
   };
 
-  const updateBusinessFeature = (id: string, field: 'title' | 'description', value: string) => {
+  const updateBusinessFeature = (id: string, field: 'title' | 'description' | 'icon', value: string) => {
     setFormData({
       ...formData,
       businessFeatures: formData.businessFeatures.map(f =>
@@ -382,12 +382,21 @@ export default function EditPagePage() {
                         <GripVertical className="h-4 w-4 text-slate-400" />
                       </div>
                       <div className="flex-1 space-y-3">
-                        <Input
-                          value={feature.title}
-                          onChange={(e) => updateBusinessFeature(feature.id, 'title', e.target.value)}
-                          placeholder="Feature title"
-                          className="bg-slate-900/50 border-slate-600"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            value={feature.icon}
+                            onChange={(e) => updateBusinessFeature(feature.id, 'icon', e.target.value)}
+                            placeholder="📌"
+                            className="w-16 bg-slate-900/50 border-slate-600 text-center text-xl"
+                            maxLength={2}
+                          />
+                          <Input
+                            value={feature.title}
+                            onChange={(e) => updateBusinessFeature(feature.id, 'title', e.target.value)}
+                            placeholder="Feature title"
+                            className="flex-1 bg-slate-900/50 border-slate-600"
+                          />
+                        </div>
                         <Textarea
                           value={feature.description}
                           onChange={(e) => updateBusinessFeature(feature.id, 'description', e.target.value)}
@@ -474,7 +483,16 @@ export default function EditPagePage() {
 
               <div>
                 <Label className="mb-3 block">Free Trial Period</Label>
-                <Select value={formData.freeTrialPeriod} onValueChange={(value) => setFormData({ ...formData, freeTrialPeriod: value })}>
+                <Select
+                  value={formData.freeTrialPeriod}
+                  onValueChange={(value) => {
+                    setFormData({
+                      ...formData,
+                      freeTrialPeriod: value,
+                      yearlyOption: value !== 'None' ? 'no' : formData.yearlyOption
+                    });
+                  }}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-700">
                     <SelectValue />
                   </SelectTrigger>
@@ -490,17 +508,26 @@ export default function EditPagePage() {
 
             <div>
               <Label className="mb-3 block">Yearly option?</Label>
-              <RadioGroup value={formData.yearlyOption} onValueChange={(value) => setFormData({ ...formData, yearlyOption: value })}>
+              {formData.freeTrialPeriod !== 'None' && (
+                <p className="text-sm text-amber-400 mb-3">
+                  Yearly pricing is not available when a free trial is enabled.
+                </p>
+              )}
+              <RadioGroup
+                value={formData.yearlyOption}
+                onValueChange={(value) => setFormData({ ...formData, yearlyOption: value })}
+                disabled={formData.freeTrialPeriod !== 'None'}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-4 bg-slate-800/40 border-slate-700/50">
+                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.freeTrialPeriod !== 'None' ? 'opacity-50' : ''}`}>
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="no" id="no-yearly" />
+                      <RadioGroupItem value="no" id="no-yearly" disabled={formData.freeTrialPeriod !== 'None'} />
                       <Label htmlFor="no-yearly" className="cursor-pointer flex-1">No yearly option</Label>
                     </div>
                   </Card>
-                  <Card className="p-4 bg-slate-800/40 border-slate-700/50">
+                  <Card className={`p-4 bg-slate-800/40 border-slate-700/50 ${formData.freeTrialPeriod !== 'None' ? 'opacity-50' : ''}`}>
                     <div className="flex items-center space-x-3">
-                      <RadioGroupItem value="yes" id="yes-yearly" />
+                      <RadioGroupItem value="yes" id="yes-yearly" disabled={formData.freeTrialPeriod !== 'None'} />
                       <Label htmlFor="yes-yearly" className="cursor-pointer">Yes, priced at</Label>
                       <Input
                         type="number"
@@ -508,7 +535,7 @@ export default function EditPagePage() {
                         onChange={(e) => setFormData({ ...formData, yearlyPrice: e.target.value })}
                         className="w-32 bg-slate-900/50 border-slate-600"
                         step="0.01"
-                        disabled={formData.yearlyOption === 'no'}
+                        disabled={formData.yearlyOption === 'no' || formData.freeTrialPeriod !== 'None'}
                       />
                     </div>
                   </Card>
