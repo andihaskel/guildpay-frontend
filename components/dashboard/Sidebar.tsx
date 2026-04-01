@@ -38,17 +38,17 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 isActive
-                  ? 'bg-primary/10 text-primary shadow-sm'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground font-medium'
               )}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-foreground rounded-r-full" />
               )}
               <item.icon className={cn(
-                "h-4 w-4 transition-transform",
+                "h-5 w-5 transition-transform",
                 isActive && "scale-110"
               )} />
               {item.name}
