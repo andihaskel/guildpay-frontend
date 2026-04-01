@@ -95,6 +95,14 @@ export interface DiscordRole {
   position: number;
 }
 
+export interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+  position: number;
+  parent_id?: string;
+}
+
 export interface StripePrice {
   id: string;
   product: string;

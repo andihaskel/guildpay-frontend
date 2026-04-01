@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
-import { DiscordRole } from '@/lib/types';
+import { DiscordRole, DiscordChannel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EditPagePage() {
@@ -28,9 +28,12 @@ export default function EditPagePage() {
   const isEditing = !!pageId;
 
   const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
+  const [discordChannels, setDiscordChannels] = useState<DiscordChannel[]>([]);
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [initialImageSeed, setInitialImageSeed] = useState('default');
+  const [guildId, setGuildId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     offerImage: 'https://api.dicebear.com/9.x/shapes/svg?seed=default',
@@ -72,8 +75,24 @@ export default function EditPagePage() {
         const overview = await api.getProductOverview(currentProduct.id);
 
         if (overview.discord_guild_id) {
+          setGuildId(overview.discord_guild_id);
           const roles = await api.getDiscordGuildRoles(overview.discord_guild_id);
           setDiscordRoles(roles);
+
+          if (roles.length > 0 && !formData.roleToAssign && !isEditing) {
+            const firstRoleId = roles[0].id;
+            setFormData(prev => ({ ...prev, roleToAssign: firstRoleId }));
+
+            try {
+              setIsLoadingChannels(true);
+              const channels = await api.getDiscordGuildChannels(overview.discord_guild_id, firstRoleId);
+              setDiscordChannels(channels);
+            } catch (error) {
+              console.error('Failed to load Discord channels:', error);
+            } finally {
+              setIsLoadingChannels(false);
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to load Discord roles:', error);
@@ -173,6 +192,29 @@ export default function EditPagePage() {
     }
   }, [hasCustomImage, initialImageSeed, isLoadingPage]);
 
+  useEffect(() => {
+    const loadChannels = async () => {
+      if (!guildId || !formData.roleToAssign) return;
+
+      try {
+        setIsLoadingChannels(true);
+        const channels = await api.getDiscordGuildChannels(guildId, formData.roleToAssign);
+        setDiscordChannels(channels);
+      } catch (error) {
+        console.error('Failed to load Discord channels:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load Discord channels',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingChannels(false);
+      }
+    };
+
+    loadChannels();
+  }, [formData.roleToAssign, guildId]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -204,6 +246,15 @@ export default function EditPagePage() {
       toast({
         title: 'Validation Error',
         description: 'Please select a role to assign',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.welcomeChannel || formData.welcomeChannel === '_empty') {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a welcome channel',
         variant: 'destructive',
       });
       return;
@@ -541,15 +592,27 @@ export default function EditPagePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="welcomeChannel" className="mb-3 block">Welcome Channel</Label>
-                <Select value={formData.welcomeChannel} onValueChange={(value) => setFormData({ ...formData, welcomeChannel: value })}>
+                <Label htmlFor="welcomeChannel" className="mb-3 block">
+                  Welcome Channel <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.welcomeChannel}
+                  onValueChange={(value) => setFormData({ ...formData, welcomeChannel: value })}
+                  disabled={isLoadingChannels}
+                >
                   <SelectTrigger id="welcomeChannel" className="bg-slate-800/50 border-slate-700">
-                    <SelectValue />
+                    <SelectValue placeholder={isLoadingChannels ? "Loading channels..." : "Select a channel"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="welcome">welcome</SelectItem>
-                    <SelectItem value="general">general</SelectItem>
-                    <SelectItem value="announcements">announcements</SelectItem>
+                    {discordChannels.length === 0 && !isLoadingChannels ? (
+                      <SelectItem value="_empty" disabled>No channels available</SelectItem>
+                    ) : (
+                      discordChannels.map((channel) => (
+                        <SelectItem key={channel.id} value={channel.id}>
+                          {channel.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-slate-400 mt-2">
