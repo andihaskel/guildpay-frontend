@@ -1,16 +1,36 @@
 'use client';
 
-import { X, FileText, CreditCard, Award } from 'lucide-react';
+import { X, FileText, CreditCard, Award, Loader as Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OnboardingStatus } from '@/lib/types';
 
 interface OnboardingChecklistProps {
-  status: OnboardingStatus;
+  status: OnboardingStatus | null;
   onDismiss: () => void;
+  isLoading?: boolean;
 }
 
-export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistProps) {
+export function OnboardingChecklist({ status, onDismiss, isLoading = false }: OnboardingChecklistProps) {
+  if (isLoading || !status) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Get started</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-6 bg-slate-800/40 border-slate-700/50">
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const isComplete = status.has_page && status.stripe_connected && status.has_guildpay_subscription;
 
   if (isComplete) {

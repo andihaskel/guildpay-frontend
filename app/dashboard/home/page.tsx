@@ -19,11 +19,7 @@ export default function HomePage() {
   const [pages, setPages] = useState<AccessPage[]>([]);
   const [payingMembers, setPayingMembers] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus>({
-    has_page: false,
-    stripe_connected: false,
-    has_guildpay_subscription: false,
-  });
+  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   useEffect(() => {
@@ -69,9 +65,9 @@ export default function HomePage() {
   };
 
   const isOnboardingComplete =
-    onboardingStatus.has_page &&
-    onboardingStatus.stripe_connected &&
-    onboardingStatus.has_guildpay_subscription;
+    onboardingStatus?.has_page &&
+    onboardingStatus?.stripe_connected &&
+    onboardingStatus?.has_guildpay_subscription;
 
   return (
     <div className="space-y-6">
@@ -83,6 +79,7 @@ export default function HomePage() {
         <OnboardingChecklist
           status={onboardingStatus}
           onDismiss={handleDismissOnboarding}
+          isLoading={isLoading}
         />
       )}
 
