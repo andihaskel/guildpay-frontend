@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/lib/types';
 import { api } from '@/lib/api';
-import { fetchWithRetry } from '@/lib/auth-utils';
 
 interface AuthContextType {
   user: User | null;
@@ -22,10 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = async () => {
     try {
       setIsLoading(true);
-      const userData = await fetchWithRetry(
-        () => api.getMe(),
-        { maxAttempts: 2, delayMs: 500, backoffMultiplier: 1.5 }
-      );
+      const userData = await api.getMe();
       setUser(userData);
     } catch (error) {
       setUser(null);
