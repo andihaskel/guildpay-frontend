@@ -152,6 +152,32 @@ export default function PublicPageClient() {
     );
   }
 
+  if (!pageData.accepts_signups) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
+        <Card className="max-w-2xl w-full p-12 bg-slate-900/80 border-slate-800/50 text-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-red-500" />
+          </div>
+          <h1 className="text-4xl font-bold mb-4">{pageData.offer_name}</h1>
+          <p className="text-xl text-slate-300 mb-6">Signups are currently closed</p>
+          <p className="text-slate-400 mb-8">
+            This access page is temporarily unavailable. Please check back later or contact the creator for more information.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/')}
+              className="border-slate-700 hover:bg-slate-800"
+            >
+              Go Home
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const currentPrice = billingInterval === 'monthly'
     ? pageData.monthly_amount_minor
     : pageData.yearly_amount_minor;
@@ -318,30 +344,24 @@ export default function PublicPageClient() {
                 )}
               </div>
 
-              {pageData.accepts_signups ? (
-                <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white h-12 text-lg font-semibold"
-                  size="lg"
-                  onClick={handleGetAccess}
-                  disabled={isCreatingSession}
-                >
-                  {isCreatingSession ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      Get Access
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <div className="text-center p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                  <p className="text-slate-400">Signups are currently closed</p>
-                </div>
-              )}
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white h-12 text-lg font-semibold"
+                size="lg"
+                onClick={handleGetAccess}
+                disabled={isCreatingSession}
+              >
+                {isCreatingSession ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Get Access
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </>
+                )}
+              </Button>
 
               <div className="mt-6 pt-6 border-t border-slate-800">
                 <div className="space-y-3 text-sm">
