@@ -46,8 +46,10 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
 
   const Icon = getIcon();
 
+  const isActive = page.active ?? true;
+
   return (
-    <Card className="overflow-hidden bg-slate-900/60 border-slate-800/50 hover:border-slate-700/50 transition-all hover:shadow-lg">
+    <Card className={`overflow-hidden bg-slate-900/60 border-slate-800/50 hover:border-slate-700/50 transition-all hover:shadow-lg ${!isActive ? 'opacity-60' : ''}`}>
       <div className={`h-40 ${gradientClass} relative flex items-center justify-center`}>
         {page.hero_image_url ? (
           <img src={page.hero_image_url} alt={page.offer_name} className="w-full h-full object-cover" />
@@ -58,7 +60,15 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
 
       <div className="p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-semibold mb-2">{page.offer_name}</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xl font-semibold">{page.offer_name}</h3>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={`text-xs font-medium ${isActive ? 'text-green-400' : 'text-red-400'}`}>
+                {isActive ? 'Active' : 'Disabled'}
+              </span>
+            </div>
+          </div>
           <p className="text-3xl font-bold mb-3">
             ${(page.monthly_amount_minor / 100).toFixed(2)}
             <span className="text-base font-normal text-slate-400">/month</span>
@@ -99,6 +109,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
             size="sm"
             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
             onClick={handleShare}
+            disabled={!isActive}
           >
             <Share2 className="h-4 w-4 mr-1" />
             Share
