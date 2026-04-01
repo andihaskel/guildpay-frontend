@@ -7,6 +7,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -240,9 +241,10 @@ export default function PublicPageClient() {
             {pageData.description && (
               <Card className="p-8 bg-slate-900/60 border-slate-800/50">
                 <h2 className="text-2xl font-semibold mb-4">About</h2>
-                <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-                  {pageData.description}
-                </p>
+                <MarkdownRenderer
+                  content={pageData.description}
+                  className="text-slate-300"
+                />
               </Card>
             )}
 

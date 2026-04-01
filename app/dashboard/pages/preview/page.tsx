@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
 import { CreatePageRequest } from '@/lib/types';
@@ -136,33 +137,6 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
     }
   };
 
-  const renderDescription = (text: string) => {
-    return text.split('\n').map((line, i) => {
-      if (line.startsWith('# ')) {
-        return <h1 key={i} className="text-2xl font-bold mb-4">{line.substring(2)}</h1>;
-      }
-      if (line.startsWith('## ')) {
-        return <h2 key={i} className="text-xl font-semibold mb-3">{line.substring(3)}</h2>;
-      }
-      if (line.startsWith('â€¢ **')) {
-        const match = line.match(/â€¢ \*\*(.*?)\*\*: (.*)/);
-        if (match) {
-          return (
-            <li key={i} className="mb-2">
-              <strong>{match[1]}</strong>: {match[2]}
-            </li>
-          );
-        }
-      }
-      if (line.startsWith('â€¢ ')) {
-        return <li key={i} className="mb-2">{line.substring(2)}</li>;
-      }
-      if (line.trim() === '') {
-        return <br key={i} />;
-      }
-      return <p key={i} className="mb-3">{line}</p>;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -244,11 +218,10 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
             </Card>
 
             <Card className="p-6 bg-slate-900/40 border-slate-800/50">
-              <div className="prose prose-invert max-w-none">
-                <div className="text-slate-300 leading-relaxed">
-                  {renderDescription(formData?.description || previewData.description)}
-                </div>
-              </div>
+              <MarkdownRenderer
+                content={formData?.description || previewData.description}
+                className="text-slate-300"
+              />
             </Card>
 
             <Card className="p-6 bg-slate-900/40 border-slate-800/50">
