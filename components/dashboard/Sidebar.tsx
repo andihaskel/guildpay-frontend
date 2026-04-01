@@ -32,15 +32,15 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-1 px-3 mt-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-md font-semibold'
                   : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground font-medium'
               )}
             >
