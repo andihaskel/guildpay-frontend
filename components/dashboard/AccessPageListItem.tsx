@@ -24,7 +24,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const pageUrl = page.public_path ? `${baseUrl}${page.public_path}` : `${baseUrl}/p/${page.slug}`;
-  const isActive = page.active ?? true;
+  const isDisabled = !page.accepts_signups;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(pageUrl);
@@ -41,7 +41,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors ${!isActive ? 'opacity-60' : ''}`}>
+    <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors ${isDisabled ? 'opacity-60' : ''}`}>
       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-700">
         {page.hero_image_url ? (
           <img
@@ -57,12 +57,14 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
       <div className="flex-1 min-w-0 w-full sm:w-auto">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-semibold text-lg">{page.offer_name}</h3>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className={`text-xs font-medium ${isActive ? 'text-green-400' : 'text-red-400'}`}>
-              {isActive ? 'Active' : 'Disabled'}
-            </span>
-          </div>
+          {isDisabled && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <span className="text-xs font-medium text-red-400">
+                Disabled
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
           <div className="px-2 py-0.5 rounded bg-green-950/50 border border-green-900/50">
@@ -111,7 +113,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
             size="icon"
             className="h-9 w-9 text-slate-400 hover:text-white"
             onClick={handleShare}
-            disabled={!isActive}
+            disabled={isDisabled}
           >
             <Share2 className="h-4 w-4" />
           </Button>
