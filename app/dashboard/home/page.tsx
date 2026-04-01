@@ -20,9 +20,9 @@ export default function HomePage() {
   const [payingMembers, setPayingMembers] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus>({
-    discordConnected: true,
-    firstPageCreated: false,
-    linkShared: false,
+    has_page: false,
+    stripe_connected: false,
+    has_guildpay_subscription: false,
   });
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
@@ -48,9 +48,9 @@ export default function HomePage() {
       setMonthlyRevenue(overview.monthly_revenue);
 
       setOnboardingStatus({
-        discordConnected: overview.onboarding.stripe_connected,
-        firstPageCreated: overview.onboarding.has_published_page,
-        linkShared: overview.onboarding.has_guildpay_subscription,
+        has_page: overview.onboarding.has_page,
+        stripe_connected: overview.onboarding.stripe_connected,
+        has_guildpay_subscription: overview.onboarding.has_guildpay_subscription,
       });
 
       const dismissed = localStorage.getItem(`onboarding_dismissed_${currentProduct.id}`);
@@ -69,9 +69,9 @@ export default function HomePage() {
   };
 
   const isOnboardingComplete =
-    onboardingStatus.discordConnected &&
-    onboardingStatus.firstPageCreated &&
-    onboardingStatus.linkShared;
+    onboardingStatus.has_page &&
+    onboardingStatus.stripe_connected &&
+    onboardingStatus.has_guildpay_subscription;
 
   return (
     <div className="space-y-6">

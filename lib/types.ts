@@ -109,7 +109,7 @@ export interface StripePrice {
 
 export interface ProductOverview {
   onboarding: {
-    has_published_page: boolean;
+    has_page: boolean;
     stripe_connected: boolean;
     has_guildpay_subscription: boolean;
   };
@@ -177,7 +177,7 @@ export interface CreatePageRequest {
 }
 
 export interface OnboardingStatus {
-  discordConnected: boolean;
-  firstPageCreated: boolean;
-  linkShared: boolean;
+  has_page: boolean;
+  stripe_connected: boolean;
+  has_guildpay_subscription: boolean;
 }

@@ -11,7 +11,7 @@ interface OnboardingChecklistProps {
 }
 
 export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistProps) {
-  const isComplete = status.discordConnected && status.firstPageCreated && status.linkShared;
+  const isComplete = status.has_page && status.stripe_connected && status.has_guildpay_subscription;
 
   if (isComplete) {
     return null;
@@ -19,39 +19,39 @@ export function OnboardingChecklist({ status, onDismiss }: OnboardingChecklistPr
 
   const steps = [
     {
-      id: 'discord',
+      id: 'page',
       icon: FileText,
       title: 'Publish your first page',
       description: 'Create a signup page to allow your users to join your community',
-      completed: status.discordConnected,
-      isPrimary: !status.discordConnected,
-      action: status.discordConnected ? null : {
-        label: 'Connect',
-        onClick: () => window.location.href = '/install-bot',
+      completed: status.has_page,
+      isPrimary: !status.has_page,
+      action: status.has_page ? null : {
+        label: 'Create Page',
+        onClick: () => window.location.href = '/dashboard/pages/edit',
       },
     },
     {
-      id: 'page',
-      icon: FileText,
+      id: 'stripe',
+      icon: CreditCard,
       title: 'Link your stripe account',
       description: 'Start accepting payments by connecting your Stripe account',
-      completed: status.firstPageCreated,
-      isPrimary: status.discordConnected && !status.firstPageCreated,
-      action: status.firstPageCreated ? null : {
+      completed: status.stripe_connected,
+      isPrimary: status.has_page && !status.stripe_connected,
+      action: status.stripe_connected ? null : {
         label: 'Link Stripe',
-        onClick: () => window.location.href = '/dashboard/pages/create',
+        onClick: () => window.location.href = '/dashboard/billing',
       },
     },
     {
-      id: 'share',
-      icon: CreditCard,
+      id: 'trial',
+      icon: Award,
       title: 'Start your 14 day free trial',
       description: 'Enjoy all the benefits of our premium tier free for 14 days',
-      completed: status.linkShared,
-      isPrimary: status.discordConnected && status.firstPageCreated && !status.linkShared,
-      action: status.linkShared ? null : {
+      completed: status.has_guildpay_subscription,
+      isPrimary: status.has_page && status.stripe_connected && !status.has_guildpay_subscription,
+      action: status.has_guildpay_subscription ? null : {
         label: 'Start now',
-        onClick: () => window.location.href = '/dashboard/pages',
+        onClick: () => window.location.href = '/dashboard/billing',
       },
     },
   ];
