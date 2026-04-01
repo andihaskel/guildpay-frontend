@@ -1,6 +1,7 @@
 import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+// Use Next.js API proxy to avoid CORS issues with cookies
+const API_BASE_URL = typeof window !== 'undefined' ? '/api/proxy' : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080');
 
 class ApiClient {
   private baseUrl: string;
