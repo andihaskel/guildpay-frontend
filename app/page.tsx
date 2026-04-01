@@ -93,12 +93,12 @@ export default function Home() {
       setIsRedirecting(true);
 
       try {
-        const response = await fetch('/api/proxy/auth/me', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
           credentials: 'include',
         });
 
         if (response.ok) {
-          const productsResponse = await fetch('/api/proxy/creator/products', {
+          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/creator/products`, {
             credentials: 'include',
           });
 
@@ -124,7 +124,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch('/api/proxy/auth/me', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
         credentials: 'include',
       });
 
@@ -150,7 +150,7 @@ export default function Home() {
 
   const handleSignOut = async () => {
     try {
-      await fetch('/api/proxy/auth/logout', {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
