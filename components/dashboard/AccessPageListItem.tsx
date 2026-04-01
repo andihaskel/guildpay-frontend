@@ -66,9 +66,18 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
             <span className="text-orange-400">Canceling: {page.member_counts.canceling}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Copy className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate">{pageUrl}</span>
+        <div
+          className="flex items-center gap-2 text-xs cursor-pointer hover:text-slate-300 transition-all active:scale-95 p-1 -ml-1 rounded group"
+          onClick={handleCopy}
+          title="Click to copy link"
+        >
+          <Copy className={`h-3 w-3 flex-shrink-0 transition-colors ${copied ? 'text-green-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+          <span className={`truncate transition-colors ${copied ? 'text-green-400' : 'text-slate-400'}`}>{pageUrl}</span>
+          {copied && (
+            <span className="text-xs text-green-400 font-medium animate-in fade-in slide-in-from-right-2 duration-300 ml-1">
+              Copied!
+            </span>
+          )}
         </div>
       </div>
 

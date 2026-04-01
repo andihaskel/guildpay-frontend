@@ -80,9 +80,18 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50">
-          <Copy className="h-4 w-4 text-slate-400 flex-shrink-0" />
+        <div
+          className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:bg-slate-800 hover:border-slate-600/50 transition-all active:scale-95"
+          onClick={handleCopy}
+          title="Click to copy link"
+        >
+          <Copy className={`h-4 w-4 flex-shrink-0 transition-colors ${copied ? 'text-green-400' : 'text-slate-400'}`} />
           <code className="text-xs text-slate-300 flex-1 truncate">{pageUrl}</code>
+          {copied && (
+            <span className="text-xs text-green-400 font-medium animate-in fade-in slide-in-from-right-2 duration-300">
+              Copied!
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
