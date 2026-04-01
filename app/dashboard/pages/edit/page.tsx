@@ -28,6 +28,8 @@ export default function EditPagePage() {
 
   const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [initialImageSeed, setInitialImageSeed] = useState('default');
 
   const [formData, setFormData] = useState({
     offerImage: 'https://api.dicebear.com/9.x/shapes/svg?seed=default',
@@ -88,14 +90,87 @@ export default function EditPagePage() {
   }, [currentProduct]);
 
   useEffect(() => {
-    if (formData.offerName && !hasCustomImage) {
-      const seed = encodeURIComponent(formData.offerName);
+    const loadPageData = async () => {
+      if (!currentProduct?.id || !pageId || !isEditing) {
+        setIsLoadingPage(false);
+        return;
+      }
+
+      try {
+        setIsLoadingPage(true);
+        const pageData = await api.getPage(currentProduct.id, pageId);
+
+        const trialDaysMap: Record<number, string> = {
+          0: 'None',
+          7: '7 days',
+          14: '14 days',
+          30: '30 days',
+        };
+
+        const imageSeed = pageData.hero_image_url?.includes('dicebear.com')
+          ? pageData.hero_image_url.split('seed=')[1] || pageData.slug
+          : pageData.slug;
+
+        setInitialImageSeed(imageSeed);
+        setHasCustomImage(!pageData.hero_image_url?.includes('dicebear.com'));
+
+        setFormData({
+          offerImage: pageData.hero_image_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${imageSeed}`,
+          offerUrl: pageData.slug,
+          offerName: pageData.offer_name,
+          businessName: currentProduct.name || '',
+          description: typeof pageData.description === 'string' ? pageData.description : JSON.stringify(pageData.description),
+          price: (pageData.monthly_amount_minor / 100).toFixed(2),
+          currency: pageData.currency.toUpperCase(),
+          interval: 'Monthly',
+          freeTrialPeriod: trialDaysMap[pageData.trial_days || 0] || 'None',
+          yearlyOption: pageData.yearly_amount_minor ? 'yes' : 'no',
+          yearlyPrice: pageData.yearly_amount_minor ? (pageData.yearly_amount_minor / 100).toFixed(2) : '300.00',
+          welcomeChannel: pageData.discord_welcome_channel_id || 'welcome',
+          roleToAssign: pageData.discord_role_id,
+          mediaGalleryEnabled: pageData.media_gallery_enabled,
+          couponsEnabled: false,
+          cryptoEnabled: false,
+          requireNameOnCard: false,
+          termsAndConditions: false,
+          isActive: pageData.accepts_signups,
+          businessFeatures: Array.isArray(pageData.features) && pageData.features.length > 0
+            ? pageData.features.map((f: any, idx: number) => ({
+                id: f.id || `${idx + 1}`,
+                icon: f.icon || '✨',
+                title: f.title || '',
+                description: f.description || '',
+              }))
+            : [
+                { id: '1', icon: '💬', title: 'Access to Group Chats:', description: 'Join a private space where you can participate in group conversations with other members.' },
+                { id: '2', icon: '⚡', title: 'Real-Time Updates:', description: 'Stay connected with instant messages and updates from the community.' },
+                { id: '3', icon: '🔒', title: 'Community-Only Content:', description: 'Get access to conversations, resources, and discussions available exclusively to members.' },
+              ],
+        });
+      } catch (error) {
+        console.error('Failed to load page data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load page data',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingPage(false);
+      }
+    };
+
+    loadPageData();
+  }, [currentProduct?.id, pageId, isEditing]);
+
+  useEffect(() => {
+    if (!hasCustomImage && !isLoadingPage) {
+      const seed = encodeURIComponent(initialImageSeed);
       setFormData(prev => ({
         ...prev,
         offerImage: `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`
       }));
     }
-  }, [formData.offerName, hasCustomImage]);
+  }, [hasCustomImage, initialImageSeed, isLoadingPage]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -164,6 +239,30 @@ export default function EditPagePage() {
       )
     });
   };
+
+  if (isLoadingPage && isEditing) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            className="mb-6 -ml-2"
+            onClick={() => router.push('/dashboard/pages')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Pages
+          </Button>
+
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading page data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
