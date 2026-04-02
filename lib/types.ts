@@ -193,3 +193,23 @@ export interface OnboardingStatus {
   stripe_connected: boolean;
   has_guildpay_subscription: boolean;
 }
+
+export interface BillingPlanStatus {
+  plan: string;
+  status: string;
+  current_period_end?: string;
+  trial_start?: string;
+  trial_end?: string;
+  cancels_at_period_end?: boolean;
+  renews_at?: string;
+  expires_at?: string;
+  usage: {
+    pages: number;
+    members: number;
+  };
+  limits: {
+    max_pages: number;
+    max_members: number;
+  };
+  features: string[];
+}

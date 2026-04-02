@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -202,18 +202,12 @@ class ApiClient {
     return this.get<CreatorSubscription>('/billing');
   }
 
-  async getBillingPlan(): Promise<{
-    planName: string;
-    status: string;
-    maxProducts: number;
-    maxRoles: number;
-  }> {
-    return this.get<{
-      planName: string;
-      status: string;
-      maxProducts: number;
-      maxRoles: number;
-    }>('/billing/plan');
+  async getBillingPlan(): Promise<BillingPlanStatus> {
+    return this.get<BillingPlanStatus>('/billing/plan');
+  }
+
+  async getBillingPlans(): Promise<BillingPlan[]> {
+    return this.get<BillingPlan[]>('/billing/plans');
   }
 
   async getProductsCount(): Promise<{ count: number }> {
