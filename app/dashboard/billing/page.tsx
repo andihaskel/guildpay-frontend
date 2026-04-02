@@ -174,7 +174,7 @@ export default function BillingPage() {
                 {billingPlan?.limits.max_pages === -1 ? (
                   <Infinity className="h-6 w-6 text-muted-foreground" />
                 ) : (
-                  billingPlan?.limits.max_pages || 0
+                  <span>{billingPlan?.limits.max_pages || 0}</span>
                 )}
               </div>
               {billingPlan?.limits.max_pages !== -1 && (
@@ -213,7 +213,7 @@ export default function BillingPage() {
                 {billingPlan?.limits.max_members === -1 ? (
                   <Infinity className="h-6 w-6 text-muted-foreground" />
                 ) : (
-                  billingPlan?.limits.max_members || 0
+                  <span>{billingPlan?.limits.max_members || 0}</span>
                 )}
               </div>
               {billingPlan?.limits.max_members !== -1 && (
