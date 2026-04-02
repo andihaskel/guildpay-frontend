@@ -125,6 +125,26 @@ export default function BillingPage() {
     }
   };
 
+  const getCurrentPlanIndex = () => {
+    if (!billingPlan?.plan) return -1;
+    return plans.findIndex(p => p.slug.toLowerCase() === billingPlan.plan.toLowerCase());
+  };
+
+  const getActionType = (planSlug: string) => {
+    const currentIndex = getCurrentPlanIndex();
+    const targetIndex = plans.findIndex(p => p.slug === planSlug);
+
+    if (currentIndex === -1 || targetIndex === -1) return 'upgrade';
+    if (targetIndex > currentIndex) return 'upgrade';
+    if (targetIndex < currentIndex) return 'downgrade';
+    return 'current';
+  };
+
+  const isMaxPlan = () => {
+    const currentIndex = getCurrentPlanIndex();
+    return currentIndex === plans.length - 1;
+  };
+
   const handleUpgrade = async (planSlug: string) => {
     try {
       setCheckoutLoading(planSlug);
@@ -180,17 +200,24 @@ export default function BillingPage() {
                 </p>
               )}
             </div>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => handleUpgrade('pro')}
-              disabled={checkoutLoading === 'pro'}
-            >
-              {checkoutLoading === 'pro' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                'Upgrade to Pro'
-              )}
-            </Button>
+            {!isMaxPlan() && (
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  const nextPlanIndex = getCurrentPlanIndex() + 1;
+                  if (nextPlanIndex < plans.length) {
+                    handleUpgrade(plans[nextPlanIndex].slug);
+                  }
+                }}
+                disabled={checkoutLoading !== null}
+              >
+                {checkoutLoading !== null ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  `Upgrade to ${plans[getCurrentPlanIndex() + 1]?.name || 'Pro'}`
+                )}
+              </Button>
+            )}
           </div>
         )}
       </Card>
@@ -346,7 +373,7 @@ export default function BillingPage() {
                     ) : isCurrentPlan ? (
                       'Current Plan'
                     ) : (
-                      `Upgrade to ${plan.name}`
+                      `${getActionType(plan.slug) === 'upgrade' ? 'Upgrade' : 'Downgrade'} to ${plan.name}`
                     )}
                   </Button>
                 </Card>
