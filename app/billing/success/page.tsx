@@ -98,27 +98,6 @@ export default function BillingSuccessPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6">
-                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                  <div className="text-3xl font-bold text-blue-400 mb-1">
-                    {plan.limits.max_pages === -1 ? '∞' : plan.limits.max_pages}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Pages</div>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                  <div className="text-3xl font-bold text-purple-400 mb-1">
-                    {plan.limits.max_members === -1 ? '∞' : plan.limits.max_members}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Members</div>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                  <div className="text-3xl font-bold text-pink-400 mb-1">
-                    {plan.features?.length || 0}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Features</div>
-                </div>
-              </div>
-
               {plan.status === 'trialing' && plan.trial_end && (
                 <div className="p-4 rounded-lg bg-blue-950/30 border border-blue-800/50">
                   <p className="text-sm text-blue-300">
