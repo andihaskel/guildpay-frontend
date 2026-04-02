@@ -7,17 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
-
-interface Plan {
-  name: string;
-  price: number;
-  period?: string;
-  features: string[];
-  isPopular?: boolean;
-  isCurrent?: boolean;
-  buttonText: string;
-  buttonVariant: 'default' | 'outline' | 'secondary';
-}
+import { BillingPlan } from '@/lib/types';
 
 export default function BillingPage() {
   const [billingPlan, setBillingPlan] = useState<{
@@ -26,19 +16,24 @@ export default function BillingPage() {
     maxProducts: number;
     maxRoles: number;
   } | null>(null);
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadBillingPlan();
+    loadBillingData();
   }, []);
 
-  const loadBillingPlan = async () => {
+  const loadBillingData = async () => {
     try {
       setIsLoading(true);
-      const planData = await api.getBillingPlan();
+      const [planData, plansData] = await Promise.all([
+        api.getBillingPlan(),
+        api.getBillingPlans()
+      ]);
       setBillingPlan(planData);
+      setPlans(plansData);
     } catch (error) {
-      console.error('Failed to load billing plan:', error);
+      console.error('Failed to load billing data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -50,46 +45,35 @@ export default function BillingPage() {
     members: { current: 247, limit: 'unlimited' }
   };
 
-  const plans: Plan[] = [
-    {
-      name: 'Free',
-      price: 0,
-      features: ['1 product', '2 roles', 'GuildPay branding'],
-      isCurrent: true,
-      buttonText: 'Current Plan',
-      buttonVariant: 'outline'
-    },
-    {
-      name: 'Pro',
-      price: 15,
-      period: 'per month',
-      features: [
-        '3 products',
-        '20 roles',
-        'No branding',
-        'Basic analytics',
-        'Priority support'
-      ],
-      isPopular: true,
-      buttonText: 'Upgrade to Pro',
-      buttonVariant: 'default'
-    },
-    {
-      name: 'Scale',
-      price: 39,
-      period: 'per month',
-      features: [
-        'Unlimited products',
-        'Unlimited roles',
-        'Advanced analytics',
-        'Team access',
-        'API access',
-        'White-label checkout'
-      ],
-      buttonText: 'Upgrade to Scale',
-      buttonVariant: 'secondary'
+  const formatFeatureList = (plan: BillingPlan): string[] => {
+    const features: string[] = [];
+
+    if (plan.max_pages === -1) {
+      features.push('Unlimited pages');
+    } else {
+      features.push(`${plan.max_pages} page${plan.max_pages === 1 ? '' : 's'}`);
     }
-  ];
+
+    if (plan.max_members_per_page === -1) {
+      features.push('Unlimited members per page');
+    } else {
+      features.push(`${plan.max_members_per_page} members per page`);
+    }
+
+    if (plan.trial_days > 0) {
+      features.push(`${plan.trial_days} days trial`);
+    }
+
+    if (plan.features.analytics) {
+      features.push('Advanced analytics');
+    }
+
+    if (plan.features.custom_support) {
+      features.push('Priority support');
+    }
+
+    return features;
+  };
 
   const getProductsPercentage = () => {
     return (usage.products.current / usage.products.limit) * 100;
@@ -198,55 +182,73 @@ export default function BillingPage() {
 
       <div>
         <h2 className="text-xl font-semibold mb-4">Plans</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`p-6 relative ${
-                plan.isPopular
-                  ? 'bg-blue-950/30 border-blue-600'
-                  : 'bg-slate-900/40 border-slate-800/50'
-              }`}
-            >
-              {plan.isPopular && (
-                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 hover:bg-blue-600 text-white">
-                  Most Popular
-                </Badge>
-              )}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">${plan.price}</span>
-                  {plan.period && (
-                    <span className="text-sm text-muted-foreground">
-                      {plan.period}
-                    </span>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.map((plan, index) => {
+              const isCurrentPlan = billingPlan?.planName?.toLowerCase() === plan.slug.toLowerCase();
+              const isPopular = plan.slug === 'pro';
+              const features = formatFeatureList(plan);
+              const price = plan.unit_amount ? (plan.unit_amount / 100).toFixed(2) : '0';
+
+              return (
+                <Card
+                  key={plan.slug}
+                  className={`p-6 relative ${
+                    isPopular
+                      ? 'bg-blue-950/30 border-blue-600'
+                      : 'bg-slate-900/40 border-slate-800/50'
+                  }`}
+                >
+                  {isPopular && (
+                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 hover:bg-blue-600 text-white">
+                      Most Popular
+                    </Badge>
                   )}
-                </div>
-              </div>
-              <div className="space-y-3 mb-6">
-                {plan.features.map((feature, featureIndex) => (
-                  <div key={featureIndex} className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className="text-4xl font-bold">${price}</span>
+                      {plan.recurring_interval && (
+                        <span className="text-sm text-muted-foreground">
+                          per {plan.recurring_interval}
+                        </span>
+                      )}
+                    </div>
+                    {plan.fee_bps > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        + {plan.fee_bps}% per transaction
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
-              <Button
-                className={`w-full ${
-                  plan.isCurrent
-                    ? 'bg-slate-800 hover:bg-slate-800 text-muted-foreground cursor-default'
-                    : plan.isPopular
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-purple-600 hover:bg-purple-700'
-                }`}
-                disabled={plan.isCurrent}
-              >
-                {plan.buttonText}
-              </Button>
-            </Card>
-          ))}
-        </div>
+                  <div className="space-y-3 mb-6">
+                    {features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    className={`w-full ${
+                      isCurrentPlan
+                        ? 'bg-slate-800 hover:bg-slate-800 text-muted-foreground cursor-default'
+                        : isPopular
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                    disabled={isCurrentPlan}
+                  >
+                    {isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                  </Button>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div>
