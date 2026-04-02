@@ -25,7 +25,20 @@ export default function BillingPage() {
         api.getBillingPlan(),
         api.getBillingPlans()
       ]);
-      setBillingPlan(planData);
+
+      const normalizedPlan = {
+        ...planData,
+        limits: planData.limits ?? {
+          max_pages: -1,
+          max_members: -1,
+        },
+        usage: planData.usage ?? {
+          pages: 0,
+          members: 0,
+        }
+      };
+
+      setBillingPlan(normalizedPlan);
       setPlans(plansData);
     } catch (error) {
       console.error('Failed to load billing data:', error);
