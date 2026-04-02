@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity } from 'lucide-react';
+import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +29,8 @@ export default function BillingPage() {
       const normalizedPlan = {
         ...planData,
         limits: planData.limits ?? {
-          max_pages: -1,
-          max_members: -1,
+          max_pages: planData.max_pages ?? -1,
+          max_members: planData.max_members ?? -1,
         },
         usage: planData.usage ?? {
           pages: 0,
@@ -187,7 +187,7 @@ export default function BillingPage() {
                 {billingPlan?.usage.pages || 0}
                 <span className="text-muted-foreground">/</span>
                 {billingPlan?.limits.max_pages === -1 ? (
-                  <Infinity className="h-6 w-6 text-muted-foreground" />
+                  <InfinityIcon className="h-6 w-6 text-muted-foreground" />
                 ) : (
                   <span>{billingPlan?.limits.max_pages || 0}</span>
                 )}
@@ -226,7 +226,7 @@ export default function BillingPage() {
                 {billingPlan?.usage.members || 0}
                 <span className="text-muted-foreground">/</span>
                 {billingPlan?.limits.max_members === -1 ? (
-                  <Infinity className="h-6 w-6 text-muted-foreground" />
+                  <InfinityIcon className="h-6 w-6 text-muted-foreground" />
                 ) : (
                   <span>{billingPlan?.limits.max_members || 0}</span>
                 )}
