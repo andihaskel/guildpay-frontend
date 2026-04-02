@@ -34,8 +34,8 @@ export default function BillingPage() {
     }
   };
 
-  const formatFeatureList = (plan: BillingPlan): React.ReactNode[] => {
-    const features: React.ReactNode[] = [];
+  const formatFeatureList = (plan: BillingPlan): string[] => {
+    const features: string[] = [];
 
     if (plan.max_pages === -1) {
       features.push('Unlimited pages');
@@ -59,7 +59,7 @@ export default function BillingPage() {
       }
     }
 
-    return features.filter(f => typeof f === 'string');
+    return features;
   };
 
   const getPagesPercentage = () => {
@@ -290,7 +290,7 @@ export default function BillingPage() {
                     {features.map((feature, featureIndex) => (
                       <div key={featureIndex} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{String(feature)}</span>
+                        <span className="text-sm">{feature}</span>
                       </div>
                     ))}
                   </div>
