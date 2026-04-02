@@ -56,12 +56,16 @@ export interface Member {
 }
 
 export interface BillingPlan {
-  id: string;
+  slug: string;
   name: string;
-  price: number;
-  interval: 'month' | 'year';
+  max_pages: number;
+  max_members: number;
+  trial_days: number;
+  fee_bps: number;
   features: string[];
-  isActive: boolean;
+  unit_amount?: number;
+  currency?: string;
+  recurring_interval?: string;
 }
 
 export interface CreatorSubscription {

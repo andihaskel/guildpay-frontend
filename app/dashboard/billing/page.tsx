@@ -54,22 +54,18 @@ export default function BillingPage() {
       features.push(`${plan.max_pages} page${plan.max_pages === 1 ? '' : 's'}`);
     }
 
-    if (plan.max_members_per_page === -1) {
-      features.push('Unlimited members per page');
+    if (plan.max_members === -1) {
+      features.push('Unlimited members');
     } else {
-      features.push(`${plan.max_members_per_page} members per page`);
+      features.push(`${plan.max_members} members`);
     }
 
-    if (plan.trial_days > 0) {
-      features.push(`${plan.trial_days} days trial`);
+    if (plan.features.includes('analytics')) {
+      features.push('Analytics');
     }
 
-    if (plan.features.analytics) {
-      features.push('Advanced analytics');
-    }
-
-    if (plan.features.custom_support) {
-      features.push('Priority support');
+    if (plan.features.includes('custom_support')) {
+      features.push('24/7 support');
     }
 
     return features;
