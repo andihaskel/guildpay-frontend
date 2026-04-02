@@ -34,8 +34,8 @@ export default function BillingPage() {
     }
   };
 
-  const formatFeatureList = (plan: BillingPlan): string[] => {
-    const features: string[] = [];
+  const formatFeatureList = (plan: BillingPlan): React.ReactNode[] => {
+    const features: React.ReactNode[] = [];
 
     if (plan.max_pages === -1) {
       features.push('Unlimited pages');
@@ -49,15 +49,17 @@ export default function BillingPage() {
       features.push(`${plan.max_members} members`);
     }
 
-    if (plan.features.includes('analytics')) {
-      features.push('Analytics');
+    if (plan.features && Array.isArray(plan.features)) {
+      if (plan.features.includes('analytics')) {
+        features.push('Analytics');
+      }
+
+      if (plan.features.includes('custom_support')) {
+        features.push('24/7 support');
+      }
     }
 
-    if (plan.features.includes('custom_support')) {
-      features.push('24/7 support');
-    }
-
-    return features;
+    return features.filter(f => typeof f === 'string');
   };
 
   const getPagesPercentage = () => {
@@ -288,7 +290,7 @@ export default function BillingPage() {
                     {features.map((feature, featureIndex) => (
                       <div key={featureIndex} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
+                        <span className="text-sm">{String(feature)}</span>
                       </div>
                     ))}
                   </div>
