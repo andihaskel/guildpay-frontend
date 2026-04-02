@@ -8,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
 import { BillingPlan, BillingPlanStatus } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function BillingPage() {
   const [billingPlan, setBillingPlan] = useState<BillingPlanStatus | null>(null);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   useEffect(() => {
     loadBillingData();
@@ -29,8 +31,8 @@ export default function BillingPage() {
       const normalizedPlan = {
         ...planData,
         limits: planData.limits ?? {
-          max_pages: planData.max_pages ?? -1,
-          max_members: planData.max_members ?? -1,
+          max_pages: -1,
+          max_members: -1,
         },
         usage: planData.usage ?? {
           pages: 0,
@@ -123,6 +125,19 @@ export default function BillingPage() {
     }
   };
 
+  const handleUpgrade = async (planSlug: string) => {
+    try {
+      setCheckoutLoading(planSlug);
+      const { checkout_url } = await api.createBillingCheckoutSession(planSlug);
+      window.open(checkout_url, '_blank');
+    } catch (error: any) {
+      console.error('Failed to create checkout session:', error);
+      toast.error(error.message || 'Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -165,8 +180,16 @@ export default function BillingPage() {
                 </p>
               )}
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Upgrade to Pro
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => handleUpgrade('pro')}
+              disabled={checkoutLoading === 'pro'}
+            >
+              {checkoutLoading === 'pro' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                'Upgrade to Pro'
+              )}
             </Button>
           </div>
         )}
@@ -315,9 +338,16 @@ export default function BillingPage() {
                         ? 'bg-blue-600 hover:bg-blue-700'
                         : 'bg-emerald-600 hover:bg-emerald-700'
                     }`}
-                    disabled={isCurrentPlan}
+                    disabled={isCurrentPlan || checkoutLoading === plan.slug}
+                    onClick={() => handleUpgrade(plan.slug)}
                   >
-                    {isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                    {checkoutLoading === plan.slug ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isCurrentPlan ? (
+                      'Current Plan'
+                    ) : (
+                      `Upgrade to ${plan.name}`
+                    )}
                   </Button>
                 </Card>
               );

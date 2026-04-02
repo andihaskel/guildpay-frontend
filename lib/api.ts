@@ -210,6 +210,12 @@ class ApiClient {
     return this.get<BillingPlan[]>('/billing/plans');
   }
 
+  async createBillingCheckoutSession(planSlug: string): Promise<{ checkout_url: string }> {
+    return this.post<{ checkout_url: string }>('/billing/checkout-session', {
+      plan_slug: planSlug
+    });
+  }
+
   async getProductsCount(): Promise<{ count: number }> {
     return this.get<{ count: number }>('/creator/products/count');
   }
