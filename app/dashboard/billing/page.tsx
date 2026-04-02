@@ -193,7 +193,7 @@ export default function BillingPage() {
               return (
                 <Card
                   key={plan.slug}
-                  className={`p-6 relative ${
+                  className={`p-6 relative flex flex-col ${
                     isPopular
                       ? 'bg-blue-950/30 border-blue-600'
                       : 'bg-slate-900/40 border-slate-800/50'
@@ -220,7 +220,7 @@ export default function BillingPage() {
                       </p>
                     )}
                   </div>
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-3 mb-6 flex-grow">
                     {features.map((feature, featureIndex) => (
                       <div key={featureIndex} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -229,7 +229,7 @@ export default function BillingPage() {
                     ))}
                   </div>
                   <Button
-                    className={`w-full ${
+                    className={`w-full mt-auto ${
                       isCurrentPlan
                         ? 'bg-slate-800 hover:bg-slate-800 text-muted-foreground cursor-default'
                         : isPopular
