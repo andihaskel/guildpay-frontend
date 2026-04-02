@@ -280,7 +280,7 @@ export default function BillingPage() {
                     </div>
                     {plan.fee_bps > 0 && (
                       <p className="text-sm text-muted-foreground">
-                        + {plan.fee_bps}% per transaction
+                        + {(plan.fee_bps / 100).toFixed(1)}% per transaction
                       </p>
                     )}
                   </div>
