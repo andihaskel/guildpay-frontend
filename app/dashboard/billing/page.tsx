@@ -149,7 +149,13 @@ export default function BillingPage() {
     try {
       setCheckoutLoading(planSlug);
       const { checkout_url } = await api.createBillingCheckoutSession(planSlug);
-      window.open(checkout_url, '_blank');
+
+      if (checkout_url) {
+        window.open(checkout_url, '_blank');
+      } else {
+        await loadBillingData();
+        toast.success('Plan updated successfully');
+      }
     } catch (error: any) {
       console.error('Failed to create checkout session:', error);
       toast.error(error.message || 'Failed to start checkout');
@@ -184,9 +190,9 @@ export default function BillingPage() {
               <p className="text-base text-muted-foreground mb-1">
                 {billingPlan?.limits.max_pages === -1 ? 'Unlimited pages' : `Up to ${billingPlan?.limits.max_pages} page${billingPlan?.limits.max_pages === 1 ? '' : 's'}`} · {billingPlan?.limits.max_members === -1 ? 'Unlimited members' : `${billingPlan?.limits.max_members} members`}
               </p>
-              {billingPlan?.cancels_at_period_end && billingPlan?.expires_at && (
+              {billingPlan?.cancels_at_period_end && billingPlan?.current_period_end && (
                 <p className="text-sm text-yellow-500">
-                  Access until {new Date(billingPlan.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  Plan active until {new Date(billingPlan.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Will revert to free plan afterwards.
                 </p>
               )}
               {billingPlan?.status === 'trialing' && billingPlan?.trial_end && (
