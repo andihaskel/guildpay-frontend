@@ -145,6 +145,26 @@ export default function BillingPage() {
     return currentIndex === plans.length - 1;
   };
 
+  const handleReactivate = async () => {
+    try {
+      setCheckoutLoading('reactivate');
+      const currentPlan = billingPlan?.plan || '';
+      const { checkout_url } = await api.createBillingCheckoutSession(currentPlan);
+
+      if (checkout_url) {
+        window.open(checkout_url, '_blank');
+      } else {
+        await loadBillingData();
+        toast.success('Plan reactivated successfully');
+      }
+    } catch (error: any) {
+      console.error('Failed to reactivate plan:', error);
+      toast.error(error.message || 'Failed to reactivate plan');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
   const handleUpgrade = async (planSlug: string) => {
     try {
       setCheckoutLoading(planSlug);
@@ -206,7 +226,19 @@ export default function BillingPage() {
                 </p>
               )}
             </div>
-            {!isMaxPlan() && (
+            {billingPlan?.cancels_at_period_end ? (
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleReactivate}
+                disabled={checkoutLoading !== null}
+              >
+                {checkoutLoading === 'reactivate' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Reactivate Plan'
+                )}
+              </Button>
+            ) : !isMaxPlan() && (
               <Button
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => {
