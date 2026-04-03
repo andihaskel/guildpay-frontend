@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon } from 'lucide-react';
+import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon, TriangleAlert as AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,12 +9,24 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
 import { BillingPlan, BillingPlanStatus } from '@/lib/types';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function BillingPage() {
   const [billingPlan, setBillingPlan] = useState<BillingPlanStatus | null>(null);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     loadBillingData();
@@ -181,6 +193,21 @@ export default function BillingPage() {
       toast.error(error.message || 'Failed to start checkout');
     } finally {
       setCheckoutLoading(null);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelLoading(true);
+      await api.cancelSubscription();
+      const updatedPlan = await api.getBillingPlan();
+      setBillingPlan(updatedPlan);
+      toast.success('Subscription cancelled successfully');
+    } catch (error: any) {
+      console.error('Failed to cancel subscription:', error);
+      toast.error(error.message || 'Failed to cancel subscription');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -450,6 +477,56 @@ export default function BillingPage() {
           </div>
         </Card>
       </div>
+
+      {billingPlan?.plan && billingPlan.plan !== 'free' && !billingPlan.cancels_at_period_end && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Cancel Subscription</h2>
+          <Card className="p-6 bg-slate-900/40 border-slate-800/50">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div className="flex-grow">
+                <h3 className="text-lg font-semibold mb-2">Cancel your subscription</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Your subscription will remain active until the end of your current billing period. After that, your account will be downgraded to the free plan.
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      disabled={cancelLoading}
+                    >
+                      {cancelLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Cancel Subscription'
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your subscription will be cancelled at the end of the current billing period. You will retain access to your current plan features until {billingPlan?.current_period_end ? new Date(billingPlan.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'the end of the period'}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancelSubscription}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Cancel Subscription
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

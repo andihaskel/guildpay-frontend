@@ -216,6 +216,10 @@ class ApiClient {
     });
   }
 
+  async cancelSubscription(): Promise<void> {
+    return this.post<void>('/billing/cancel');
+  }
+
   async getProductsCount(): Promise<{ count: number }> {
     return this.get<{ count: number }>('/creator/products/count');
   }
