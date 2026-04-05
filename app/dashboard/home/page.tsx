@@ -64,18 +64,13 @@ export default function HomePage() {
     localStorage.setItem(`onboarding_dismissed_${currentProduct.id}`, 'true');
   };
 
-  const isOnboardingComplete =
-    onboardingStatus?.has_page &&
-    onboardingStatus?.stripe_connected &&
-    onboardingStatus?.has_guildpay_subscription;
-
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">
         {currentProduct?.name || 'Gaming Community'}
       </h1>
 
-      {!onboardingDismissed && !isOnboardingComplete && (
+      {!onboardingDismissed && (
         <OnboardingChecklist
           status={onboardingStatus}
           onDismiss={handleDismissOnboarding}
