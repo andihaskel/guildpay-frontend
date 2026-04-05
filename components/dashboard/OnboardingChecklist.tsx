@@ -31,12 +31,6 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
     );
   }
 
-  const isComplete = status.has_page && status.stripe_connected && status.has_guildpay_subscription;
-
-  if (isComplete) {
-    return null;
-  }
-
   const steps = [
     {
       id: 'page',
