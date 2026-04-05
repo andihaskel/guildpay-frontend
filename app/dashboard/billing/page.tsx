@@ -274,7 +274,7 @@ export default function BillingPage() {
                     handleUpgrade(plans[nextPlanIndex].slug);
                   }
                 }}
-                disabled={checkoutLoading !== null}
+                disabled={checkoutLoading !== null || billingPlan?.status === 'canceled'}
               >
                 {checkoutLoading !== null ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -430,7 +430,7 @@ export default function BillingPage() {
                         ? 'bg-blue-600 hover:bg-blue-700'
                         : 'bg-emerald-600 hover:bg-emerald-700'
                     }`}
-                    disabled={isCurrentPlan || checkoutLoading === plan.slug}
+                    disabled={isCurrentPlan || checkoutLoading === plan.slug || billingPlan?.status === 'canceled'}
                     onClick={() => handleUpgrade(plan.slug)}
                   >
                     {checkoutLoading === plan.slug ? (
