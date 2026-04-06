@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon, TriangleAlert as AlertTriangle } from 'lucide-react';
+import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon, TriangleAlert as AlertTriangle, ExternalLink, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { api } from '@/lib/api';
-import { BillingPlan, BillingPlanStatus } from '@/lib/types';
+import { BillingPlan, BillingPlanStatus, Invoice } from '@/lib/types';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -24,12 +24,15 @@ import {
 export default function BillingPage() {
   const [billingPlan, setBillingPlan] = useState<BillingPlanStatus | null>(null);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [invoicesLoading, setInvoicesLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     loadBillingData();
+    loadInvoices();
   }, []);
 
   const loadBillingData = async () => {
@@ -58,6 +61,18 @@ export default function BillingPage() {
       console.error('Failed to load billing data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadInvoices = async () => {
+    try {
+      setInvoicesLoading(true);
+      const response = await api.getBillingInvoices();
+      setInvoices(response.invoices);
+    } catch (error) {
+      console.error('Failed to load invoices:', error);
+    } finally {
+      setInvoicesLoading(false);
     }
   };
 
@@ -208,6 +223,38 @@ export default function BillingPage() {
       toast.error(error.message || 'Failed to cancel subscription');
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amount / 100);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'bg-green-600 hover:bg-green-600';
+      case 'open':
+        return 'bg-blue-600 hover:bg-blue-600';
+      case 'draft':
+        return 'bg-slate-600 hover:bg-slate-600';
+      case 'void':
+        return 'bg-slate-600 hover:bg-slate-600';
+      case 'uncollectible':
+        return 'bg-red-600 hover:bg-red-600';
+      default:
+        return 'bg-slate-600 hover:bg-slate-600';
     }
   };
 
@@ -451,30 +498,80 @@ export default function BillingPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Billing History</h2>
         <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-800/30">
-                <tr className="text-left text-sm text-muted-foreground">
-                  <th className="py-4 px-6 font-medium">Invoice</th>
-                  <th className="py-4 px-6 font-medium">Date</th>
-                  <th className="py-4 px-6 font-medium">Amount</th>
-                  <th className="py-4 px-6 font-medium">Status</th>
-                  <th className="py-4 px-6 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={5} className="py-12">
-                    <EmptyState
-                      icon={FileText}
-                      title="No billing history yet"
-                      description="Invoices will appear here after your first payment"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {invoicesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="py-12">
+              <EmptyState
+                icon={FileText}
+                title="No billing history yet"
+                description="Invoices will appear here after your first payment"
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-800/30">
+                  <tr className="text-left text-sm text-muted-foreground">
+                    <th className="py-4 px-6 font-medium">Invoice</th>
+                    <th className="py-4 px-6 font-medium">Date</th>
+                    <th className="py-4 px-6 font-medium">Amount</th>
+                    <th className="py-4 px-6 font-medium">Status</th>
+                    <th className="py-4 px-6 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice, index) => (
+                    <tr
+                      key={invoice.id}
+                      className={`border-t border-slate-800/50 ${
+                        index % 2 === 0 ? 'bg-slate-900/20' : ''
+                      }`}
+                    >
+                      <td className="py-4 px-6">
+                        <div className="font-medium">{invoice.number}</div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-muted-foreground">
+                        {formatDate(invoice.created)}
+                      </td>
+                      <td className="py-4 px-6 font-medium">
+                        {formatCurrency(invoice.total, invoice.currency)}
+                      </td>
+                      <td className="py-4 px-6">
+                        <Badge className={`${getStatusBadgeColor(invoice.status)} text-white`}>
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-slate-700 hover:bg-slate-800"
+                            onClick={() => window.open(invoice.hosted_invoice_url, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-slate-700 hover:bg-slate-800"
+                            onClick={() => window.open(invoice.invoice_pdf, '_blank')}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
       </div>
 

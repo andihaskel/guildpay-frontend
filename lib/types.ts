@@ -213,3 +213,23 @@ export interface BillingPlanStatus {
   };
   features: string[];
 }
+
+export interface Invoice {
+  id: string;
+  number: string;
+  status: string;
+  currency: string;
+  amount_paid: number;
+  amount_due: number;
+  total: number;
+  created: string;
+  period_start: string;
+  period_end: string;
+  hosted_invoice_url: string;
+  invoice_pdf: string;
+}
+
+export interface InvoicesResponse {
+  invoices: Invoice[];
+  has_more: boolean;
+}
