@@ -30,7 +30,7 @@ function UserMenu({ user, onSignOut, onGoToDashboard }: UserMenuProps) {
       >
         <Avatar className="h-9 w-9 border-2 border-primary/20">
           <AvatarImage src={user.avatar || undefined} alt={user.email || 'User'} />
-          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
             {user.email?.[0]?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>

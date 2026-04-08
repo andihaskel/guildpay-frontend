@@ -123,7 +123,7 @@ export default function MembersPage() {
     if (status === 'active') {
       return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
     } else if (status === 'trialing') {
-      return <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/20">Trialing</Badge>;
+      return <Badge variant="secondary" className="bg-sky-600/20 text-sky-400 hover:bg-sky-600/20">Trialing</Badge>;
     } else if (status === 'canceling') {
       return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Canceling</Badge>;
     } else if (status === 'free') {
@@ -389,7 +389,7 @@ export default function MembersPage() {
                   size="icon"
                   className={`h-9 w-9 ${
                     currentPage === page
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                       : 'bg-slate-900/40 border-slate-800/50'
                   }`}
                   onClick={() => setCurrentPage(page)}
@@ -423,7 +423,7 @@ export default function MembersPage() {
                       size="icon"
                       className={`h-9 w-9 ${
                         currentPage === page
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                           : 'bg-slate-900/40 border-slate-800/50'
                       }`}
                       onClick={() => setCurrentPage(page)}
@@ -471,7 +471,7 @@ export default function MembersPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
-            <div className="p-4 bg-blue-600/10 border border-blue-600/20 rounded-lg">
+            <div className="p-4 bg-primary/8 border border-primary/20 rounded-lg">
               <p className="text-sm text-slate-300">
                 Send this link to <strong>{selectedMember?.email}</strong> so they can connect their Discord account and gain access to the server.
               </p>

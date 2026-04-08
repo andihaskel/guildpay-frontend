@@ -57,7 +57,7 @@ export default function DiscordCallbackPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 bg-slate-900/80 border-slate-800/50 text-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
+            <Loader2 className="h-16 w-16 text-primary animate-spin" />
             <h2 className="text-2xl font-bold">Connecting Discord</h2>
             <p className="text-slate-400">
               Please wait while we connect your Discord account...
@@ -121,7 +121,7 @@ export default function DiscordCallbackPage() {
 
               <Button
                 onClick={handleGoToDiscord}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold"
                 size="lg"
               >
                 Open Discord

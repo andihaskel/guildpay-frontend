@@ -149,11 +149,11 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Editor
           </Button>
-          <Badge variant="outline" className="border-blue-500/50 text-blue-400">
+          <Badge variant="outline" className="border-primary/50 text-primary">
             Preview Mode
           </Badge>
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={handlePublish}
             disabled={isPublishing || !formData}
           >
@@ -289,8 +289,8 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
                 <div className="mb-6 p-6 rounded-lg border-2 border-dashed border-slate-700 bg-slate-800/20">
                   <div className="text-center">
                     <div className="mb-4">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 mb-3">
-                        <Lock className="h-8 w-8 text-blue-400" />
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/15 mb-3">
+                        <Lock className="h-8 w-8 text-primary" />
                       </div>
                       <h3 className="text-lg font-semibold mb-2">Stripe Payment Form</h3>
                       <p className="text-sm text-slate-400 mb-4">
@@ -334,7 +334,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold">
+                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold">
                       Subscribe Now
                     </Button>
 

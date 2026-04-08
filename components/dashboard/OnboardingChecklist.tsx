@@ -98,10 +98,10 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
 
               <div className="mb-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                  step.isPrimary ? 'bg-purple-600/20' : 'bg-slate-700/40'
+                  step.isPrimary ? 'bg-primary/15' : 'bg-secondary'
                 }`}>
                   <Icon className={`h-6 w-6 ${
-                    step.isPrimary ? 'text-purple-400' : 'text-slate-400'
+                    step.isPrimary ? 'text-primary' : 'text-muted-foreground'
                   }`} />
                 </div>
                 <h3 className="font-semibold mb-2">{step.title}</h3>
@@ -112,8 +112,8 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
                 <Button
                   className={`w-full ${
                     step.isPrimary
-                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      : 'bg-secondary hover:bg-secondary/80 text-muted-foreground'
                   }`}
                   onClick={step.action.onClick}
                 >

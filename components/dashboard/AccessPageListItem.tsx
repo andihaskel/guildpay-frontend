@@ -70,8 +70,8 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
           <div className="px-2 py-0.5 rounded bg-green-950/50 border border-green-900/50">
             <span className="text-green-400">Active: {page.member_counts.active}</span>
           </div>
-          <div className="px-2 py-0.5 rounded bg-blue-950/50 border border-blue-900/50">
-            <span className="text-blue-400">Trialing: {page.member_counts.trialing}</span>
+          <div className="px-2 py-0.5 rounded bg-sky-950/50 border border-sky-900/50">
+            <span className="text-sky-400">Trialing: {page.member_counts.trialing}</span>
           </div>
           <div className="px-2 py-0.5 rounded bg-orange-950/50 border border-orange-900/50">
             <span className="text-orange-400">Canceling: {page.member_counts.canceling}</span>

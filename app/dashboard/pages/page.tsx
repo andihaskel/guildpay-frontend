@@ -71,7 +71,7 @@ export default function PagesPage() {
               </Button>
             </div>
             <Button
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => router.push('/dashboard/pages/edit')}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -103,7 +103,7 @@ export default function PagesPage() {
             <AccessPageCard
               key={page.id}
               page={page}
-              gradientClass={['bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700', 'bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600', 'bg-gradient-to-br from-orange-500 via-orange-600 to-red-600'][index % 3]}
+              gradientClass={['bg-gradient-to-br from-amber-700 via-amber-800 to-stone-800', 'bg-gradient-to-br from-stone-700 via-stone-800 to-zinc-800', 'bg-gradient-to-br from-orange-800 via-stone-800 to-zinc-900'][index % 3]}
             />
           ))}
         </div>

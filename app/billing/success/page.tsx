@@ -80,17 +80,17 @@ export default function BillingSuccessPage() {
         <Card className="w-full max-w-2xl p-12 bg-slate-900/60 border-slate-800/50 backdrop-blur-sm text-center">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">Loading your plan...</p>
             </div>
           ) : plan ? (
             <div className="space-y-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
-                <Sparkles className="h-10 w-10 text-white" />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/20 mb-4">
+                <Sparkles className="h-10 w-10 text-primary" />
               </div>
 
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <h1 className="text-4xl md:text-5xl font-bold mb-3">
                   Welcome to {getPlanDisplayName(plan.plan)}!
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-md mx-auto">
@@ -99,8 +99,8 @@ export default function BillingSuccessPage() {
               </div>
 
               {plan.status === 'trialing' && plan.trial_end && (
-                <div className="p-4 rounded-lg bg-blue-950/30 border border-blue-800/50">
-                  <p className="text-sm text-blue-300">
+                <div className="p-4 rounded-lg bg-primary/8 border border-primary/20">
+                  <p className="text-sm text-primary">
                     Your trial ends on {new Date(plan.trial_end).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -113,7 +113,7 @@ export default function BillingSuccessPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8"
                   onClick={() => router.push('/dashboard/home')}
                 >
                   Go to Dashboard

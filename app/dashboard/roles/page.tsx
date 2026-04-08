@@ -283,7 +283,7 @@ export default function RolesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold mx-auto mb-4">
                   1
                 </div>
                 <h4 className="font-semibold mb-2">Select a Discord role</h4>
@@ -292,7 +292,7 @@ export default function RolesPage() {
                 </p>
               </div>
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold mx-auto mb-4">
                   2
                 </div>
                 <h4 className="font-semibold mb-2">Connect or choose a Stripe price</h4>
@@ -301,7 +301,7 @@ export default function RolesPage() {
                 </p>
               </div>
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold mx-auto mb-4">
                   3
                 </div>
                 <h4 className="font-semibold mb-2">Members automatically receive access</h4>
@@ -405,7 +405,7 @@ export default function RolesPage() {
                             size="icon"
                             onClick={() => handleShareRole(role.id)}
                             disabled={sharingRoleId === role.id}
-                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30"
+                            className="h-8 w-8 text-sky-400 hover:text-sky-300 hover:bg-sky-950/30"
                           >
                             {sharingRoleId === role.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -446,7 +446,7 @@ export default function RolesPage() {
           <div className="space-y-4 mt-4">
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 mt-1">
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
                   1
                 </div>
                 <div className="flex-1 space-y-2">
@@ -487,7 +487,7 @@ export default function RolesPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 mt-1">
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
                   2
                 </div>
                 <div className="flex-1 space-y-2">
@@ -526,13 +526,13 @@ export default function RolesPage() {
                   </div>
                   <Card className="p-3 bg-slate-800/30 border-slate-700/50">
                     <div className="flex items-start gap-2">
-                      <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs font-medium mb-0.5">Need to create a new price?</p>
                         <p className="text-xs text-muted-foreground">
-                          Visit your <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline cursor-pointer hover:text-blue-300">Stripe Dashboard</a> to create new subscription prices
+                          Visit your <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer" className="text-sky-400 underline cursor-pointer hover:text-sky-300">Stripe Dashboard</a> to create new subscription prices
                         </p>
                       </div>
                     </div>
@@ -592,7 +592,7 @@ export default function RolesPage() {
               <Button
                 onClick={handleCreateRole}
                 disabled={!selectedDiscordRole || !selectedStripePrice || isCreating}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isCreating ? (
                   <>
@@ -624,7 +624,7 @@ export default function RolesPage() {
             </div>
             <Button
               onClick={handleCopyCheckoutUrl}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Copy className="h-4 w-4 mr-2" />
               Copy Link

@@ -12,7 +12,7 @@ const statusConfig = {
   },
   trialing: {
     label: 'Trialing',
-    className: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    className: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
   },
   canceled: {
     label: 'Canceled',

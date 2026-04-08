@@ -57,7 +57,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     alt={user.discordUsername || user.username}
                   />
                 ) : null}
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                   {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -79,7 +79,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                             alt={user.discordUsername || user.username}
                           />
                         ) : null}
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                           {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>

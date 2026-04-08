@@ -307,7 +307,7 @@ export default function EditPagePage() {
 
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading page data...</p>
             </div>
           </div>
@@ -741,7 +741,7 @@ export default function EditPagePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Next: Preview your signup page
               </Button>
             </div>

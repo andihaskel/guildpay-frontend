@@ -132,7 +132,7 @@ export default function BillingPage() {
       const daysRemaining = getTrialDaysRemaining();
       return {
         label: `Trial (${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} left)`,
-        color: 'bg-blue-600 hover:bg-blue-600'
+        color: 'bg-sky-600 hover:bg-sky-600'
       };
     }
 
@@ -246,7 +246,7 @@ export default function BillingPage() {
       case 'paid':
         return 'bg-green-600 hover:bg-green-600';
       case 'open':
-        return 'bg-blue-600 hover:bg-blue-600';
+        return 'bg-sky-600 hover:bg-sky-600';
       case 'draft':
         return 'bg-slate-600 hover:bg-slate-600';
       case 'void':
@@ -290,7 +290,7 @@ export default function BillingPage() {
                 </p>
               )}
               {billingPlan?.status === 'trialing' && billingPlan?.trial_end && (
-                <p className="text-sm text-blue-500">
+                <p className="text-sm text-sky-400">
                   Trial ends {new Date(billingPlan.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </p>
               )}
@@ -314,7 +314,7 @@ export default function BillingPage() {
               </Button>
             ) : !isMaxPlan() && (
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={() => {
                   const nextPlanIndex = getCurrentPlanIndex() + 1;
                   if (nextPlanIndex < plans.length) {
@@ -363,7 +363,7 @@ export default function BillingPage() {
                           ? 'bg-red-500'
                           : getPagesPercentage() >= 80
                           ? 'bg-yellow-500'
-                          : 'bg-blue-500'
+                          : 'bg-primary/60'
                       }`}
                       style={{ width: `${Math.min(getPagesPercentage(), 100)}%` }}
                     />
@@ -402,7 +402,7 @@ export default function BillingPage() {
                           ? 'bg-red-500'
                           : getMembersPercentage() >= 80
                           ? 'bg-yellow-500'
-                          : 'bg-blue-500'
+                          : 'bg-primary/60'
                       }`}
                       style={{ width: `${Math.min(getMembersPercentage(), 100)}%` }}
                     />
@@ -436,12 +436,12 @@ export default function BillingPage() {
                   key={plan.slug}
                   className={`p-6 relative flex flex-col ${
                     isPopular
-                      ? 'bg-blue-950/30 border-blue-600'
+                      ? 'bg-primary/5 border-primary/40'
                       : 'bg-slate-900/40 border-slate-800/50'
                   }`}
                 >
                   {isPopular && (
-                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 hover:bg-blue-600 text-white">
+                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary hover:bg-primary text-primary-foreground">
                       Most Popular
                     </Badge>
                   )}
@@ -472,10 +472,10 @@ export default function BillingPage() {
                   <Button
                     className={`w-full mt-auto ${
                       isCurrentPlan
-                        ? 'bg-slate-800 hover:bg-slate-800 text-muted-foreground cursor-default'
+                        ? 'bg-secondary hover:bg-secondary text-muted-foreground cursor-default'
                         : isPopular
-                        ? 'bg-blue-600 hover:bg-blue-700'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
+                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                        : 'bg-secondary hover:bg-secondary/80 text-foreground'
                     }`}
                     disabled={isCurrentPlan || checkoutLoading === plan.slug || billingPlan?.cancels_at_period_end === true}
                     onClick={() => handleUpgrade(plan.slug)}
