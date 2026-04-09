@@ -19,7 +19,7 @@ export default function PagesPage() {
   const { currentProduct } = useProduct();
   const [isLoading, setIsLoading] = useState(true);
   const [pages, setPages] = useState<AccessPage[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     if (currentProduct?.id) {
@@ -71,7 +71,6 @@ export default function PagesPage() {
               </Button>
             </div>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => router.push('/dashboard/pages/edit')}
             >
               <Plus className="h-4 w-4 mr-2" />
