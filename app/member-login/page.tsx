@@ -13,14 +13,15 @@ const DISCORD_SVG = (
 
 interface MemberStatus {
   logged_in: boolean;
-  has_active_membership: boolean;
-  discord_connected: boolean;
-  should_show_discord_cta: boolean;
   discord_connect_url?: string;
+  discord_username?: string;
+  discord_email?: string;
+  role_name?: string;
 }
 
 export default function MemberLoginPage() {
   const statusRef = useRef<MemberStatus | null>(null);
+  const [status, setStatus] = useState<MemberStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function MemberLoginPage() {
         if (res.ok) {
           const data: MemberStatus = await res.json();
           statusRef.current = data;
+          setStatus(data);
         }
       } catch {
       } finally {
@@ -42,12 +44,16 @@ export default function MemberLoginPage() {
   }, []);
 
   const handleDiscordCta = () => {
-    const status = statusRef.current;
-    if (status?.discord_connect_url) {
-      window.location.href = status.discord_connect_url;
+    const s = statusRef.current;
+    if (s?.discord_connect_url) {
+      window.location.href = s.discord_connect_url;
     } else {
       window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/member/start`;
     }
+  };
+
+  const handleChange = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/member/start`;
   };
 
   return (
@@ -117,6 +123,37 @@ export default function MemberLoginPage() {
               </a>
             </p>
           </div>
+
+          {statusLoaded && status?.logged_in && (
+            <div className="mt-4 bg-card border border-border rounded-2xl p-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-semibold text-foreground whitespace-nowrap">Discord Username:</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm text-muted-foreground truncate">{status.discord_username ?? '—'}</span>
+                    <button
+                      onClick={handleChange}
+                      className="text-xs text-sky-500 hover:text-sky-400 transition-colors whitespace-nowrap font-medium underline underline-offset-2"
+                    >
+                      (change)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-semibold text-foreground whitespace-nowrap">Email:</span>
+                  <span className="text-sm text-muted-foreground truncate">{status.discord_email ?? '—'}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-semibold text-foreground whitespace-nowrap">Role:</span>
+                  <span className="inline-flex items-center rounded-md bg-amber-400/20 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    {status.role_name ?? 'Free'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
