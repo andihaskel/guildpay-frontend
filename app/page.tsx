@@ -246,9 +246,18 @@ export default function Home() {
       <main>
         <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-16">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-primary/6 rounded-full blur-[140px]" />
-            <div className="absolute bottom-0 left-1/4 w-[500px] h-[400px] bg-primary/4 rounded-full blur-[120px]" />
-            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_60%,hsl(var(--background))_100%)]" />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle, rgba(56,107,140,0.45) 0.6px, transparent 0.6px), radial-gradient(circle, rgba(56,107,140,0.22) 0.6px, transparent 0.6px)',
+                backgroundSize: '22px 22px',
+                backgroundPosition: '0 0, 11px 11px',
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,transparent_30%,hsl(var(--background))_75%)]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,hsl(var(--background))_100%)]" />
           </div>
 
           <div className="relative max-w-4xl mx-auto px-6 text-center">
