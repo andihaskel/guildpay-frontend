@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CircleCheck as CheckCircle, Loader as Loader2, ArrowRight, CircleAlert as AlertCircle } from 'lucide-react';
 
@@ -12,6 +11,20 @@ interface DiscordCallbackData {
   welcome_channel_id?: string;
   error?: string;
 }
+
+const GlowWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+    <div className="grain" aria-hidden="true" />
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-primary/5 rounded-full blur-[140px]" />
+    </div>
+    <div className="relative z-10 w-full max-w-md">
+      <div className="bg-card border border-border rounded-2xl p-8 text-center">
+        {children}
+      </div>
+    </div>
+  </div>
+);
 
 export default function DiscordCallbackPage() {
   const searchParams = useSearchParams();
@@ -33,11 +46,7 @@ export default function DiscordCallbackPage() {
 
     if (connected === 'true') {
       setStatus('success');
-      setCallbackData({
-        connected: true,
-        guild_id: guildId || undefined,
-        welcome_channel_id: welcomeChannelId || undefined,
-      });
+      setCallbackData({ connected: true, guild_id: guildId || undefined, welcome_channel_id: welcomeChannelId || undefined });
     } else {
       setStatus('error');
       setCallbackData({ connected: false, error: 'Failed to connect Discord account' });
@@ -54,91 +63,86 @@ export default function DiscordCallbackPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 bg-slate-900/80 border-slate-800/50 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-16 w-16 text-primary animate-spin" />
-            <h2 className="text-2xl font-bold">Connecting Discord</h2>
-            <p className="text-slate-400">
-              Please wait while we connect your Discord account...
-            </p>
-          </div>
-        </Card>
-      </div>
+      <GlowWrapper>
+        <div className="flex flex-col items-center gap-4 py-4">
+          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          <h2 className="text-2xl font-bold tracking-tight">Connecting Discord</h2>
+          <p className="text-muted-foreground text-sm">
+            Please wait while we connect your Discord account...
+          </p>
+        </div>
+      </GlowWrapper>
     );
   }
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 bg-slate-900/80 border-slate-800/50 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <AlertCircle className="h-10 w-10 text-red-500" />
-            </div>
-            <h2 className="text-2xl font-bold">Connection Failed</h2>
-            <p className="text-slate-400">
-              {callbackData?.error || 'Unable to connect your Discord account'}
-            </p>
-            <Button
-              onClick={() => router.push('/dashboard/home')}
-              variant="outline"
-              className="mt-4"
-            >
-              Go to Dashboard
-            </Button>
+      <GlowWrapper>
+        <div className="flex flex-col items-center gap-4 py-4">
+          <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="h-7 w-7 text-destructive" />
           </div>
-        </Card>
-      </div>
+          <h2 className="text-2xl font-bold tracking-tight">Connection Failed</h2>
+          <p className="text-muted-foreground text-sm">
+            {callbackData?.error || 'Unable to connect your Discord account'}
+          </p>
+          <Button
+            onClick={() => router.push('/dashboard/home')}
+            variant="ghost"
+            className="mt-2 text-muted-foreground hover:text-foreground"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </GlowWrapper>
     );
   }
 
   const hasDiscordLink = callbackData?.guild_id && (callbackData?.welcome_channel_id || true);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full p-8 bg-slate-900/80 border-slate-800/50 text-center">
-        <div className="flex flex-col items-center gap-6">
-          <div className="h-20 w-20 rounded-full bg-green-500/10 flex items-center justify-center">
-            <CheckCircle className="h-12 w-12 text-green-500" />
-          </div>
+    <GlowWrapper>
+      <div className="flex flex-col items-center gap-6 py-2">
+        <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center">
+          <CheckCircle className="h-9 w-9 text-green-500" />
+        </div>
 
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Discord Connected!</h1>
-            <p className="text-slate-400">
-              Your Discord account has been successfully linked.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Discord Connected!</h1>
+          <p className="text-muted-foreground text-sm">
+            Your Discord account has been successfully linked.
+          </p>
+        </div>
 
-          {hasDiscordLink && (
-            <div className="w-full bg-slate-800/50 rounded-lg p-6 space-y-4">
-              <h3 className="font-semibold text-lg">Access Your Server</h3>
-              <p className="text-sm text-slate-400">
+        {hasDiscordLink && (
+          <div className="w-full bg-background/60 border border-border rounded-xl p-5 space-y-4 text-left">
+            <div>
+              <h3 className="font-semibold mb-1">Access Your Server</h3>
+              <p className="text-sm text-muted-foreground">
                 {callbackData?.welcome_channel_id
                   ? 'Click below to open your welcome channel in Discord.'
                   : 'Click below to open your Discord server.'}
               </p>
-
-              <Button
-                onClick={handleGoToDiscord}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold"
-                size="lg"
-              >
-                Open Discord
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
             </div>
-          )}
+            <Button
+              onClick={handleGoToDiscord}
+              className="w-full gap-2.5 font-semibold hover:scale-[1.01] active:scale-[0.99] transition-transform"
+              size="lg"
+            >
+              Open Discord
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
-          <Button
-            onClick={() => router.push('/dashboard/home')}
-            variant="ghost"
-            className="text-slate-400 hover:text-white"
-          >
-            Continue to Dashboard
-          </Button>
-        </div>
-      </Card>
-    </div>
+        <Button
+          onClick={() => router.push('/dashboard/home')}
+          variant="ghost"
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
+          Continue to Dashboard
+        </Button>
+      </div>
+    </GlowWrapper>
   );
 }
