@@ -210,34 +210,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <style>{`
-        @keyframes grain {
-          0%, 100% { transform: translate(0, 0); }
-          10% { transform: translate(-2%, -3%); }
-          20% { transform: translate(3%, 2%); }
-          30% { transform: translate(-1%, 4%); }
-          40% { transform: translate(2%, -1%); }
-          50% { transform: translate(-3%, 3%); }
-          60% { transform: translate(1%, -2%); }
-          70% { transform: translate(-2%, 1%); }
-          80% { transform: translate(3%, -3%); }
-          90% { transform: translate(-1%, 2%); }
-        }
-        .grain::before {
-          content: '';
-          position: fixed;
-          inset: -200%;
-          width: 400%;
-          height: 400%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-          background-size: 200px 200px;
-          opacity: 0.022;
-          pointer-events: none;
-          animation: grain 8s steps(10) infinite;
-          z-index: 9999;
-        }
-      `}</style>
-
       <div className="grain" aria-hidden="true" />
 
       <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/30 bg-background/70 backdrop-blur-xl">
