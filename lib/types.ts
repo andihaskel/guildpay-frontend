@@ -1,3 +1,11 @@
+export interface MemberStatus {
+  logged_in: boolean;
+  has_active_membership: boolean;
+  discord_connected: boolean;
+  should_show_discord_cta: boolean;
+  discord_connect_url?: string;
+}
+
 export interface User {
   id: string;
   email: string;

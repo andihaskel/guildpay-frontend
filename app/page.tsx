@@ -234,8 +234,7 @@ export default function Home() {
             ) : user ? (
               <UserMenu user={user} onSignOut={handleSignOut} onGoToDashboard={handleGoToDashboard} />
             ) : (
-              <Button size="sm" className="gap-1.5 font-medium" onClick={handleDiscordLogin}>
-                {DISCORD_ICON}
+              <Button size="sm" variant="outline" className="font-medium" onClick={() => router.push('/choose-login')}>
                 Sign in
               </Button>
             )}

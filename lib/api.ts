@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -95,6 +95,10 @@ class ApiClient {
 
   async getMe(): Promise<User> {
     return this.get<User>('/auth/me');
+  }
+
+  async getMemberStatus(): Promise<MemberStatus> {
+    return this.get<MemberStatus>('/member/status');
   }
 
   async signOut(): Promise<void> {
