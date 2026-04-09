@@ -1,9 +1,9 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Lightbulb, CircleUser as UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const DISCORD_SVG = (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -11,15 +11,43 @@ const DISCORD_SVG = (
   </svg>
 );
 
-export default function ChooseLoginPage() {
-  const router = useRouter();
+interface MemberStatus {
+  logged_in: boolean;
+  has_active_membership: boolean;
+  discord_connected: boolean;
+  should_show_discord_cta: boolean;
+  discord_connect_url?: string;
+}
 
-  const handleCreatorLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/start`;
-  };
+export default function MemberLoginPage() {
+  const statusRef = useRef<MemberStatus | null>(null);
+  const [statusLoaded, setStatusLoaded] = useState(false);
 
-  const handleMemberLogin = () => {
-    router.push('/member-login');
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/member/status`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data: MemberStatus = await res.json();
+          statusRef.current = data;
+        }
+      } catch {
+      } finally {
+        setStatusLoaded(true);
+      }
+    };
+    fetchStatus();
+  }, []);
+
+  const handleDiscordCta = () => {
+    const status = statusRef.current;
+    if (status?.discord_connect_url) {
+      window.location.href = status.discord_connect_url;
+    } else {
+      window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/member/start`;
+    }
   };
 
   return (
@@ -27,13 +55,12 @@ export default function ChooseLoginPage() {
       <div className="grain" aria-hidden="true" />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[400px] bg-amber-500/5 rounded-full blur-[120px]" />
-        <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-sky-500/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/4 rounded-full blur-[140px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-sky-500/5 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-primary/4 rounded-full blur-[120px]" />
       </div>
 
       <header className="relative z-10 h-16 border-b border-border/30 bg-background/70 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-full flex items-center">
+        <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               <svg className="w-4 h-4 text-primary-foreground" viewBox="0 0 24 24" fill="currentColor">
@@ -42,67 +69,55 @@ export default function ChooseLoginPage() {
             </div>
             <span className="font-semibold text-base tracking-tight">GuildPay</span>
           </Link>
+
+          <Link
+            href="/choose-login"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Link>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-6">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Sign in to GuildPay</h1>
-          <p className="text-muted-foreground">Choose how you want to continue</p>
-        </div>
-
-        <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden shadow-2xl shadow-black/10">
-          <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-2xl border-2 border-amber-400/60 bg-amber-400/8 flex items-center justify-center">
-              <Lightbulb className="w-9 h-9 text-amber-400" strokeWidth={1.5} />
+      <main className="relative z-10 flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl border-2 border-sky-400/60 bg-sky-400/8 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
             </div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Member sign in</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Connect your Discord account to access your communities and manage your subscriptions.
+            </p>
+          </div>
 
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-1.5">Creator</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Log in to your dashboard and manage your community
-              </p>
-            </div>
-
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-5">
             <Button
               className="w-full gap-2.5 font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
               size="lg"
-              onClick={handleCreatorLogin}
+              onClick={handleDiscordCta}
+              disabled={!statusLoaded}
             >
               {DISCORD_SVG}
-              Connect Discord
+              Continue with Discord
             </Button>
-          </div>
 
-          <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-2xl border-2 border-sky-400/60 bg-sky-400/8 flex items-center justify-center">
-              <UserCircle className="w-9 h-9 text-sky-400" strokeWidth={1.5} />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-1.5">Member</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Manage your subscription and access your communities
-              </p>
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
-              size="lg"
-              onClick={handleMemberLogin}
-            >
-              Sign In
-            </Button>
+            <p className="text-center text-xs text-muted-foreground leading-relaxed">
+              By signing in, you agree to our{' '}
+              <a href="#" className="text-foreground/80 hover:text-foreground underline underline-offset-2 transition-colors">
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a href="#" className="text-foreground/80 hover:text-foreground underline underline-offset-2 transition-colors">
+                Privacy Policy
+              </a>
+            </p>
           </div>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-8">
-          New to GuildPay?{' '}
-          <Link href="/" className="text-foreground hover:text-foreground/80 font-medium transition-colors">
-            Learn more
-          </Link>
-        </p>
       </main>
     </div>
   );
