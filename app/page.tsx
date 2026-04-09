@@ -267,11 +267,11 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
-              <CtaButton size="lg" className="text-base" />
+              <CtaButton size="lg" className="text-base hover:scale-[1.03] active:scale-[0.98]" />
               <Button
-                variant="outline"
+                variant="ghost"
                 size="lg"
-                className="text-base gap-1.5"
+                className="text-base gap-1.5 text-muted-foreground hover:text-foreground hover:bg-foreground/6 hover:scale-[1.03] active:scale-[0.98]"
                 asChild
               >
                 <a href="#how-it-works">
