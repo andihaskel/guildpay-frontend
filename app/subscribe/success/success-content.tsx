@@ -19,7 +19,7 @@ export default function SubscribeSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [discordConnectUrl, setDiscordConnectUrl] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -51,6 +51,20 @@ export default function SubscribeSuccessContent() {
     }
   };
 
+  const fetchMemberStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/member/status`, {
+        credentials: 'include',
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.discord_connect_url) {
+        setDiscordConnectUrl(data.discord_connect_url);
+      }
+    } catch {
+    }
+  };
+
   const fetchCheckoutStatus = async (sessionId: string, stripeAccount: string, attempt = 1) => {
     try {
       const url = `${API_URL}/subscribe/checkout-session-status?session_id=${encodeURIComponent(sessionId)}&stripe_account=${encodeURIComponent(stripeAccount)}`;
@@ -58,8 +72,8 @@ export default function SubscribeSuccessContent() {
       if (!response.ok) throw new Error(`Failed to fetch checkout status: ${response.statusText}`);
       const data = await response.json();
       if (data.customer_id) {
-        setCustomerId(data.customer_id);
         await createMemberSession(sessionId, stripeAccount);
+        await fetchMemberStatus();
         setStatus('success');
         sessionStorage.removeItem('stripe_account');
       } else if (attempt < MAX_RETRIES) {
@@ -81,9 +95,8 @@ export default function SubscribeSuccessContent() {
   };
 
   const handleConnectDiscord = () => {
-    if (!customerId) return;
-    const discordUrl = `${API_URL}/subscriber/discord/connect?stripe_customer_id=${encodeURIComponent(customerId)}`;
-    window.location.href = discordUrl;
+    if (!discordConnectUrl) return;
+    window.location.href = discordConnectUrl;
   };
 
   const GlowWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -150,23 +163,25 @@ export default function SubscribeSuccessContent() {
           </p>
         </div>
 
-        <div className="w-full bg-background/60 border border-border rounded-xl p-5 space-y-4 text-left">
-          <div>
-            <h3 className="font-semibold mb-1">Next Step: Connect Discord</h3>
-            <p className="text-sm text-muted-foreground">
-              Link your Discord account to access your exclusive roles and content.
-            </p>
+        {discordConnectUrl && (
+          <div className="w-full bg-background/60 border border-border rounded-xl p-5 space-y-4 text-left">
+            <div>
+              <h3 className="font-semibold mb-1">Next Step: Connect Discord</h3>
+              <p className="text-sm text-muted-foreground">
+                Link your Discord account to access your exclusive roles and content.
+              </p>
+            </div>
+            <Button
+              onClick={handleConnectDiscord}
+              className="w-full gap-2.5 font-semibold hover:scale-[1.01] active:scale-[0.99] transition-transform"
+              size="lg"
+            >
+              {DISCORD_SVG}
+              Connect Discord Account
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            onClick={handleConnectDiscord}
-            className="w-full gap-2.5 font-semibold hover:scale-[1.01] active:scale-[0.99] transition-transform"
-            size="lg"
-          >
-            {DISCORD_SVG}
-            Connect Discord Account
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
+        )}
 
         <Button
           onClick={() => router.push('/dashboard/home')}
