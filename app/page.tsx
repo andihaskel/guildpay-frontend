@@ -269,9 +269,9 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
               <CtaButton size="lg" className="h-13 px-7 text-base" />
               <Button
-                variant="ghost"
+                variant="outline"
                 size="lg"
-                className="h-13 px-7 text-base text-muted-foreground hover:text-foreground gap-1.5"
+                className="h-13 px-7 text-base gap-1.5"
                 asChild
               >
                 <a href="#how-it-works">
