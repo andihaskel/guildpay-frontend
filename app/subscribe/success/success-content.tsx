@@ -39,6 +39,18 @@ export default function SubscribeSuccessContent() {
     fetchCheckoutStatus(sessionId, stripeAccount);
   }, [searchParams]);
 
+  const createMemberSession = async (sessionId: string, stripeAccount: string) => {
+    try {
+      await fetch(`${API_URL}/member/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ session_id: sessionId, stripe_account: stripeAccount }),
+      });
+    } catch {
+    }
+  };
+
   const fetchCheckoutStatus = async (sessionId: string, stripeAccount: string, attempt = 1) => {
     try {
       const url = `${API_URL}/subscribe/checkout-session-status?session_id=${encodeURIComponent(sessionId)}&stripe_account=${encodeURIComponent(stripeAccount)}`;
@@ -47,6 +59,7 @@ export default function SubscribeSuccessContent() {
       const data = await response.json();
       if (data.customer_id) {
         setCustomerId(data.customer_id);
+        await createMemberSession(sessionId, stripeAccount);
         setStatus('success');
         sessionStorage.removeItem('stripe_account');
       } else if (attempt < MAX_RETRIES) {
