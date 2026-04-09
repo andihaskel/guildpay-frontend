@@ -267,11 +267,11 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
-              <CtaButton size="lg" className="h-13 px-7 text-base" />
+              <CtaButton size="lg" className="text-base" />
               <Button
                 variant="outline"
                 size="lg"
-                className="h-13 px-7 text-base gap-1.5"
+                className="text-base gap-1.5"
                 asChild
               >
                 <a href="#how-it-works">
@@ -385,7 +385,7 @@ export default function Home() {
             <p className="text-muted-foreground text-lg mb-12 max-w-md mx-auto">
               Start accepting payments from your Discord members today. Free setup, no monthly fees.
             </p>
-            <CtaButton size="lg" className="h-13 px-9 text-base" />
+            <CtaButton size="lg" className="text-base" />
           </div>
         </section>
       </main>
