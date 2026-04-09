@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Lightbulb, CircleUser as UserCircle, Loader as Loader2, MailOpen, CircleAlert as AlertCircle } from 'lucide-react';
@@ -32,6 +32,39 @@ export default function ChooseLoginPage() {
     window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/start`;
   };
 
+  const processMemberStatus = (status: MemberStatus) => {
+    if (status.should_show_discord_cta && status.discord_connect_url) {
+      window.location.href = status.discord_connect_url;
+      return;
+    }
+
+    if (!status.has_active_membership && !status.should_show_discord_cta) {
+      setView('no-membership');
+      return;
+    }
+
+    if (status.logged_in) {
+      router.push('/dashboard/overview');
+    }
+  };
+
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/member/status`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const status: MemberStatus = await res.json();
+        if (status.logged_in) {
+          processMemberStatus(status);
+        }
+      } catch {
+      }
+    };
+    checkExistingSession();
+  }, []);
+
   const handleMemberSignIn = async () => {
     setMemberLoading(true);
     setMemberError(null);
@@ -46,20 +79,9 @@ export default function ChooseLoginPage() {
       }
 
       const status: MemberStatus = await res.json();
+      processMemberStatus(status);
 
-      if (status.should_show_discord_cta && status.discord_connect_url) {
-        window.location.href = status.discord_connect_url;
-        return;
-      }
-
-      if (!status.has_active_membership && !status.should_show_discord_cta) {
-        setView('no-membership');
-        return;
-      }
-
-      if (status.logged_in) {
-        router.push('/dashboard/overview');
-      } else {
+      if (!status.logged_in) {
         router.push('/login');
       }
     } catch {
