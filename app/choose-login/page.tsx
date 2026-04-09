@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lightbulb, CircleUser as UserCircle, Loader as Loader2 } from 'lucide-react';
+import { Lightbulb, CircleUser as UserCircle, Loader as Loader2, MailOpen, CircleAlert as AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const DISCORD_SVG = (
@@ -20,10 +20,13 @@ interface MemberStatus {
   discord_connect_url?: string;
 }
 
+type PageView = 'choose' | 'no-membership';
+
 export default function ChooseLoginPage() {
   const router = useRouter();
   const [memberLoading, setMemberLoading] = useState(false);
   const [memberError, setMemberError] = useState<string | null>(null);
+  const [view, setView] = useState<PageView>('choose');
 
   const handleCreatorLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/start`;
@@ -46,6 +49,11 @@ export default function ChooseLoginPage() {
 
       if (status.should_show_discord_cta && status.discord_connect_url) {
         window.location.href = status.discord_connect_url;
+        return;
+      }
+
+      if (!status.has_active_membership && !status.should_show_discord_cta) {
+        setView('no-membership');
         return;
       }
 
@@ -85,74 +93,113 @@ export default function ChooseLoginPage() {
       </header>
 
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-6">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Sign in to GuildPay</h1>
-          <p className="text-muted-foreground">Choose how you want to continue</p>
-        </div>
+        {view === 'no-membership' ? (
+          <div className="w-full max-w-md">
+            <div className="bg-card border border-border rounded-2xl p-10 flex flex-col items-center text-center gap-6 shadow-2xl shadow-black/10">
+              <div className="w-20 h-20 rounded-2xl border-2 border-border bg-muted/40 flex items-center justify-center">
+                <AlertCircle className="w-9 h-9 text-muted-foreground" strokeWidth={1.5} />
+              </div>
 
-        <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden shadow-2xl shadow-black/10">
-          <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-2xl border-2 border-amber-400/60 bg-amber-400/8 flex items-center justify-center">
-              <Lightbulb className="w-9 h-9 text-amber-400" strokeWidth={1.5} />
-            </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">No active membership</h2>
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
+                  It looks like you don't have an active subscription to any community. If you think this is a mistake, please contact support.
+                </p>
+              </div>
 
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-1.5">Creator</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Log in to your dashboard and manage your community
-              </p>
-            </div>
-
-            <Button
-              className="w-full gap-2.5 font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
-              size="lg"
-              onClick={handleCreatorLogin}
-            >
-              {DISCORD_SVG}
-              Connect Discord
-            </Button>
-          </div>
-
-          <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-2xl border-2 border-sky-400/60 bg-sky-400/8 flex items-center justify-center">
-              <UserCircle className="w-9 h-9 text-sky-400" strokeWidth={1.5} />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-1.5">Member</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Manage your subscription and access your communities
-              </p>
-            </div>
-
-            <div className="w-full space-y-3">
-              <Button
-                variant="outline"
-                className="w-full font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
-                size="lg"
-                onClick={handleMemberSignIn}
-                disabled={memberLoading}
-              >
-                {memberLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
-
-              {memberError && (
-                <p className="text-xs text-destructive text-center">{memberError}</p>
-              )}
+              <div className="w-full space-y-3">
+                <Button
+                  className="w-full gap-2 font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                  size="lg"
+                  asChild
+                >
+                  <a href="mailto:support@guildpay.com">
+                    <MailOpen className="w-4 h-4" />
+                    Contact Support
+                  </a>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-muted-foreground hover:text-foreground text-sm"
+                  onClick={() => setView('choose')}
+                >
+                  Back
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="text-center mb-10">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Sign in to GuildPay</h1>
+              <p className="text-muted-foreground">Choose how you want to continue</p>
+            </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-8">
-          New to GuildPay?{' '}
-          <Link href="/" className="text-foreground hover:text-foreground/80 font-medium transition-colors">
-            Learn more
-          </Link>
-        </p>
+            <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden shadow-2xl shadow-black/10">
+              <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
+                <div className="w-20 h-20 rounded-2xl border-2 border-amber-400/60 bg-amber-400/8 flex items-center justify-center">
+                  <Lightbulb className="w-9 h-9 text-amber-400" strokeWidth={1.5} />
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight mb-1.5">Creator</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Log in to your dashboard and manage your community
+                  </p>
+                </div>
+
+                <Button
+                  className="w-full gap-2.5 font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                  size="lg"
+                  onClick={handleCreatorLogin}
+                >
+                  {DISCORD_SVG}
+                  Connect Discord
+                </Button>
+              </div>
+
+              <div className="bg-card p-10 flex flex-col items-center text-center gap-6">
+                <div className="w-20 h-20 rounded-2xl border-2 border-sky-400/60 bg-sky-400/8 flex items-center justify-center">
+                  <UserCircle className="w-9 h-9 text-sky-400" strokeWidth={1.5} />
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight mb-1.5">Member</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Manage your subscription and access your communities
+                  </p>
+                </div>
+
+                <div className="w-full space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                    size="lg"
+                    onClick={handleMemberSignIn}
+                    disabled={memberLoading}
+                  >
+                    {memberLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Sign In'
+                    )}
+                  </Button>
+
+                  {memberError && (
+                    <p className="text-xs text-destructive text-center">{memberError}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-muted-foreground mt-8">
+              New to GuildPay?{' '}
+              <Link href="/" className="text-foreground hover:text-foreground/80 font-medium transition-colors">
+                Learn more
+              </Link>
+            </p>
+          </>
+        )}
       </main>
     </div>
   );
