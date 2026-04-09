@@ -299,8 +299,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center overflow-hidden h-12">
-            <div className="w-px h-12 bg-gradient-to-b from-transparent via-muted-foreground/40 to-transparent animate-scroll-line" />
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce">
+            <ChevronDown className="w-5 h-5 text-muted-foreground/40" />
           </div>
         </section>
 
