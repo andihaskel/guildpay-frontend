@@ -299,9 +299,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground/40">
-            <span className="text-xs tracking-widest uppercase">Scroll</span>
-            <div className="w-px h-10 bg-gradient-to-b from-muted-foreground/30 to-transparent" />
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center overflow-hidden h-12">
+            <div className="w-px h-12 bg-gradient-to-b from-transparent via-muted-foreground/40 to-transparent animate-scroll-line" />
           </div>
         </section>
 
