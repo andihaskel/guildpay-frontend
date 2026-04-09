@@ -109,7 +109,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+            className="flex-1"
             onClick={handleShare}
             disabled={isDisabled}
           >
