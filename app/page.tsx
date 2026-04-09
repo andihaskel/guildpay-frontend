@@ -332,23 +332,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-20 md:py-28 border-y border-border/40 bg-card/20">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden">
-              {[
-                { value: '5%', label: 'Platform fee per transaction' },
-                { value: '< 5min', label: 'Average setup time' },
-                { value: '100%', label: 'Automated role management' },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-background px-10 py-10">
-                  <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section id="faq" className="py-28 md:py-36">
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-16 md:gap-24">
