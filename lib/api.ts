@@ -286,6 +286,10 @@ class ApiClient {
     currency: string;
     accepts_signups: boolean;
     has_yearly: boolean;
+    settings?: {
+      page_style?: 'dark' | 'light';
+      [key: string]: any;
+    };
   }> {
     return this.get<any>(publicPath);
   }

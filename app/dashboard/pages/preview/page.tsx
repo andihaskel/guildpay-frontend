@@ -107,6 +107,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
           crypto_enabled: formData.cryptoEnabled,
           require_name_on_card: formData.requireNameOnCard,
           terms_and_conditions: formData.termsAndConditions,
+          page_style: formData.pageStyle || 'dark',
         },
       };
 
