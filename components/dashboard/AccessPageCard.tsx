@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Share2, Pencil, Copy, Shield, Crown, Zap } from 'lucide-react';
+import { Share2, Pencil, Copy, Shield, Crown, Zap, Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -124,6 +124,15 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
           >
             <Pencil className="h-4 w-4 mr-1" />
             Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-slate-700 hover:bg-slate-800"
+            onClick={() => window.open(pageUrl, '_blank')}
+            title="Preview page"
+          >
+            <Eye className="h-4 w-4" />
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Share2, Copy } from 'lucide-react';
+import { Pencil, Share2, Copy, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -99,6 +99,16 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
         </div>
 
         <div className="flex items-center gap-2 ml-auto sm:ml-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-slate-400 hover:text-white"
+            onClick={() => window.open(pageUrl, '_blank')}
+            title="Preview page"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"
