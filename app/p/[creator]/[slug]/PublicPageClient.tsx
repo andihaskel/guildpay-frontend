@@ -31,6 +31,7 @@ interface PageData {
   accepts_signups: boolean;
   has_yearly: boolean;
   trial_days?: number;
+  style?: 'dark' | 'light';
   settings?: {
     page_style?: 'dark' | 'light';
     [key: string]: any;
@@ -136,7 +137,8 @@ export default function PublicPageClient() {
     return clientSecret;
   }, [clientSecret]);
 
-  const isLight = pageData?.settings?.page_style === 'light';
+  const pageStyle = pageData?.style ?? pageData?.settings?.page_style;
+  const isLight = pageStyle === 'light';
 
   const theme = {
     pageBg: isLight
@@ -152,7 +154,7 @@ export default function PublicPageClient() {
       : 'bg-gradient-to-b from-transparent to-slate-950',
     heroBorder: isLight ? 'border-gray-300' : 'border-slate-800',
     divider: isLight ? 'border-gray-200' : 'border-slate-800',
-    toggleBg: isLight ? 'bg-gray-100' : 'bg-slate-800/50',
+    toggleBg: isLight ? 'bg-gray-100 text-gray-600' : 'bg-slate-800/50',
     toggleActive: 'bg-primary text-primary-foreground',
     toggleInactive: isLight ? 'text-gray-500 hover:text-gray-800' : 'text-slate-400 hover:text-white',
     btnBg: 'bg-primary hover:bg-primary/85 text-primary-foreground',

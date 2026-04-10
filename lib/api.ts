@@ -286,6 +286,7 @@ class ApiClient {
     currency: string;
     accepts_signups: boolean;
     has_yearly: boolean;
+    style?: 'dark' | 'light';
     settings?: {
       page_style?: 'dark' | 'light';
       [key: string]: any;
