@@ -430,28 +430,28 @@ export default function EditPagePage() {
                     onClick={() => setFormData({ ...formData, pageStyle: 'dark' })}
                     className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       formData.pageStyle === 'dark'
-                        ? 'border-amber-500 bg-amber-500/10'
+                        ? 'border-primary bg-primary/10'
                         : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
                     }`}
                   >
                     <div className="w-full h-14 rounded-lg bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 flex items-center justify-center">
-                      <div className="w-8 h-2 rounded bg-amber-500 opacity-80" />
+                      <div className="w-8 h-2 rounded bg-primary opacity-80" />
                     </div>
-                    <span className={`text-sm font-medium ${formData.pageStyle === 'dark' ? 'text-amber-400' : 'text-slate-400'}`}>Dark</span>
+                    <span className={`text-sm font-medium ${formData.pageStyle === 'dark' ? 'text-primary' : 'text-slate-400'}`}>Dark</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, pageStyle: 'light' })}
                     className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       formData.pageStyle === 'light'
-                        ? 'border-amber-500 bg-amber-500/10'
+                        ? 'border-primary bg-primary/10'
                         : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
                     }`}
                   >
-                    <div className="w-full h-14 rounded-lg bg-gradient-to-b from-gray-50 to-white border border-gray-200 flex items-center justify-center">
-                      <div className="w-8 h-2 rounded bg-amber-500 opacity-80" />
+                    <div className="w-full h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
+                      <div className="w-8 h-2 rounded bg-primary opacity-80" />
                     </div>
-                    <span className={`text-sm font-medium ${formData.pageStyle === 'light' ? 'text-amber-400' : 'text-slate-400'}`}>Light</span>
+                    <span className={`text-sm font-medium ${formData.pageStyle === 'light' ? 'text-primary' : 'text-slate-400'}`}>Light</span>
                   </button>
                 </div>
               </div>
