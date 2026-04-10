@@ -153,9 +153,9 @@ export default function PublicPageClient() {
     heroBorder: isLight ? 'border-gray-300' : 'border-slate-800',
     divider: isLight ? 'border-gray-200' : 'border-slate-800',
     toggleBg: isLight ? 'bg-gray-100' : 'bg-slate-800/50',
-    toggleActive: 'bg-amber-500 text-white',
+    toggleActive: 'bg-primary text-primary-foreground',
     toggleInactive: isLight ? 'text-gray-500 hover:text-gray-800' : 'text-slate-400 hover:text-white',
-    btnBg: 'bg-amber-500 hover:bg-amber-600 text-white',
+    btnBg: 'bg-primary hover:bg-primary/85 text-primary-foreground',
     backBtn: isLight ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white',
     trialBanner: isLight
       ? 'bg-emerald-50 border-emerald-200'
@@ -168,7 +168,7 @@ export default function PublicPageClient() {
   if (isLoading) {
     return (
       <div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950'} flex items-center justify-center`}>
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -374,7 +374,7 @@ export default function PublicPageClient() {
               </div>
 
               <Button
-                className={`w-full h-12 text-lg font-semibold ${theme.btnBg}`}
+                className="w-full h-12 text-lg font-semibold rounded-full"
                 size="lg"
                 onClick={handleGetAccess}
                 disabled={isCreatingSession}
