@@ -65,7 +65,10 @@ export default function PublicPageClient() {
         setIsLoading(true);
         console.log('Fetching page data from:', publicPath);
         const data = await api.getPublicPage(publicPath);
-        console.log('Page data loaded:', data);
+        console.log('Page data loaded:', JSON.stringify(data, null, 2));
+        console.log('style field:', data?.style);
+        console.log('settings field:', data?.settings);
+        console.log('settings.page_style:', data?.settings?.page_style);
         setPageData(data);
         setError(null);
       } catch (err: any) {
@@ -137,8 +140,8 @@ export default function PublicPageClient() {
     return clientSecret;
   }, [clientSecret]);
 
-  const pageStyle = pageData?.style ?? pageData?.settings?.page_style;
-  const isLight = pageStyle === 'light';
+  const resolvedStyle = pageData?.style ?? pageData?.settings?.page_style ?? 'dark';
+  const isLight = resolvedStyle === 'light';
 
   const theme = {
     pageBg: isLight
