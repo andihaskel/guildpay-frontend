@@ -193,6 +193,7 @@ export interface CreatePageRequest {
   yearly_amount_minor?: number;
   currency: string;
   trial_days?: number;
+  style?: 'dark' | 'light';
   settings?: any;
 }
 

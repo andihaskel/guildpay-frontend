@@ -127,6 +127,7 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
         yearly_amount_minor: formData.yearlyOption === 'yes' ? parsePrice(formData.yearlyPrice) : undefined,
         currency: formData.currency.toLowerCase(),
         trial_days: parseTrialDays(formData.freeTrialPeriod),
+        style: formData.pageStyle || 'dark',
         settings: {
           coupons_enabled: formData.couponsEnabled,
           crypto_enabled: formData.cryptoEnabled,
