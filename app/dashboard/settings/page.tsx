@@ -115,10 +115,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Reauthorize Discord
-        </Button>
+        {!currentProduct?.bot_installed && (
+          <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Reauthorize Discord
+          </Button>
+        )}
       </Card>
 
       <Card className="p-6 bg-slate-800/40 border-slate-700/50">
