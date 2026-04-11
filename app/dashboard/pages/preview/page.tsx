@@ -102,6 +102,22 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
     try {
       setIsPublishing(true);
 
+      const slugCheck = await api.checkSlug(
+        currentProduct.id,
+        formData.offerUrl,
+        pageId || undefined
+      );
+
+      if (!slugCheck.available) {
+        toast({
+          title: 'Slug already in use',
+          description: `The URL "${formData.offerUrl}" is already taken. Please go back and choose a different one.`,
+          variant: 'destructive',
+        });
+        setIsPublishing(false);
+        return;
+      }
+
       const parsePrice = (price: string): number => {
         const parsed = parseFloat(price);
         return Math.round(parsed * 100);
@@ -154,9 +170,13 @@ Join us in a space where creativity flourishes and every artist feels at home! ð
       router.push('/dashboard/pages');
     } catch (error: any) {
       console.error('Failed to publish page:', error);
+      const description =
+        error?.message ||
+        (typeof error?.error === 'string' ? error.error : undefined) ||
+        'Failed to publish page';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to publish page',
+        description,
         variant: 'destructive',
       });
     } finally {

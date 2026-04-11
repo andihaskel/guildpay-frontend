@@ -267,6 +267,12 @@ class ApiClient {
     return this.delete<void>(`/creator/products/${productId}/pages/${pageId}`);
   }
 
+  async checkSlug(productId: string, slug: string, excludePageId?: string): Promise<{ available: boolean }> {
+    const params = new URLSearchParams({ slug });
+    if (excludePageId) params.append('exclude_page_id', excludePageId);
+    return this.get<{ available: boolean }>(`/creator/products/${productId}/pages/slug-check?${params.toString()}`);
+  }
+
   async getPublicPage(publicPath: string): Promise<{
     creator_slug: string;
     page_slug: string;

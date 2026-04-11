@@ -244,6 +244,15 @@ export default function EditPagePage() {
       return;
     }
 
+    if (!formData.offerName.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Offer Name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!formData.roleToAssign) {
       toast({
         title: 'Validation Error',
@@ -388,13 +397,16 @@ export default function EditPagePage() {
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="offerName" className="mb-3 block">Offer Name</Label>
+                <Label htmlFor="offerName" className="mb-3 block">
+                  Offer Name <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="offerName"
                   value={formData.offerName}
                   onChange={(e) => setFormData({ ...formData, offerName: e.target.value })}
                   placeholder="Artistry Collective"
                   className="bg-slate-800/50 border-slate-700"
+                  required
                 />
               </div>
 
