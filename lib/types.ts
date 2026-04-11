@@ -165,7 +165,8 @@ export interface AccessPage {
   discord_role_id: string;
   discord_welcome_channel_id?: string;
   published: boolean;
-  accepts_signups: boolean;
+  accepts_signups?: boolean;
+  status?: 'active' | 'disabled' | 'payment_config_required';
   stripe_product_id?: string;
   monthly_amount_minor: number;
   yearly_amount_minor?: number;

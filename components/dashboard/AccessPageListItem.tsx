@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Share2, Copy, Eye } from 'lucide-react';
+import { Pencil, Share2, Copy, Eye, CircleHelp as HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,7 +24,9 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const pageUrl = page.public_path ? `${baseUrl}${page.public_path}` : `${baseUrl}/p/${page.slug}`;
-  const isDisabled = !page.accepts_signups;
+  const pageStatus = page.status ?? (page.accepts_signups === false ? 'disabled' : 'active');
+  const isDisabled = pageStatus === 'disabled';
+  const isPaymentConfigRequired = pageStatus === 'payment_config_required';
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(pageUrl);
@@ -41,7 +43,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors ${isDisabled ? 'opacity-60' : ''}`}>
+    <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors ${isDisabled || isPaymentConfigRequired ? 'opacity-60' : ''}`}>
       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-700">
         {page.hero_image_url ? (
           <img
@@ -60,9 +62,22 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
           {isDisabled && (
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-xs font-medium text-red-400">
-                Disabled
-              </span>
+              <span className="text-xs font-medium text-red-400">Disabled</span>
+            </div>
+          )}
+          {isPaymentConfigRequired && (
+            <div className="flex items-center gap-1.5 group relative">
+              <div className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-xs font-medium text-amber-400">Payment configuration required</span>
+              <div className="relative flex items-center">
+                <HelpCircle className="h-3.5 w-3.5 text-amber-400/70 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10 pointer-events-none">
+                  <div className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-md px-3 py-2 w-52 text-center shadow-lg">
+                    Connect to your Stripe account to receive payments
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-700" />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -123,7 +138,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
             size="icon"
             className="h-9 w-9 text-slate-400 hover:text-white"
             onClick={handleShare}
-            disabled={isDisabled}
+            disabled={isDisabled || isPaymentConfigRequired}
           >
             <Share2 className="h-4 w-4" />
           </Button>

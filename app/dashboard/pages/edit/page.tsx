@@ -158,7 +158,7 @@ export default function EditPagePage() {
           cryptoEnabled: false,
           requireNameOnCard: false,
           termsAndConditions: false,
-          isActive: pageData.accepts_signups,
+          isActive: pageData.status ? pageData.status === 'active' : (pageData.accepts_signups ?? true),
           businessFeatures: Array.isArray(pageData.features) && pageData.features.length > 0
             ? pageData.features.map((f: any, idx: number) => ({
                 id: f.id || `${idx + 1}`,
