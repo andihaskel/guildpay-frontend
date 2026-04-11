@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Upload, Plus, Trash2, GripVertical } from 'lucide-react';
+import { ArrowLeft, Upload, Plus, Trash2, GripVertical, CircleCheck as CheckCircle2, Circle as XCircle, Loader as Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,6 +66,9 @@ export default function EditPagePage() {
   const [premiumFeaturesOpen, setPremiumFeaturesOpen] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [hasCustomImage, setHasCustomImage] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCheckedSlug = useRef<string>('');
 
   useEffect(() => {
     const loadDiscordRoles = async () => {
@@ -195,6 +198,34 @@ export default function EditPagePage() {
   }, [hasCustomImage, initialImageSeed, isLoadingPage]);
 
   useEffect(() => {
+    const slug = formData.offerUrl.trim();
+
+    if (!slug || !currentProduct?.id) {
+      setSlugStatus('idle');
+      return;
+    }
+
+    if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+
+    setSlugStatus('checking');
+
+    slugDebounceRef.current = setTimeout(async () => {
+      if (slug === lastCheckedSlug.current) return;
+      lastCheckedSlug.current = slug;
+      try {
+        const result = await api.checkSlug(currentProduct.id, slug, pageId || undefined);
+        setSlugStatus(result.available ? 'available' : 'taken');
+      } catch {
+        setSlugStatus('idle');
+      }
+    }, 1000);
+
+    return () => {
+      if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+    };
+  }, [formData.offerUrl, currentProduct?.id, pageId]);
+
+  useEffect(() => {
     const loadChannels = async () => {
       if (!guildId || !formData.roleToAssign) return;
 
@@ -239,6 +270,24 @@ export default function EditPagePage() {
       toast({
         title: 'Validation Error',
         description: 'Offer URL is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (slugStatus === 'taken') {
+      toast({
+        title: 'Validation Error',
+        description: 'This URL is already taken. Please choose a different one.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (slugStatus === 'checking') {
+      toast({
+        title: 'Please wait',
+        description: 'Checking URL availability...',
         variant: 'destructive',
       });
       return;
@@ -381,14 +430,30 @@ export default function EditPagePage() {
                 <Label htmlFor="offerUrl" className="mb-3 block">
                   Offer URL <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="offerUrl"
-                  value={formData.offerUrl}
-                  onChange={(e) => setFormData({ ...formData, offerUrl: e.target.value })}
-                  placeholder="artistry-collective"
-                  className="mb-2 bg-slate-800/50 border-slate-700"
-                  required
-                />
+                <div className="relative mb-2">
+                  <Input
+                    id="offerUrl"
+                    value={formData.offerUrl}
+                    onChange={(e) => setFormData({ ...formData, offerUrl: e.target.value })}
+                    placeholder="artistry-collective"
+                    className={`bg-slate-800/50 border-slate-700 pr-9 ${
+                      slugStatus === 'taken' ? 'border-red-500 focus-visible:ring-red-500' :
+                      slugStatus === 'available' ? 'border-green-500 focus-visible:ring-green-500' : ''
+                    }`}
+                    required
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {slugStatus === 'checking' && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+                    {slugStatus === 'available' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    {slugStatus === 'taken' && <XCircle className="h-4 w-4 text-red-500" />}
+                  </div>
+                </div>
+                {slugStatus === 'taken' && (
+                  <p className="text-xs text-red-400 mb-1">This URL is already taken</p>
+                )}
+                {slugStatus === 'available' && (
+                  <p className="text-xs text-green-400 mb-1">URL is available</p>
+                )}
                 <p className="text-sm text-slate-400 flex items-center gap-2">
                   🔗 launchpass.com/testandi/{formData.offerUrl || 'artistry-collective'}
                 </p>
