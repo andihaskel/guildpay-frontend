@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, Loader as Loader2 } from 'lucide-react';
+import { Plus, FileText, Loader as Loader2, ExternalLink, Zap } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
 import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
-import { AccessPage, OnboardingStatus } from '@/lib/types';
+import { AccessPage, OnboardingStatus, ProductOverview } from '@/lib/types';
 import { api } from '@/lib/api';
 
 export default function HomePage() {
@@ -21,6 +21,7 @@ export default function HomePage() {
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [overview, setOverview] = useState<ProductOverview | null>(null);
 
   useEffect(() => {
     if (currentProduct?.id) {
@@ -34,19 +35,20 @@ export default function HomePage() {
     try {
       setIsLoading(true);
 
-      const [overview, pagesData] = await Promise.all([
+      const [overviewData, pagesData] = await Promise.all([
         api.getProductOverview(currentProduct.id),
         api.getPages(currentProduct.id, 'popular'),
       ]);
 
+      setOverview(overviewData);
       setPages(pagesData);
-      setPayingMembers(overview.paying_members);
-      setMonthlyRevenue(overview.monthly_revenue);
+      setPayingMembers(overviewData.paying_members);
+      setMonthlyRevenue(overviewData.monthly_revenue);
 
       setOnboardingStatus({
-        has_page: overview.onboarding.has_page,
-        stripe_connected: overview.onboarding.stripe_connected,
-        has_guildpay_subscription: overview.onboarding.has_guildpay_subscription,
+        has_page: overviewData.onboarding.has_page,
+        stripe_connected: overviewData.onboarding.stripe_connected,
+        has_guildpay_subscription: overviewData.onboarding.has_guildpay_subscription,
       });
 
       const dismissed = localStorage.getItem(`onboarding_dismissed_${currentProduct.id}`);
@@ -64,11 +66,33 @@ export default function HomePage() {
     localStorage.setItem(`onboarding_dismissed_${currentProduct.id}`, 'true');
   };
 
+  const showStripeCta = !isLoading && overview && !overview.onboarding.stripe_connected;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">
         {currentProduct?.name || 'Gaming Community'}
       </h1>
+
+      {showStripeCta && (
+        <div className="flex items-center justify-between gap-4 px-5 py-4 rounded-lg bg-amber-500/10 border border-amber-500/25">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <Zap className="h-4 w-4 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-amber-300">Connect Stripe to start receiving payments</p>
+              <p className="text-xs text-amber-400/70 mt-0.5">Your pages won't accept new members until Stripe is configured.</p>
+            </div>
+          </div>
+          <a href={overview.stripe_connect_url} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold shrink-0">
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              Connect Stripe
+            </Button>
+          </a>
+        </div>
+      )}
 
       {!onboardingDismissed && (
         <OnboardingChecklist
