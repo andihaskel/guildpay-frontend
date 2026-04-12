@@ -61,9 +61,9 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
       icon: Award,
       title: 'Start your 14 day free trial',
       description: 'Enjoy all the benefits of our premium tier free for 14 days',
-      completed: status.has_guildpay_subscription,
-      isPrimary: status.has_page && status.stripe_connected && !status.has_guildpay_subscription,
-      action: status.has_guildpay_subscription ? null : {
+      completed: status.has_accessgate_subscription,
+      isPrimary: status.has_page && status.stripe_connected && !status.has_accessgate_subscription,
+      action: status.has_accessgate_subscription ? null : {
         label: 'Start now',
         onClick: () => window.location.href = '/dashboard/billing',
       },

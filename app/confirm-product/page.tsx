@@ -44,7 +44,7 @@ export default function ConfirmProductPage() {
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               {LOGO_SVG}
             </div>
-            <span className="font-semibold text-base tracking-tight">GuildPay</span>
+            <span className="font-semibold text-base tracking-tight">AccessGate</span>
           </Link>
           <span className="text-sm text-muted-foreground">Step 3 of 3</span>
         </div>

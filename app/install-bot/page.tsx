@@ -58,7 +58,7 @@ export default function InstallBotPage() {
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               {LOGO_SVG}
             </div>
-            <span className="font-semibold text-base tracking-tight">GuildPay</span>
+            <span className="font-semibold text-base tracking-tight">AccessGate</span>
           </Link>
           <span className="text-sm text-muted-foreground">Step 2 of 3</span>
         </div>
@@ -81,10 +81,10 @@ export default function InstallBotPage() {
               {DISCORD_LARGE_SVG}
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-              Install GuildPay Bot
+              Install AccessGate Bot
             </h1>
             <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-              To automatically assign and remove roles when members subscribe or cancel, the GuildPay bot must be added to your server.
+              To automatically assign and remove roles when members subscribe or cancel, the AccessGate bot must be added to your server.
             </p>
           </div>
 
@@ -141,7 +141,7 @@ export default function InstallBotPage() {
 
       <footer className="relative z-10 border-t border-border/30 py-5">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-xs text-muted-foreground">
-          <p>© 2024 GuildPay</p>
+          <p>© 2024 AccessGate</p>
           <div className="flex items-center gap-5">
             <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>

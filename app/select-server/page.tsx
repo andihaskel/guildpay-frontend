@@ -140,7 +140,7 @@ export default function SelectServerPage() {
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               {LOGO_SVG}
             </div>
-            <span className="font-semibold text-base tracking-tight">GuildPay</span>
+            <span className="font-semibold text-base tracking-tight">AccessGate</span>
           </Link>
           <Link
             href="/"

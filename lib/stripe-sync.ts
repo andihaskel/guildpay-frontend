@@ -1,7 +1,7 @@
 import { api } from './api';
 
-const SESSION_KEY_PREFIX = 'guildpay:stripeSync:session:';
-const LAST_DATE_KEY_PREFIX = 'guildpay:stripeSync:lastDate:';
+const SESSION_KEY_PREFIX = 'accessgate:stripeSync:session:';
+const LAST_DATE_KEY_PREFIX = 'accessgate:stripeSync:lastDate:';
 
 const getTodayDate = (): string => {
   const now = new Date();

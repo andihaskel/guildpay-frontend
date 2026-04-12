@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'GuildPay - Monetize Your Discord Server',
+  title: 'AccessGate - Monetize Your Discord Server',
   description: 'Sell access to exclusive roles with automated Stripe subscriptions. No manual approvals. No hassle.',
   openGraph: {
     images: [
