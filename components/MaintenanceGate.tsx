@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 const MAINTENANCE_KEY = 'maintenance_bypass';
-const PASSWORD = 'Andihas123';
+const PASSWORD = 'Hola123';
 
 export default function MaintenanceGate({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState(false);
