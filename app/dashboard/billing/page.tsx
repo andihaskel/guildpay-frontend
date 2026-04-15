@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag, Users, Check, FileText, Loader as Loader2, Infinity as InfinityIcon, TriangleAlert as AlertTriangle, ExternalLink, Download } from 'lucide-react';
+import { Check, FileText, Loader as Loader2, TriangleAlert as AlertTriangle, ExternalLink, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -102,18 +102,6 @@ export default function BillingPage() {
     }
 
     return features;
-  };
-
-  const getPagesPercentage = () => {
-    if (!billingPlan) return 0;
-    if (billingPlan.limits.max_pages === -1) return 0;
-    return (billingPlan.usage.pages / billingPlan.limits.max_pages) * 100;
-  };
-
-  const getMembersPercentage = () => {
-    if (!billingPlan) return 0;
-    if (billingPlan.limits.max_members === -1) return 0;
-    return (billingPlan.usage.members / billingPlan.limits.max_members) * 100;
   };
 
   const getTrialDaysRemaining = () => {
@@ -281,23 +269,20 @@ export default function BillingPage() {
                   {getStatusBadge().label}
                 </Badge>
               </div>
-              <p className="text-base text-muted-foreground mb-1">
-                {billingPlan?.limits.max_pages === -1 ? 'Unlimited pages' : `Up to ${billingPlan?.limits.max_pages} page${billingPlan?.limits.max_pages === 1 ? '' : 's'}`} · {billingPlan?.limits.max_members === -1 ? 'Unlimited members' : `${billingPlan?.limits.max_members} members`}
-              </p>
               {billingPlan?.cancels_at_period_end && billingPlan?.current_period_end && (
                 <p className="text-sm text-yellow-500">
                   Plan active until {new Date(billingPlan.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Will revert to free plan afterwards.
                 </p>
               )}
               {billingPlan?.status === 'trialing' && billingPlan?.trial_end && (
-                <p className="text-sm text-sky-400">
-                  Trial ends {new Date(billingPlan.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </p>
-              )}
-              {!billingPlan?.cancels_at_period_end && billingPlan?.status !== 'trialing' && (
-                <p className="text-sm text-muted-foreground">
-                  Perfect for getting started with Discord monetization
-                </p>
+                <div className="space-y-0.5">
+                  <p className="text-sm text-sky-400">
+                    Trial ends {new Date(billingPlan.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    When your trial ends, your account will revert to the free plan.
+                  </p>
+                </div>
               )}
             </div>
             {billingPlan?.cancels_at_period_end ? (
@@ -333,89 +318,6 @@ export default function BillingPage() {
           </div>
         )}
       </Card>
-
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Usage</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-6 bg-slate-900/40 border-slate-800/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                <span>Pages</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-2xl font-bold flex items-center gap-2">
-                {billingPlan?.usage.pages || 0}
-                <span className="text-muted-foreground">/</span>
-                {billingPlan?.limits.max_pages === -1 ? (
-                  <InfinityIcon className="h-6 w-6 text-muted-foreground" />
-                ) : (
-                  <span>{billingPlan?.limits.max_pages || 0}</span>
-                )}
-              </div>
-              {billingPlan?.limits.max_pages !== -1 && (
-                <>
-                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        getPagesPercentage() >= 100
-                          ? 'bg-red-500'
-                          : getPagesPercentage() >= 80
-                          ? 'bg-yellow-500'
-                          : 'bg-primary/60'
-                      }`}
-                      style={{ width: `${Math.min(getPagesPercentage(), 100)}%` }}
-                    />
-                  </div>
-                  {getPagesPercentage() >= 100 && (
-                    <p className="text-xs text-red-500">At limit</p>
-                  )}
-                </>
-              )}
-            </div>
-          </Card>
-
-          <Card className="p-6 bg-slate-900/40 border-slate-800/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>Members</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-2xl font-bold flex items-center gap-2">
-                {billingPlan?.usage.members || 0}
-                <span className="text-muted-foreground">/</span>
-                {billingPlan?.limits.max_members === -1 ? (
-                  <InfinityIcon className="h-6 w-6 text-muted-foreground" />
-                ) : (
-                  <span>{billingPlan?.limits.max_members || 0}</span>
-                )}
-              </div>
-              {billingPlan?.limits.max_members !== -1 && (
-                <>
-                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        getMembersPercentage() >= 100
-                          ? 'bg-red-500'
-                          : getMembersPercentage() >= 80
-                          ? 'bg-yellow-500'
-                          : 'bg-primary/60'
-                      }`}
-                      style={{ width: `${Math.min(getMembersPercentage(), 100)}%` }}
-                    />
-                  </div>
-                  {getMembersPercentage() >= 100 && (
-                    <p className="text-xs text-red-500">At limit</p>
-                  )}
-                </>
-              )}
-            </div>
-          </Card>
-        </div>
-      </div>
 
       <div>
         <h2 className="text-xl font-semibold mb-4">Plans</h2>
