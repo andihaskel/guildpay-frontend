@@ -131,7 +131,8 @@ export interface ProductOverview {
   onboarding: {
     has_page: boolean;
     stripe_connected: boolean;
-    has_accessgate_subscription: boolean;
+    has_accessgate_subscription?: boolean;
+    has_guildpay_subscription?: boolean;
   };
   paying_members: number;
   monthly_revenue: number;
@@ -203,7 +204,7 @@ export interface CreatePageRequest {
 export interface OnboardingStatus {
   has_page: boolean;
   stripe_connected: boolean;
-  has_accessgate_subscription: boolean;
+  has_guildpay_subscription: boolean;
 }
 
 export interface BillingPlanStatus {

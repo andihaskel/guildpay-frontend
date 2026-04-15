@@ -48,7 +48,7 @@ export default function HomePage() {
       setOnboardingStatus({
         has_page: overviewData.onboarding.has_page,
         stripe_connected: overviewData.onboarding.stripe_connected,
-        has_accessgate_subscription: overviewData.onboarding.has_accessgate_subscription,
+        has_guildpay_subscription: overviewData.onboarding.has_guildpay_subscription ?? overviewData.onboarding.has_accessgate_subscription ?? false,
       });
 
       const dismissed = localStorage.getItem(`onboarding_dismissed_${currentProduct.id}`);
