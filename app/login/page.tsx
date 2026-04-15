@@ -11,8 +11,7 @@ const DISCORD_SVG = (
 
 export default function LoginPage() {
   const handleDiscordLogin = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    window.location.href = `${backendUrl}/auth/discord/start`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/start`;
   };
 
   return (

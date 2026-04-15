@@ -135,9 +135,9 @@ export default function Home() {
     if (fromDiscord) {
       setIsRedirecting(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, { credentials: 'include' });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, { credentials: 'include' });
         if (response.ok) {
-          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/creator/products`, { credentials: 'include' });
+          const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/creator/products`, { credentials: 'include' });
           if (productsResponse.ok) {
             const products = await productsResponse.json();
             router.push(products?.length > 0 ? '/dashboard/overview' : '/select-server');
@@ -154,7 +154,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, { credentials: 'include' });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, { credentials: 'include' });
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
@@ -166,14 +166,14 @@ export default function Home() {
   };
 
   const handleDiscordLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/start`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/start`;
   };
 
   const handleGoToDashboard = () => router.push('/dashboard/overview');
 
   const handleSignOut = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
       setUser(null);
       router.push('/');
     } catch {}

@@ -27,7 +27,7 @@ export default function MemberLoginPage() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/member/status`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/member/status`, {
           credentials: 'include',
         });
         if (res.ok) {
@@ -48,12 +48,12 @@ export default function MemberLoginPage() {
     if (s?.discord_connect_url) {
       window.location.href = s.discord_connect_url;
     } else {
-      window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/member/start`;
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/member/start`;
     }
   };
 
   const handleChange = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/member/start`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/member/start`;
   };
 
   return (

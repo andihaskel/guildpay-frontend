@@ -15,7 +15,7 @@ export default function ChooseLoginPage() {
   const router = useRouter();
 
   const handleCreatorLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/discord/start`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/start`;
   };
 
   const handleMemberLogin = () => {
