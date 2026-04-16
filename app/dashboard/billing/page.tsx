@@ -275,14 +275,9 @@ export default function BillingPage() {
                 </p>
               )}
               {billingPlan?.status === 'trialing' && billingPlan?.trial_end && (
-                <div className="space-y-0.5">
-                  <p className="text-sm text-sky-400">
-                    Trial ends {new Date(billingPlan.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    When your trial ends, your account will revert to the free plan.
-                  </p>
-                </div>
+                <p className="text-sm text-sky-400">
+                  Trial ends {new Date(billingPlan.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
               )}
             </div>
             {billingPlan?.cancels_at_period_end ? (
