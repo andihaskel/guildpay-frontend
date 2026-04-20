@@ -2,11 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  ArrowLeft, Upload, Plus, Trash2, GripVertical,
-  CheckCircle2, XCircle, Loader2, Monitor, Tablet, Smartphone,
-  Link as LinkIcon, Lock
-} from 'lucide-react';
+import { ArrowLeft, Upload, Plus, Trash2, GripVertical, CircleCheck as CheckCircle2, Circle as XCircle, Loader as Loader2, Monitor, Tablet, Smartphone, Link as LinkIcon, Lock } from 'lucide-react';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { RichTextEditor } from '@/components/dashboard/RichTextEditor';
 import { useProduct } from '@/contexts';
