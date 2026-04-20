@@ -2,11 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader as Loader2, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader as Loader2, Check, ArrowLeft, Lock, Shield } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -56,66 +54,40 @@ export default function PublicPageClient() {
 
   useEffect(() => {
     const loadPageData = async () => {
-      if (!params.creator || !params.slug) {
-        console.log('Missing params:', { creator: params.creator, slug: params.slug });
-        return;
-      }
-
+      if (!params.creator || !params.slug) return;
       try {
         setIsLoading(true);
-        console.log('Fetching page data from:', publicPath);
         const data = await api.getPublicPage(publicPath);
-        console.log('Page data loaded:', JSON.stringify(data, null, 2));
-        console.log('style field:', data?.style);
-        console.log('settings field:', data?.settings);
-        console.log('settings.page_style:', data?.settings?.page_style);
         setPageData(data);
         setError(null);
       } catch (err: any) {
-        console.error('Failed to load page:', err);
-        console.error('Error details:', {
-          message: err.message,
-          statusCode: err.statusCode,
-          error: err.error
-        });
         setError(err.message || 'Page not found');
       } finally {
         setIsLoading(false);
       }
     };
-
     loadPageData();
   }, [params.creator, params.slug, publicPath]);
 
   const handleGetAccess = async () => {
     if (!pageData) return;
-
     const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-
     if (!stripePublishableKey) {
-      toast.error('Stripe publishable key is missing. Please configure NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.');
+      toast.error('Stripe publishable key is missing.');
       return;
     }
-
     if (!stripePublishableKey.startsWith('pk_test_') && !stripePublishableKey.startsWith('pk_live_')) {
-      toast.error('Invalid Stripe publishable key format. Key should start with pk_test_ or pk_live_');
+      toast.error('Invalid Stripe publishable key format.');
       return;
     }
-
     try {
       setIsCreatingSession(true);
-      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(
-        publicPath,
-        billingInterval
-      );
-
+      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(publicPath, billingInterval);
       sessionStorage.setItem('stripe_account', stripe_account);
-
       setStripePromise(loadStripe(stripePublishableKey));
       setClientSecret(client_secret);
       setStep('checkout');
     } catch (err: any) {
-      console.error('Failed to create checkout session:', err);
       toast.error(err.message || 'Failed to start checkout. Please try again.');
     } finally {
       setIsCreatingSession(false);
@@ -143,48 +115,38 @@ export default function PublicPageClient() {
   const resolvedStyle = pageData?.style ?? pageData?.settings?.page_style ?? 'dark';
   const isLight = resolvedStyle === 'light';
 
-  const theme = {
-    pageBg: isLight
-      ? 'bg-gradient-to-b from-gray-50 via-white to-gray-100'
-      : 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950',
-    cardBg: isLight ? 'bg-white border-gray-200' : 'bg-slate-900/60 border-slate-800/50',
-    sideCardBg: isLight ? 'bg-white border-gray-200' : 'bg-slate-900/80 border-slate-800/50',
-    headingColor: isLight ? 'text-gray-900' : 'text-white',
-    subColor: isLight ? 'text-gray-500' : 'text-slate-400',
-    featureRowBg: isLight ? 'bg-gray-50 border-gray-200 hover:border-gray-300' : 'bg-slate-800/40 border-slate-700/50 hover:border-slate-600/50',
-    overlayGradient: isLight
-      ? 'bg-gradient-to-b from-transparent to-gray-50'
-      : 'bg-gradient-to-b from-transparent to-slate-950',
-    heroBorder: isLight ? 'border-gray-300' : 'border-slate-800',
-    divider: isLight ? 'border-gray-200' : 'border-slate-800',
-    toggleBg: isLight ? 'bg-gray-100 text-gray-600' : 'bg-slate-800/50',
-    toggleActive: 'bg-primary text-primary-foreground',
-    toggleInactive: isLight ? 'text-gray-500 hover:text-gray-800' : 'text-slate-400 hover:text-white',
-    btnBg: 'bg-primary hover:bg-primary/85 text-primary-foreground',
-    backBtn: isLight ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white',
-    trialBanner: isLight
-      ? 'bg-emerald-50 border-emerald-200'
-      : 'bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-emerald-500/30',
-    trialText: 'text-emerald-600',
-    priceSubColor: isLight ? 'text-gray-400' : 'text-slate-400',
-    closedCardBg: isLight ? 'bg-white border-gray-200' : 'bg-slate-900/80 border-slate-800/50',
+  const t = {
+    bg: isLight ? '#fafafa' : '#0a0a0a',
+    surface: isLight ? '#ffffff' : '#111111',
+    surfaceAlt: isLight ? '#f5f5f5' : '#161616',
+    border: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+    borderSoft: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+    text: isLight ? '#0a0a0a' : '#f0f0f0',
+    subText: isLight ? '#555555' : '#888888',
+    mutedText: isLight ? '#888888' : '#555555',
+    divider: isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)',
   };
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950'} flex items-center justify-center`}>
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#5865f2' }} />
       </div>
     );
   }
 
   if (error || !pageData) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
-          <p className="text-slate-400 mb-6">The page you're looking for doesn't exist.</p>
-          <Button onClick={() => router.push('/')}>Go Home</Button>
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, ui-sans-serif, sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(214,69,69,0.1)', border: '0.5px solid rgba(214,69,69,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Lock style={{ width: '20px', height: '20px', color: '#e06a6a' }} />
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: 500, color: '#f0f0f0', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Page not found</h1>
+          <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px' }}>The page you're looking for doesn't exist or has been removed.</p>
+          <button onClick={() => router.push('/')} style={{ padding: '8px 16px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', fontSize: '13px', fontWeight: 500, border: '0', cursor: 'pointer' }}>
+            Go home
+          </button>
         </div>
       </div>
     );
@@ -192,77 +154,53 @@ export default function PublicPageClient() {
 
   if (!pageData.accepts_signups) {
     return (
-      <div className={`min-h-screen ${theme.pageBg} flex items-center justify-center px-4`}>
-        <Card className={`max-w-2xl w-full p-12 ${theme.closedCardBg} text-center`}>
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full bg-red-500" />
+      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, ui-sans-serif, sans-serif' }}>
+        <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(214,69,69,0.08)', border: '0.5px solid rgba(214,69,69,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Lock style={{ width: '22px', height: '22px', color: '#e06a6a' }} />
           </div>
-          <h1 className={`text-4xl font-bold mb-4 ${theme.headingColor}`}>{pageData.offer_name}</h1>
-          <p className={`text-xl mb-6 ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Signups are currently closed</p>
-          <p className={`mb-8 ${theme.subColor}`}>
-            This access page is temporarily unavailable. Please check back later or contact the creator for more information.
+          <h1 style={{ fontSize: '24px', fontWeight: 500, color: t.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>{pageData.offer_name}</h1>
+          <p style={{ fontSize: '14px', color: t.subText, margin: '0 0 24px', lineHeight: 1.6 }}>
+            Signups are currently closed. Check back later or contact the creator.
           </p>
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/')}
-              className={isLight ? 'border-gray-300 hover:bg-gray-100 text-gray-700' : 'border-slate-700 hover:bg-slate-800'}
-            >
-              Go Home
-            </Button>
-          </div>
-        </Card>
+          <button onClick={() => router.push('/')} style={{ padding: '8px 16px', borderRadius: '6px', background: isLight ? '#0a0a0a' : '#fff', color: isLight ? '#fff' : '#0a0a0a', fontSize: '13px', fontWeight: 500, border: '0', cursor: 'pointer' }}>
+            Go home
+          </button>
+        </div>
       </div>
     );
   }
 
-  const currentPrice = billingInterval === 'monthly'
-    ? pageData.monthly_amount_minor
-    : pageData.yearly_amount_minor;
-
+  const currentPrice = billingInterval === 'monthly' ? pageData.monthly_amount_minor : pageData.yearly_amount_minor;
   const formattedPrice = (currentPrice / 100).toFixed(2);
-  const currencySymbol = pageData.currency === 'usd' ? '$' : pageData.currency.toUpperCase();
+  const currencySymbol = pageData.currency === 'usd' ? '$' : pageData.currency === 'eur' ? '€' : pageData.currency === 'gbp' ? '£' : pageData.currency.toUpperCase();
+  const trialDays = pageData.trial_days && pageData.trial_days > 0 ? pageData.trial_days : null;
 
   if (step === 'checkout' && clientSecret && stripePromise) {
     return (
-      <div className={`min-h-screen ${theme.pageBg}`}>
-        <div className="container mx-auto px-4 py-8">
-          <Button
-            variant="ghost"
+      <div style={{ minHeight: '100vh', background: t.bg, fontFamily: 'Inter, ui-sans-serif, sans-serif' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 80px' }}>
+          <button
             onClick={handleBackToDetails}
-            className={`mb-6 ${theme.backBtn}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: t.subText, background: 'none', border: '0', cursor: 'pointer', marginBottom: '28px', padding: 0 }}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft style={{ width: '14px', height: '14px' }} />
             Back to details
-          </Button>
+          </button>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8 text-center">
-              <h1 className={`text-3xl font-bold mb-2 ${theme.headingColor}`}>{pageData.offer_name}</h1>
-              {pageData.trial_days && pageData.trial_days > 0 ? (
-                <div>
-                  <p className="text-emerald-500 font-semibold mb-1">
-                    {pageData.trial_days}-day free trial
-                  </p>
-                  <p className={`text-sm ${theme.subColor}`}>
-                    Then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
-                  </p>
-                </div>
-              ) : (
-                <p className={theme.subColor}>
-                  {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}
-                </p>
-              )}
-            </div>
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 500, color: t.text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>{pageData.offer_name}</h1>
+            {trialDays ? (
+              <p style={{ fontSize: '13px', color: '#4ab585' }}>{trialDays}-day free trial, then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'mo' : 'yr'}</p>
+            ) : (
+              <p style={{ fontSize: '13px', color: t.subText }}>{currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'month' : 'year'}</p>
+            )}
+          </div>
 
-            <Card className={`p-8 ${theme.sideCardBg}`}>
-              <EmbeddedCheckoutProvider
-                stripe={stripePromise}
-                options={{ clientSecret }}
-              >
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
-            </Card>
+          <div style={{ background: t.surface, border: `0.5px solid ${t.border}`, borderRadius: '10px', overflow: 'hidden', padding: '24px' }}>
+            <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
           </div>
         </div>
       </div>
@@ -270,161 +208,169 @@ export default function PublicPageClient() {
   }
 
   return (
-    <div className={`min-h-screen ${theme.pageBg}`}>
-      <div
-        className="h-[400px] relative bg-cover bg-center"
-        style={{
-          backgroundImage: pageData.cover_url ? `url(${pageData.cover_url})` : 'none',
-          backgroundColor: !pageData.cover_url ? (isLight ? '#e5e7eb' : '#1e293b') : undefined
-        }}
-      >
-        <div className={`absolute inset-0 ${theme.overlayGradient}`} />
+    <div style={{ minHeight: '100vh', background: t.bg, fontFamily: 'Inter, ui-sans-serif, sans-serif', fontSize: '14px', color: t.text }}>
+      <div style={{ borderBottom: `0.5px solid ${t.border}`, padding: '0 24px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20, background: isLight ? 'rgba(250,250,250,0.9)' : 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', fontWeight: 500, color: t.subText }}>
+          <span style={{ width: '16px', height: '16px', borderRadius: '4px', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#8b92f8', fontSize: '10px', fontWeight: 700 }}>A</span>
+          Secured by AccessGate
+        </span>
+        {trialDays && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px', borderRadius: '999px', background: 'rgba(88,101,242,0.10)', border: '0.5px solid rgba(88,101,242,0.22)', color: '#8b92f8', fontSize: '10.5px', fontWeight: 500 }}>
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
+            {trialDays}-day free trial
+          </span>
+        )}
+      </div>
 
-        <div className="container mx-auto px-4 h-full flex items-end pb-12 relative z-10">
-          <div className="flex items-end gap-6">
+      <div style={{ maxWidth: '1060px', margin: '0 auto', padding: '40px 24px 80px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 360px', gap: '32px', alignItems: 'start' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
             {pageData.hero_image_url && (
-              <div className={`w-32 h-32 rounded-2xl overflow-hidden border-4 ${theme.heroBorder} shadow-2xl flex-shrink-0`}>
-                <img
-                  src={pageData.hero_image_url}
-                  alt={pageData.offer_name}
-                  className="w-full h-full object-cover"
-                />
+              <div style={{ width: '72px', height: '72px', borderRadius: '16px', border: `0.5px solid ${t.border}`, overflow: 'hidden', flexShrink: 0 }}>
+                <img src={pageData.hero_image_url} alt={pageData.offer_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
             <div>
-              <h1 className={`text-5xl font-bold mb-2 ${theme.headingColor}`}>{pageData.offer_name}</h1>
-              <p className={`text-lg ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>@{pageData.creator_slug}</p>
+              <p style={{ fontSize: '11px', fontWeight: 500, color: t.mutedText, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 4px' }}>
+                @{pageData.creator_slug}
+              </p>
+              <h1 style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.025em', color: t.text, margin: 0, lineHeight: 1.1 }}>
+                {pageData.offer_name}
+              </h1>
+            </div>
+          </div>
+
+          {pageData.features && pageData.features.length > 0 && (
+            <div style={{ background: t.surface, border: `0.5px solid ${t.border}`, borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${t.borderSoft}` }}>
+                <h2 style={{ fontSize: '14px', fontWeight: 500, color: t.text, margin: 0 }}>What's included</h2>
+              </div>
+              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {pageData.features.map(feature => (
+                  <div key={feature.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(88,101,242,0.10)', border: '0.5px solid rgba(88,101,242,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                      {feature.icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '13.5px', fontWeight: 500, color: t.text, margin: '0 0 3px' }}>{feature.title}</p>
+                      {feature.description && <p style={{ fontSize: '12.5px', color: t.subText, margin: 0, lineHeight: 1.5 }}>{feature.description}</p>}
+                    </div>
+                    <Check style={{ width: '14px', height: '14px', color: '#4ab585', flexShrink: 0, marginTop: '2px' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pageData.description && (
+            <div style={{ background: t.surface, border: `0.5px solid ${t.border}`, borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${t.borderSoft}` }}>
+                <h2 style={{ fontSize: '14px', fontWeight: 500, color: t.text, margin: 0 }}>About</h2>
+              </div>
+              <div style={{ padding: '20px' }}>
+                <MarkdownRenderer content={pageData.description} className={isLight ? 'text-gray-700' : 'text-slate-300'} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ position: 'sticky', top: '68px' }}>
+          <div style={{ background: t.surface, border: `0.5px solid ${t.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+            {trialDays && (
+              <div style={{ padding: '10px 20px', background: 'rgba(47,157,107,0.08)', borderBottom: '0.5px solid rgba(47,157,107,0.18)', textAlign: 'center' }}>
+                <p style={{ fontSize: '12.5px', fontWeight: 500, color: '#4ab585', margin: 0 }}>
+                  {trialDays}-day free trial included
+                </p>
+              </div>
+            )}
+
+            <div style={{ padding: '20px' }}>
+              {pageData.has_yearly && (
+                <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: t.surfaceAlt, border: `0.5px solid ${t.border}`, borderRadius: '8px', padding: '3px' }}>
+                  {(['monthly', 'yearly'] as const).map(plan => (
+                    <button
+                      key={plan}
+                      onClick={() => handleBillingIntervalChange(plan)}
+                      style={{
+                        flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '12.5px', fontWeight: 500,
+                        border: '0', cursor: 'pointer', transition: 'all 180ms ease',
+                        background: billingInterval === plan ? (isLight ? '#fff' : '#1a1a1a') : 'transparent',
+                        color: billingInterval === plan ? t.text : t.subText,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      }}
+                    >
+                      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                      {plan === 'yearly' && billingInterval !== 'yearly' && (
+                        <span style={{ padding: '1px 5px', borderRadius: '999px', background: 'rgba(47,157,107,0.12)', color: '#4ab585', fontSize: '10px', fontWeight: 600 }}>Save</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '34px', fontWeight: 500, letterSpacing: '-0.025em', color: t.text, lineHeight: 1 }}>
+                  {currencySymbol}{formattedPrice}
+                  <span style={{ fontSize: '16px', fontWeight: 400, color: t.subText }}>/{billingInterval === 'monthly' ? 'month' : 'year'}</span>
+                </div>
+                {trialDays && (
+                  <p style={{ fontSize: '12px', color: t.subText, marginTop: '5px' }}>
+                    {trialDays} days free, then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'mo' : 'yr'}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={handleGetAccess}
+                disabled={isCreatingSession}
+                style={{
+                  width: '100%', padding: '11px', borderRadius: '8px',
+                  background: '#5865f2', border: '0.5px solid #5865f2',
+                  color: '#fff', fontSize: '13.5px', fontWeight: 500,
+                  cursor: isCreatingSession ? 'not-allowed' : 'pointer',
+                  opacity: isCreatingSession ? 0.7 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  marginBottom: '16px', transition: 'opacity 180ms ease',
+                }}
+              >
+                {isCreatingSession ? (
+                  <><Loader2 style={{ width: '14px', height: '14px' }} className="animate-spin" /> Processing...</>
+                ) : (
+                  trialDays ? `Start ${trialDays}-day free trial` : `Join for ${currencySymbol}${formattedPrice}/${billingInterval === 'monthly' ? 'mo' : 'yr'}`
+                )}
+              </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', paddingBottom: '16px', marginBottom: '16px', borderBottom: `0.5px solid ${t.divider}` }}>
+                {[
+                  trialDays ? `${trialDays}-day free trial` : null,
+                  'Instant Discord access',
+                  'Cancel anytime',
+                  'Secure payment via Stripe',
+                ].filter(Boolean).map(item => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px' }}>
+                    <Check style={{ width: '13px', height: '13px', color: '#4ab585', flexShrink: 0 }} />
+                    <span style={{ color: t.subText }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Shield style={{ width: '12px', height: '12px', color: t.mutedText }} />
+                <p style={{ fontSize: '11px', color: t.mutedText, margin: 0 }}>
+                  Secured by Stripe
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {pageData.description && (
-              <Card className={`p-8 ${theme.cardBg}`}>
-                <h2 className={`text-2xl font-semibold mb-4 ${theme.headingColor}`}>About</h2>
-                <MarkdownRenderer
-                  content={pageData.description}
-                  className={isLight ? 'text-gray-700' : 'text-slate-300'}
-                />
-              </Card>
-            )}
-
-            {pageData.features && pageData.features.length > 0 && (
-              <Card className={`p-8 ${theme.cardBg}`}>
-                <h2 className={`text-2xl font-semibold mb-6 ${theme.headingColor}`}>What's Included</h2>
-                <div className="space-y-4">
-                  {pageData.features.map((feature) => (
-                    <div
-                      key={feature.id}
-                      className={`flex gap-4 p-4 rounded-lg border transition-colors ${theme.featureRowBg}`}
-                    >
-                      <div className="text-3xl flex-shrink-0">{feature.icon}</div>
-                      <div className="flex-1">
-                        <h3 className={`font-semibold mb-1 ${theme.headingColor}`}>{feature.title}</h3>
-                        <p className={`text-sm ${theme.subColor}`}>{feature.description}</p>
-                      </div>
-                      <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-
-          <div className="lg:col-span-1">
-            <Card className={`p-6 ${theme.sideCardBg} sticky top-6`}>
-              {pageData.trial_days && pageData.trial_days > 0 && (
-                <div className={`mb-4 -mt-2 -mx-2 px-4 py-2 border rounded-lg ${theme.trialBanner}`}>
-                  <p className={`font-semibold text-sm text-center ${theme.trialText}`}>
-                    {pageData.trial_days}-day free trial included
-                  </p>
-                </div>
-              )}
-              <div className="mb-6">
-                <div className={`text-4xl font-bold mb-2 ${theme.headingColor}`}>
-                  {currencySymbol}{formattedPrice}
-                  <span className={`text-lg font-normal ${theme.priceSubColor}`}>
-                    /{billingInterval === 'monthly' ? 'month' : 'year'}
-                  </span>
-                </div>
-                {pageData.trial_days && pageData.trial_days > 0 && (
-                  <p className={`text-sm mt-1 ${theme.subColor}`}>
-                    Try free for {pageData.trial_days} days, then {currencySymbol}{formattedPrice}/{billingInterval === 'monthly' ? 'mo' : 'yr'}
-                  </p>
-                )}
-
-                {pageData.has_yearly && (
-                  <div className={`flex gap-2 p-1 rounded-lg mt-4 ${theme.toggleBg}`}>
-                    <button
-                      onClick={() => handleBillingIntervalChange('monthly')}
-                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                        billingInterval === 'monthly' ? theme.toggleActive : theme.toggleInactive
-                      }`}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => handleBillingIntervalChange('yearly')}
-                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                        billingInterval === 'yearly' ? theme.toggleActive : theme.toggleInactive
-                      }`}
-                    >
-                      Yearly
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                className="w-full h-12 text-lg font-semibold rounded-full"
-                size="lg"
-                onClick={handleGetAccess}
-                disabled={isCreatingSession}
-              >
-                {isCreatingSession ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Get Access
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
-                )}
-              </Button>
-
-              <div className={`mt-6 pt-6 border-t ${theme.divider}`}>
-                <div className="space-y-3 text-sm">
-                  {pageData.trial_days && pageData.trial_days > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-emerald-500 font-medium">{pageData.trial_days}-day free trial</span>
-                      <Check className="h-4 w-4 text-emerald-500" />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className={theme.subColor}>Instant access</span>
-                    <Check className="h-4 w-4 text-green-500" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={theme.subColor}>Cancel anytime</span>
-                    <Check className="h-4 w-4 text-green-500" />
-                  </div>
-                  {billingInterval === 'yearly' && (
-                    <div className="flex items-center justify-between">
-                      <span className={theme.subColor}>Save with yearly billing</span>
-                      <Check className="h-4 w-4 text-green-500" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <style>{`
+        @media (max-width: 900px) {
+          .public-page-grid { grid-template-columns: 1fr !important; }
+          .public-page-sidebar { position: static !important; top: auto !important; }
+        }
+      `}</style>
     </div>
   );
 }
