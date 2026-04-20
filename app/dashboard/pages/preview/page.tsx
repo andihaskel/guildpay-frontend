@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, Crown, MessageSquare, Zap, Lock, ExternalLink, Loader as Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Check, Lock, Loader as Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
@@ -21,115 +17,39 @@ export default function PreviewPage() {
   const pageId = searchParams.get('id');
   const dataParam = searchParams.get('data');
   const [isPublishing, setIsPublishing] = useState(false);
-
   const [formData, setFormData] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
 
   useEffect(() => {
     if (dataParam) {
       try {
-        const parsed = JSON.parse(dataParam);
-        setFormData(parsed);
-      } catch (error) {
-        console.error('Failed to parse form data:', error);
-      }
+        setFormData(JSON.parse(dataParam));
+      } catch { }
     }
   }, [dataParam]);
 
-  const [previewData] = useState({
-    offerImage: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=800',
-    offerName: 'Artistry Collective',
-    businessName: 'testandi',
-    description: `# Welcome to Testandi! 👋
-
-Dive into a vibrant community dedicated to the world of art! Testandi is all about connection, inspiration, and creativity. Here's what makes us special:
-
-• **Passionate Artists Unite**: Furthers your artistic journey alongside like-minded individuals who share your love for creativity.
-• **Diverse Art Forms**: Explore various genres including painting, digital art, sculpture, and beyond!
-• **Showcase Your Work**: A supportive environment for sharing and receiving feedback on your creations.
-• **Workshops and Challenges**: Participate in collaborative projects, themed challenges, and skill-building workshops to enhance your craft.
-• **Inspiring Discussions**: Engage in stimulating conversations about techniques, inspirations, and the art world at large.
-• **Friendship and Collaboration**: Build lasting connections with fellow artists and collaborate on exciting new projects.
-
-Join us in a space where creativity flourishes and every artist feels at home! 🎨✨`,
-    price: 30.00,
-    yearlyPrice: 300.00,
-    currency: 'USD',
-    interval: 'Monthly',
-    businessFeatures: [
-      { icon: '💬', title: 'Access to Group Chats:', description: 'Join a private space where you can participate in group conversations with other members.' },
-      { icon: '⚡', title: 'Real-Time Updates:', description: 'Stay connected with instant messages and updates from the community.' },
-      { icon: '🔒', title: 'Community-Only Content:', description: 'Get access to conversations, resources, and discussions available exclusively to members.' },
-    ],
-  });
-
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
-
-  const isLight = formData?.pageStyle === 'light';
-
-  const theme = {
-    pageBg: isLight ? 'bg-white' : 'bg-background',
-    cardBg: isLight ? 'bg-white border-gray-200 text-gray-900' : 'bg-slate-900/40 border-slate-800/50',
-    headingColor: isLight ? 'text-gray-900' : '',
-    subColor: isLight ? 'text-gray-500' : 'text-slate-400',
-    featureIconBg: isLight ? 'bg-gray-100' : 'bg-slate-800/60',
-    featureText: isLight ? 'text-gray-700' : 'text-slate-400',
-    faqText: isLight ? 'text-gray-600' : 'text-slate-400',
-    checkText: isLight ? 'text-gray-700' : 'text-slate-300',
-    sideCardBg: isLight ? 'bg-white border-gray-200' : 'bg-slate-900/60 border-slate-800/50',
-    tabListBg: isLight ? 'bg-gray-100 text-gray-600' : 'bg-slate-800/60',
-    tabActiveBg: isLight ? 'data-[state=active]:bg-white data-[state=active]:text-gray-900' : 'data-[state=active]:bg-slate-700',
-    priceSummaryBg: isLight ? 'bg-gray-50 border-gray-200' : 'bg-slate-800/40 border-slate-700/50',
-    priceSummaryText: isLight ? 'text-gray-500' : 'text-slate-400',
-    paymentMockBg: isLight ? 'border-gray-300 bg-gray-50/50' : 'border-dashed border-slate-700 bg-slate-800/20',
-    paymentFieldBg: isLight ? 'bg-gray-50 border-gray-200' : 'bg-slate-900/60 border-slate-700/50',
-    paymentInputBg: isLight ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700',
-    paymentInputText: isLight ? 'text-gray-400' : 'text-slate-500',
-    paymentLabelText: isLight ? 'text-gray-500' : 'text-slate-400',
-    divider: isLight ? 'border-gray-200' : 'border-slate-700',
-    footerText: isLight ? 'text-gray-400' : 'text-slate-400',
-  };
-
   const handlePublish = async () => {
     if (!currentProduct?.id || !formData) {
-      toast({
-        title: 'Error',
-        description: 'Missing product or form data',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Missing product or form data', variant: 'destructive' });
       return;
     }
-
     try {
       setIsPublishing(true);
-
-      const slugCheck = await api.checkSlug(
-        currentProduct.id,
-        formData.offerUrl,
-        pageId || undefined
-      );
-
+      const slugCheck = await api.checkSlug(currentProduct.id, formData.offerUrl, pageId || undefined);
       if (!slugCheck.available) {
-        toast({
-          title: 'Slug already in use',
-          description: `The URL "${formData.offerUrl}" is already taken. Please go back and choose a different one.`,
-          variant: 'destructive',
-        });
+        toast({ title: 'URL taken', description: `"${formData.offerUrl}" is already taken. Go back and choose a different one.`, variant: 'destructive' });
         setIsPublishing(false);
         return;
       }
 
-      const parsePrice = (price: string): number => {
-        const parsed = parseFloat(price);
-        return Math.round(parsed * 100);
+      const parsePrice = (p: string) => Math.round(parseFloat(p) * 100);
+      const parseTrialDays = (t: string) => {
+        if (t === 'None') return undefined;
+        const m = t.match(/\d+/);
+        return m ? parseInt(m[0]) : undefined;
       };
 
-      const parseTrialDays = (trial: string): number | undefined => {
-        if (trial === 'None') return undefined;
-        const match = trial.match(/\d+/);
-        return match ? parseInt(match[0]) : undefined;
-      };
-
-      const createPageData: CreatePageRequest = {
+      const payload: CreatePageRequest = {
         slug: formData.offerUrl,
         offer_name: formData.offerName,
         hero_image_url: formData.offerImage || undefined,
@@ -154,276 +74,237 @@ Join us in a space where creativity flourishes and every artist feels at home! �
       };
 
       if (pageId) {
-        await api.updatePage(currentProduct.id, pageId, createPageData);
-        toast({
-          title: 'Success',
-          description: 'Page updated successfully',
-        });
+        await api.updatePage(currentProduct.id, pageId, payload);
+        toast({ title: 'Updated', description: 'Page updated successfully' });
       } else {
-        await api.createPage(currentProduct.id, createPageData);
-        toast({
-          title: 'Success',
-          description: 'Page created successfully',
-        });
+        await api.createPage(currentProduct.id, payload);
+        toast({ title: 'Published', description: 'Page created successfully' });
       }
-
       router.push('/dashboard/pages');
     } catch (error: any) {
-      console.error('Failed to publish page:', error);
-      const description =
-        error?.message ||
-        (typeof error?.error === 'string' ? error.error : undefined) ||
-        'Failed to publish page';
-      toast({
-        title: 'Error',
-        description,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error?.message || 'Failed to publish page', variant: 'destructive' });
     } finally {
       setIsPublishing(false);
     }
   };
 
+  if (!formData) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  const isLight = formData.pageStyle === 'light';
+  const price = parseFloat(formData.price) || 0;
+  const yearlyPrice = parseFloat(formData.yearlyPrice) || 0;
+  const currSymbol = formData.currency === 'EUR' ? '€' : formData.currency === 'GBP' ? '£' : '$';
+  const hasYearly = formData.yearlyOption === 'yes' && formData.interval !== 'Yearly';
+  const trialDays = formData.freeTrialPeriod !== 'None' ? formData.freeTrialPeriod.replace(' days', '') : null;
+
+  const displayPrice = selectedPlan === 'yearly' && hasYearly ? yearlyPrice : price;
+  const displayPeriod = selectedPlan === 'yearly' && hasYearly ? 'year' : 'month';
+
+  const theme = {
+    bg: isLight ? '#fafafa' : '#0a0a0a',
+    surface: isLight ? '#ffffff' : '#111111',
+    surfaceAlt: isLight ? '#f5f5f5' : '#161616',
+    border: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+    borderSoft: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+    text: isLight ? '#0a0a0a' : '#f0f0f0',
+    subText: isLight ? '#555' : '#888',
+    mutedText: isLight ? '#888' : '#555',
+    divider: isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)',
+  };
 
   return (
-    <div className={`min-h-screen ${isLight ? 'bg-white' : 'bg-background'}`}>
-      <div className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/dashboard/pages/edit' + (pageId ? `?id=${pageId}` : ''))}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Editor
-          </Button>
-          <Badge variant="outline" className="border-primary/50 text-primary">
-            Preview Mode
-          </Badge>
-          <Button
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            onClick={handlePublish}
-            disabled={isPublishing || !formData}
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Publishing...
-              </>
-            ) : (
-              'Publish'
-            )}
-          </Button>
-        </div>
+    <div style={{ minHeight: '100vh', background: theme.bg, fontFamily: 'Inter, ui-sans-serif, sans-serif' }}>
+      <div className="sticky top-0 z-50 h-[52px] flex items-center justify-between px-6 border-b" style={{ background: isLight ? 'rgba(250,250,250,0.92)' : 'rgba(10,10,10,0.92)', backdropFilter: 'blur(10px)', borderColor: theme.border }}>
+        <button
+          onClick={() => router.push('/dashboard/pages/edit' + (pageId ? `?id=${pageId}` : ''))}
+          className="inline-flex items-center gap-2 text-[13px] font-medium transition-colors group"
+          style={{ color: theme.subText }}
+          onMouseEnter={e => (e.currentTarget.style.color = theme.text)}
+          onMouseLeave={e => (e.currentTarget.style.color = theme.subText)}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to editor
+        </button>
+
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium border" style={{ background: 'rgba(88,101,242,0.08)', borderColor: 'rgba(88,101,242,0.2)', color: '#8b92f8' }}>
+          Preview mode
+        </span>
+
+        <button
+          onClick={handlePublish}
+          disabled={isPublishing}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[13px] font-medium transition-opacity disabled:opacity-50"
+          style={{ background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff' }}
+        >
+          {isPublishing ? (
+            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publishing...</>
+          ) : (
+            pageId ? 'Save changes' : 'Publish page'
+          )}
+        </button>
       </div>
 
-      <div className={`max-w-7xl mx-auto px-6 py-12 ${theme.pageBg} min-h-screen`}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="space-y-8">
+      <div className="max-w-[1100px] mx-auto px-6 py-12 grid lg:grid-cols-[1fr_400px] gap-10">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 mb-2">
+            {formData.offerImage && (
+              <div style={{ width: '72px', height: '72px', borderRadius: '16px', border: `0.5px solid ${theme.border}`, overflow: 'hidden', flexShrink: 0 }}>
+                <img src={formData.offerImage} alt={formData.offerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <img
-                  src={(formData?.offerImage || previewData.offerImage)}
-                  alt={(formData?.offerName || previewData.offerName)}
-                  className={`w-20 h-20 rounded-xl object-cover border-2 ${isLight ? 'border-gray-200' : 'border-slate-700'}`}
-                />
-                <div>
-                  <h1 className={`text-3xl font-bold ${theme.headingColor}`}>{formData?.offerName || previewData.offerName}</h1>
-                  <p className={theme.subColor}>by {formData?.businessName || previewData.businessName}</p>
-                </div>
-              </div>
-
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className={`text-5xl font-bold ${theme.headingColor}`}>
-                  ${selectedPlan === 'monthly'
-                    ? parseFloat(formData?.price || previewData.price).toFixed(2)
-                    : parseFloat(formData?.yearlyPrice || previewData.yearlyPrice).toFixed(2)}
-                </span>
-                <span className={`text-xl ${theme.subColor}`}>
-                  / {selectedPlan === 'monthly' ? 'month' : 'year'}
-                </span>
-              </div>
+              {formData.businessName && (
+                <p style={{ fontSize: '11px', fontWeight: 500, color: theme.mutedText, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                  {formData.businessName}
+                </p>
+              )}
+              <h1 style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.025em', color: theme.text, margin: 0 }}>
+                {formData.offerName || 'Untitled Page'}
+              </h1>
             </div>
+          </div>
 
-            <Card className={`p-6 ${theme.cardBg}`}>
-              <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${theme.headingColor}`}>
-                <Crown className="h-5 w-5 text-yellow-500" />
-                What's Included
-              </h2>
-              <div className="space-y-4">
-                {(formData?.businessFeatures || previewData.businessFeatures).map((feature: any, index: number) => (
-                  <div key={index} className="flex gap-3">
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${theme.featureIconBg} flex items-center justify-center text-xl`}>
-                      {feature.icon}
+          {formData.businessFeatures?.length > 0 && (
+            <div style={{ background: theme.surface, border: `0.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${theme.borderSoft}` }}>
+                <h2 style={{ fontSize: '14px', fontWeight: 500, color: theme.text, margin: 0 }}>What's included</h2>
+              </div>
+              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {formData.businessFeatures.map((f: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(88,101,242,0.10)', border: '0.5px solid rgba(88,101,242,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                      {f.icon}
                     </div>
                     <div>
-                      <h3 className={`font-semibold mb-1 ${theme.headingColor}`}>{feature.title}</h3>
-                      <p className={`text-sm ${theme.featureText}`}>{feature.description}</p>
+                      <p style={{ fontSize: '13.5px', fontWeight: 500, color: theme.text, margin: '0 0 3px' }}>{f.title}</p>
+                      {f.description && <p style={{ fontSize: '12.5px', color: theme.subText, margin: 0, lineHeight: 1.5 }}>{f.description}</p>}
                     </div>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
+          )}
 
-            <Card className={`p-6 ${theme.cardBg}`}>
-              <MarkdownRenderer
-                content={formData?.description || previewData.description}
-                className={theme.featureText}
-              />
-            </Card>
-
-            <Card className={`p-6 ${theme.cardBg}`}>
-              <h2 className={`text-xl font-semibold mb-4 ${theme.headingColor}`}>Frequently Asked Questions</h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className={`font-semibold mb-2 ${theme.headingColor}`}>How does billing work?</h3>
-                  <p className={`text-sm ${theme.faqText}`}>
-                    You'll be charged {selectedPlan === 'monthly' ? 'monthly' : 'annually'} and can cancel anytime. No hidden fees.
-                  </p>
-                </div>
-                <div>
-                  <h3 className={`font-semibold mb-2 ${theme.headingColor}`}>Can I change my plan later?</h3>
-                  <p className={`text-sm ${theme.faqText}`}>
-                    Yes! You can upgrade, downgrade, or cancel your subscription at any time from your account settings.
-                  </p>
-                </div>
-                <div>
-                  <h3 className={`font-semibold mb-2 ${theme.headingColor}`}>What payment methods do you accept?</h3>
-                  <p className={`text-sm ${theme.faqText}`}>
-                    We accept all major credit cards, debit cards, and digital wallets through Stripe.
-                  </p>
-                </div>
+          {formData.description && (
+            <div style={{ background: theme.surface, border: `0.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${theme.borderSoft}` }}>
+                <h2 style={{ fontSize: '14px', fontWeight: 500, color: theme.text, margin: 0 }}>About</h2>
               </div>
-            </Card>
+              <div style={{ padding: '20px' }}>
+                <MarkdownRenderer content={formData.description} className={isLight ? 'text-gray-700' : 'text-slate-300'} />
+              </div>
+            </div>
+          )}
+
+          <div style={{ background: theme.surface, border: `0.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${theme.borderSoft}` }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 500, color: theme.text, margin: 0 }}>Frequently Asked Questions</h2>
+            </div>
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                { q: 'How does billing work?', a: `You'll be charged ${selectedPlan === 'monthly' ? 'monthly' : 'annually'} and can cancel anytime. No hidden fees.` },
+                { q: 'Can I change my plan later?', a: 'Yes! You can upgrade, downgrade, or cancel your subscription at any time.' },
+                { q: 'What payment methods do you accept?', a: 'We accept all major credit cards, debit cards, and digital wallets through Stripe.' },
+              ].map(({ q, a }) => (
+                <div key={q}>
+                  <p style={{ fontSize: '13.5px', fontWeight: 500, color: theme.text, margin: '0 0 4px' }}>{q}</p>
+                  <p style={{ fontSize: '12.5px', color: theme.subText, margin: 0, lineHeight: 1.5 }}>{a}</p>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
 
-          <div>
-            <div className="sticky top-24">
-              <Card className={`p-6 ${theme.sideCardBg}`}>
-                <h2 className={`text-2xl font-bold mb-6 ${theme.headingColor}`}>Join {formData?.offerName || previewData.offerName}</h2>
-
-                <Tabs value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as 'monthly' | 'yearly')} className="mb-6">
-                  <TabsList className={`grid w-full grid-cols-2 ${theme.tabListBg}`}>
-                    <TabsTrigger value="monthly" className={theme.tabActiveBg}>
-                      Monthly
-                    </TabsTrigger>
-                    <TabsTrigger value="yearly" className={theme.tabActiveBg}>
-                      Yearly
-                      <Badge className="ml-2 bg-green-600 text-white border-0 text-xs">
-                        Save 17%
-                      </Badge>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-
-                <div className={`mb-6 p-4 rounded-lg ${theme.priceSummaryBg}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={theme.priceSummaryText}>
-                      {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'} Subscription
-                    </span>
-                    <span className={`text-xl font-bold ${theme.headingColor}`}>
-                      ${selectedPlan === 'monthly'
-                        ? parseFloat(formData?.price || previewData.price).toFixed(2)
-                        : parseFloat(formData?.yearlyPrice || previewData.yearlyPrice).toFixed(2)}
-                    </span>
-                  </div>
-                  {selectedPlan === 'yearly' && (
-                    <p className="text-sm text-green-500">
-                      You save ${((parseFloat(formData?.price || previewData.price) * 12) - parseFloat(formData?.yearlyPrice || previewData.yearlyPrice)).toFixed(2)} per year
-                    </p>
-                  )}
-                </div>
-
-                <div className={`mb-6 p-6 rounded-lg border-2 ${theme.paymentMockBg}`}>
-                  <div className="text-center">
-                    <div className="mb-4">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/15 mb-3">
-                        <Lock className="h-8 w-8 text-primary" />
-                      </div>
-                      <h3 className={`text-lg font-semibold mb-2 ${theme.headingColor}`}>Stripe Payment Form</h3>
-                      <p className={`text-sm ${theme.priceSummaryText} mb-4`}>
-                        Secure payment processing powered by Stripe
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className={`p-3 ${theme.paymentFieldBg} rounded-lg border text-left`}>
-                        <label className={`text-xs ${theme.paymentLabelText} block mb-2`}>Card Number</label>
-                        <div className="flex items-center gap-2">
-                          <div className={`flex-1 h-10 ${theme.paymentInputBg} rounded border flex items-center px-3`}>
-                            <span className={theme.paymentInputText}>•••• •••• •••• ••••</span>
-                          </div>
-                          <div className="flex gap-1">
-                            <div className={`w-8 h-6 ${isLight ? 'bg-gray-200' : 'bg-slate-700'} rounded flex items-center justify-center text-xs`}>💳</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className={`p-3 ${theme.paymentFieldBg} rounded-lg border text-left`}>
-                          <label className={`text-xs ${theme.paymentLabelText} block mb-2`}>Expiry</label>
-                          <div className={`h-10 ${theme.paymentInputBg} rounded border flex items-center px-3`}>
-                            <span className={theme.paymentInputText}>MM / YY</span>
-                          </div>
-                        </div>
-                        <div className={`p-3 ${theme.paymentFieldBg} rounded-lg border text-left`}>
-                          <label className={`text-xs ${theme.paymentLabelText} block mb-2`}>CVC</label>
-                          <div className={`h-10 ${theme.paymentInputBg} rounded border flex items-center px-3`}>
-                            <span className={theme.paymentInputText}>•••</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={`p-3 ${theme.paymentFieldBg} rounded-lg border text-left`}>
-                        <label className={`text-xs ${theme.paymentLabelText} block mb-2`}>Email</label>
-                        <div className={`h-10 ${theme.paymentInputBg} rounded border flex items-center px-3`}>
-                          <span className={theme.paymentInputText}>your@email.com</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold">
-                      Subscribe Now
-                    </Button>
-
-                    <div className={`mt-4 flex items-center justify-center gap-2 text-xs ${theme.footerText}`}>
-                      <Lock className="h-3 w-3" />
-                      <span>Secured by Stripe</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className={theme.checkText}>Cancel anytime, no questions asked</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className={theme.checkText}>Instant access to all features</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className={theme.checkText}>24/7 community support</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className={theme.checkText}>Secure payment processing</span>
-                  </div>
-                </div>
-
-                <div className={`pt-4 border-t ${theme.divider}`}>
-                  <p className={`text-xs ${theme.footerText} text-center`}>
-                    By subscribing, you agree to our Terms of Service and Privacy Policy.
-                    Your subscription will renew automatically until cancelled.
+        <div>
+          <div style={{ position: 'sticky', top: '76px' }}>
+            <div style={{ background: theme.surface, border: `0.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden', padding: '20px' }}>
+              {trialDays && (
+                <div style={{ margin: '-20px -20px 16px', padding: '10px 20px', background: 'rgba(47,157,107,0.08)', borderBottom: '0.5px solid rgba(47,157,107,0.2)', textAlign: 'center' }}>
+                  <p style={{ fontSize: '12.5px', fontWeight: 500, color: '#4ab585', margin: 0 }}>
+                    {trialDays}-day free trial included
                   </p>
                 </div>
-              </Card>
+              )}
 
-              <div className="mt-6 text-center">
-                <Button variant="link" className="text-slate-400 hover:text-slate-300">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View in new tab
-                </Button>
+              {hasYearly && (
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', background: theme.surfaceAlt, border: `0.5px solid ${theme.border}`, borderRadius: '8px', padding: '3px' }}>
+                  {(['monthly', 'yearly'] as const).map(plan => (
+                    <button
+                      key={plan}
+                      onClick={() => setSelectedPlan(plan)}
+                      style={{
+                        flex: 1, padding: '7px 12px', borderRadius: '6px', fontSize: '12.5px', fontWeight: 500,
+                        border: '0',
+                        background: selectedPlan === plan ? (isLight ? '#fff' : '#1a1a1a') : 'transparent',
+                        color: selectedPlan === plan ? theme.text : theme.subText,
+                        cursor: 'pointer', transition: 'all 180ms ease',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      }}
+                    >
+                      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                      {plan === 'yearly' && (
+                        <span style={{ padding: '1px 6px', borderRadius: '999px', background: 'rgba(47,157,107,0.12)', color: '#4ab585', fontSize: '10px', fontWeight: 600 }}>
+                          Save
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '36px', fontWeight: 500, letterSpacing: '-0.025em', color: theme.text, lineHeight: 1 }}>
+                  {currSymbol}{displayPrice.toFixed(2)}
+                  <span style={{ fontSize: '16px', fontWeight: 400, color: theme.subText }}>/{displayPeriod}</span>
+                </div>
+                {trialDays && (
+                  <p style={{ fontSize: '12px', color: theme.subText, marginTop: '6px' }}>
+                    {trialDays} days free, then {currSymbol}{displayPrice.toFixed(2)}/{displayPeriod === 'month' ? 'mo' : 'yr'}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ padding: '16px', background: 'rgba(88,101,242,0.04)', border: '1px dashed rgba(88,101,242,0.2)', borderRadius: '8px', textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(88,101,242,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+                  <Lock style={{ width: '18px', height: '18px', color: '#8b92f8' }} />
+                </div>
+                <p style={{ fontSize: '13px', fontWeight: 500, color: theme.text, margin: '0 0 4px' }}>Stripe payment form</p>
+                <p style={{ fontSize: '12px', color: theme.subText, margin: 0 }}>Secure checkout powered by Stripe</p>
+              </div>
+
+              <button
+                style={{
+                  width: '100%', padding: '10px', borderRadius: '6px', background: '#5865f2', border: '0.5px solid #5865f2',
+                  color: '#fff', fontSize: '13.5px', fontWeight: 500, marginBottom: '16px', cursor: 'pointer'
+                }}
+              >
+                {trialDays ? `Start ${trialDays}-day free trial` : `Join for ${currSymbol}${displayPrice.toFixed(2)}/${displayPeriod === 'month' ? 'mo' : 'yr'}`}
+              </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                {[
+                  trialDays ? `${trialDays}-day free trial` : null,
+                  'Instant Discord access',
+                  'Cancel anytime',
+                  'Secure payment via Stripe',
+                ].filter(Boolean).map(item => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px' }}>
+                    <Check style={{ width: '13px', height: '13px', color: '#4ab585', flexShrink: 0 }} />
+                    <span style={{ color: theme.subText }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ paddingTop: '14px', borderTop: `0.5px solid ${theme.border}` }}>
+                <p style={{ fontSize: '11px', color: theme.mutedText, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
+                  By subscribing, you agree to our Terms of Service. Your subscription renews automatically until cancelled.
+                </p>
               </div>
             </div>
           </div>
