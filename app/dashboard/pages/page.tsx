@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader as Loader2, FileText, Grid3x3, List } from 'lucide-react';
+import { Plus, FileText, Grid3x3, List } from 'lucide-react';
 import { useProduct } from '@/contexts';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
 import { AccessPageCard } from '@/components/dashboard/AccessPageCard';
 import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
 import { AccessPage } from '@/lib/types';
@@ -29,7 +26,6 @@ export default function PagesPage() {
 
   const loadPages = async () => {
     if (!currentProduct?.id) return;
-
     try {
       setIsLoading(true);
       const pagesData = await api.getPages(currentProduct.id);
@@ -41,63 +37,97 @@ export default function PagesPage() {
     }
   };
 
+  const iconToggle = (active: boolean) => ({
+    width: '28px', height: '28px', borderRadius: '5px',
+    background: active ? 'var(--surface-2)' : 'none',
+    border: active ? '0.5px solid var(--border-strong)' : '0.5px solid transparent',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: active ? 'var(--text)' : 'var(--text-muted)',
+    transition: 'all 180ms ease',
+  } as React.CSSProperties);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div>
-          <h1 className="text-3xl font-semibold mb-1">Access Pages</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 style={{ fontSize: '20px', fontWeight: 500, color: 'var(--text)', margin: '0 0 4px', letterSpacing: '-0.015em' }}>
+            Access Pages
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
             Manage your community access pages
           </p>
         </div>
-        {!isLoading && pages.length > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border border-slate-700 rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${viewMode === 'grid' ? 'bg-slate-800' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${viewMode === 'list' ? 'bg-slate-800' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {!isLoading && pages.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px', background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '7px' }}>
+              <button style={iconToggle(viewMode === 'grid')} onClick={() => setViewMode('grid')} title="Grid view">
+                <Grid3x3 size={13} />
+              </button>
+              <button style={iconToggle(viewMode === 'list')} onClick={() => setViewMode('list')} title="List view">
+                <List size={13} />
+              </button>
             </div>
-            <Button
-              onClick={() => router.push('/dashboard/pages/edit')}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create page
-            </Button>
-          </div>
-        )}
+          )}
+          <button
+            onClick={() => router.push('/dashboard/pages/edit')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              fontSize: '13px', fontWeight: 500, padding: '7px 14px', borderRadius: '6px',
+              background: 'var(--text)', color: 'var(--bg)',
+              border: 'none', cursor: 'pointer', transition: 'opacity 180ms ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            <Plus size={13} />
+            Create page
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ height: '76px', borderRadius: '10px', background: 'var(--surface-1)', border: '0.5px solid var(--border)' }} />
+          ))}
         </div>
       ) : pages.length === 0 ? (
-        <Card className="p-12 bg-slate-900/40 border-slate-800/50">
-          <EmptyState
-            icon={FileText}
-            title="Create your first access page"
-            description="Set up a page where your community members can purchase access to exclusive content and perks"
-            action={{
-              label: '+ Create page',
-              onClick: () => router.push('/dashboard/pages/edit'),
+        <div style={{
+          padding: '64px 24px', textAlign: 'center',
+          background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px',
+        }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '8px',
+            background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}>
+            <FileText size={16} style={{ color: 'var(--accent-soft-text)' }} />
+          </div>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', margin: '0 0 6px' }}>
+            Create your first access page
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px', maxWidth: '340px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
+            Set up a page where your community members can purchase access to exclusive content and perks
+          </p>
+          <button
+            onClick={() => router.push('/dashboard/pages/edit')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              fontSize: '13px', fontWeight: 500, padding: '8px 16px', borderRadius: '6px',
+              background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer',
+              border: 'none', transition: 'opacity 180ms ease',
             }}
-          />
-        </Card>
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            <Plus size={13} />
+            Create page
+          </button>
+        </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {pages.map((page, index) => (
             <AccessPageCard
               key={page.id}
@@ -107,7 +137,7 @@ export default function PagesPage() {
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {pages.map((page) => (
             <AccessPageListItem key={page.id} page={page} />
           ))}

@@ -1,7 +1,8 @@
 'use client';
 
-import { Pencil, Share2, Copy, Eye, CircleHelp as HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Pencil, Eye, Copy, Share2, CircleHelp as HelpCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,8 +11,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AccessPage } from '@/lib/types';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface AccessPageListItemProps {
   page: AccessPage;
@@ -27,6 +26,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
   const pageStatus = page.status ?? (page.accepts_signups === false ? 'disabled' : 'active');
   const isDisabled = pageStatus === 'disabled';
   const isPaymentConfigRequired = pageStatus === 'payment_config_required';
+  const dimmed = isDisabled || isPaymentConfigRequired;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(pageUrl);
@@ -38,132 +38,169 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
     router.push(`/dashboard/pages/edit?id=${page.id}`);
   };
 
-  const handleShare = () => {
-    setShareDialogOpen(true);
-  };
+  const iconBtn = {
+    width: '30px', height: '30px', borderRadius: '6px',
+    background: 'none', border: '0.5px solid var(--border)',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: 'var(--text-muted)', transition: 'background 180ms ease, color 180ms ease, border-color 180ms ease',
+  } as React.CSSProperties;
 
   return (
-    <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg hover:border-slate-600/50 transition-colors ${isDisabled || isPaymentConfigRequired ? 'opacity-60' : ''}`}>
-      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-700">
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '48px 1fr auto auto',
+      alignItems: 'center',
+      gap: '16px',
+      padding: '14px 16px',
+      background: 'var(--surface-1)',
+      border: '0.5px solid var(--border)',
+      borderRadius: '10px',
+      opacity: dimmed ? 0.55 : 1,
+      transition: 'border-color 180ms ease',
+    }}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+    >
+      <div style={{
+        width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden',
+        background: 'var(--surface-2)', border: '0.5px solid var(--border)', flexShrink: 0,
+      }}>
         {page.hero_image_url ? (
-          <img
-            src={page.hero_image_url}
-            alt={page.offer_name}
-            className="w-full h-full object-cover"
-          />
+          <img src={page.hero_image_url} alt={page.offer_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800" />
+          <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />
         )}
       </div>
 
-      <div className="flex-1 min-w-0 w-full sm:w-auto">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-semibold text-lg">{page.offer_name}</h3>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            {page.offer_name}
+          </span>
+
           {isDisabled && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-xs font-medium text-red-400">Disabled</span>
-            </div>
+            <span style={{
+              fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px',
+              background: 'rgba(239,68,68,0.1)', border: '0.5px solid rgba(239,68,68,0.25)', color: '#f87171',
+            }}>
+              Disabled
+            </span>
           )}
           {isPaymentConfigRequired && (
-            <div className="flex items-center gap-1.5 group relative">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-xs font-medium text-amber-400">Payment configuration required</span>
-              <div className="relative flex items-center">
-                <HelpCircle className="h-3.5 w-3.5 text-amber-400/70 cursor-help" />
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10 pointer-events-none">
-                  <div className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-md px-3 py-2 w-52 text-center shadow-lg">
-                    Connect to your Stripe account to receive payments
-                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-700" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <span style={{
+              fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px',
+              background: 'rgba(245,158,11,0.1)', border: '0.5px solid rgba(245,158,11,0.25)', color: '#fbbf24',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
+              <HelpCircle size={10} />
+              Payment config required
+            </span>
           )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
-          <div className="px-2 py-0.5 rounded bg-green-950/50 border border-green-900/50">
-            <span className="text-green-400">Active: {page.member_counts.active}</span>
-          </div>
-          <div className="px-2 py-0.5 rounded bg-sky-950/50 border border-sky-900/50">
-            <span className="text-sky-400">Trialing: {page.member_counts.trialing}</span>
-          </div>
-          <div className="px-2 py-0.5 rounded bg-orange-950/50 border border-orange-900/50">
-            <span className="text-orange-400">Canceling: {page.member_counts.canceling}</span>
-          </div>
-        </div>
-        <div
-          className="flex items-center gap-2 text-xs cursor-pointer hover:text-slate-300 transition-all active:scale-95 p-1 -ml-1 rounded group"
-          onClick={handleCopy}
-          title="Click to copy link"
-        >
-          <Copy className={`h-3 w-3 flex-shrink-0 transition-colors ${copied ? 'text-green-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
-          <span className={`truncate transition-colors ${copied ? 'text-green-400' : 'text-slate-400'}`}>{pageUrl}</span>
-          {copied && (
-            <span className="text-xs text-green-400 font-medium animate-in fade-in slide-in-from-right-2 duration-300 ml-1">
-              Copied!
+
+          <span style={{
+            fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px',
+            background: 'rgba(34,197,94,0.08)', border: '0.5px solid rgba(34,197,94,0.2)', color: '#4ade80',
+          }}>
+            Active {page.member_counts.active}
+          </span>
+          <span style={{
+            fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px',
+            background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)', color: 'var(--accent-soft-text)',
+          }}>
+            Trialing {page.member_counts.trialing}
+          </span>
+          {page.member_counts.canceling > 0 && (
+            <span style={{
+              fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px',
+              background: 'rgba(245,158,11,0.08)', border: '0.5px solid rgba(245,158,11,0.2)', color: '#fbbf24',
+            }}>
+              Canceling {page.member_counts.canceling}
             </span>
           )}
         </div>
+
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+            fontSize: '12px', color: copied ? '#4ade80' : 'var(--text-muted)',
+            transition: 'color 180ms ease',
+          }}
+          onClick={handleCopy}
+          title="Click to copy link"
+        >
+          <Copy size={11} style={{ flexShrink: 0 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>
+            {copied ? 'Copied!' : pageUrl}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
-        <div className="text-left sm:text-right sm:mr-4 flex-1 sm:flex-initial">
-          <div className="text-2xl font-bold">${(page.monthly_amount_minor / 100).toFixed(2)}</div>
-          <div className="text-xs text-slate-400">/month</div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.03em' }}>
+          ${(page.monthly_amount_minor / 100).toFixed(2)}
         </div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/month</div>
+      </div>
 
-        <div className="flex items-center gap-2 ml-auto sm:ml-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-slate-400 hover:text-white"
-            onClick={() => window.open(pageUrl, '_blank')}
-            title="Preview page"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-slate-400 hover:text-white"
-            onClick={handleEdit}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-slate-400 hover:text-white"
-            onClick={handleShare}
-            disabled={isDisabled || isPaymentConfigRequired}
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <button
+          style={iconBtn}
+          onClick={() => window.open(pageUrl, '_blank')}
+          title="Preview page"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+        >
+          <Eye size={13} />
+        </button>
+        <button
+          style={iconBtn}
+          onClick={handleEdit}
+          title="Edit page"
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+        >
+          <Pencil size={13} />
+        </button>
+        <button
+          style={{ ...iconBtn, opacity: dimmed ? 0.4 : 1, cursor: dimmed ? 'not-allowed' : 'pointer' }}
+          onClick={() => !dimmed && setShareDialogOpen(true)}
+          title="Share page"
+          disabled={dimmed}
+          onMouseEnter={e => { if (!dimmed) { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+        >
+          <Share2 size={13} />
+        </button>
       </div>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800">
+        <DialogContent style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)' }}>
           <DialogHeader>
-            <DialogTitle>Share access page</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: 'var(--text)' }}>Share access page</DialogTitle>
+            <DialogDescription style={{ color: 'var(--text-muted)' }}>
               Share this link with your community to allow them to purchase access to {page.offer_name}.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-              <code className="text-sm text-slate-300 flex-1 truncate">{pageUrl}</code>
-              <Button
-                variant="ghost"
-                size="sm"
+          <div style={{ marginTop: '16px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px',
+              background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: '8px',
+            }}>
+              <code style={{ fontSize: '12px', color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
+                {pageUrl}
+              </code>
+              <button
                 onClick={handleCopy}
-                className="flex-shrink-0"
+                style={{
+                  fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px',
+                  background: copied ? 'rgba(34,197,94,0.1)' : 'var(--surface-1)',
+                  border: `0.5px solid ${copied ? 'rgba(34,197,94,0.3)' : 'var(--border-strong)'}`,
+                  color: copied ? '#4ade80' : 'var(--text)', cursor: 'pointer', flexShrink: 0,
+                  transition: 'all 180ms ease',
+                }}
               >
-                {copied ? 'Copied!' : <Copy className="h-4 w-4" />}
-              </Button>
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
             </div>
           </div>
         </DialogContent>

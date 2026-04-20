@@ -1,19 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Loader as Loader2, Filter, Share2, Copy, Check } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, Share2, Copy, Check, Users, ChevronDown } from 'lucide-react';
 import { useProduct } from '@/contexts';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { Member, Role } from '@/lib/types';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Users } from 'lucide-react';
 
 export default function MembersPage() {
   const { currentProduct } = useProduct();
@@ -119,29 +106,6 @@ export default function MembersPage() {
 
   const totalPages = Math.ceil(totalMembers / membersPerPage);
 
-  const getPaymentStatusBadge = (status: string) => {
-    if (status === 'active') {
-      return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
-    } else if (status === 'trialing') {
-      return <Badge variant="secondary" className="bg-sky-600/20 text-sky-400 hover:bg-sky-600/20">Trialing</Badge>;
-    } else if (status === 'canceling') {
-      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Canceling</Badge>;
-    } else if (status === 'free') {
-      return <Badge variant="secondary" className="bg-slate-600/20 text-slate-400 hover:bg-slate-600/20">Free</Badge>;
-    }
-    return <Badge variant="secondary">Unknown</Badge>;
-  };
-
-  const getAccessStatusBadge = (status: string) => {
-    if (status === 'active') {
-      return <Badge className="bg-green-600 hover:bg-green-600 text-white">Active</Badge>;
-    } else if (status === 'onboarding') {
-      return <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 hover:bg-orange-600/20">Onboarding</Badge>;
-    } else if (status === 'free') {
-      return <Badge variant="secondary" className="bg-slate-600/20 text-slate-400 hover:bg-slate-600/20">Free</Badge>;
-    }
-    return <Badge variant="secondary">Unknown</Badge>;
-  };
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -194,166 +158,136 @@ export default function MembersPage() {
     return accessStatusFilter.charAt(0).toUpperCase() + accessStatusFilter.slice(1);
   };
 
+  const paymentChip = (status: string) => {
+    const map: Record<string, { bg: string; border: string; color: string; label: string }> = {
+      active:    { bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.2)',   color: '#4ade80', label: 'Active' },
+      trialing:  { bg: 'var(--accent-soft-bg)', border: 'var(--accent-soft-border)', color: 'var(--accent-soft-text)', label: 'Trialing' },
+      canceling: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)',  color: '#fbbf24', label: 'Canceling' },
+      free:      { bg: 'rgba(255,255,255,0.04)', border: 'var(--border)',        color: 'var(--text-muted)', label: 'Free' },
+    };
+    const s = map[status] || { bg: 'rgba(255,255,255,0.04)', border: 'var(--border)', color: 'var(--text-muted)', label: status };
+    return (
+      <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px', background: s.bg, border: `0.5px solid ${s.border}`, color: s.color }}>
+        {s.label}
+      </span>
+    );
+  };
+
+  const accessChip = (status: string) => {
+    const map: Record<string, { bg: string; border: string; color: string; label: string }> = {
+      active:     { bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.2)',   color: '#4ade80', label: 'Active' },
+      onboarding: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)',  color: '#fbbf24', label: 'Onboarding' },
+      free:       { bg: 'rgba(255,255,255,0.04)', border: 'var(--border)',        color: 'var(--text-muted)', label: 'Free' },
+    };
+    const s = map[status] || { bg: 'rgba(255,255,255,0.04)', border: 'var(--border)', color: 'var(--text-muted)', label: status };
+    return (
+      <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 7px', borderRadius: '20px', background: s.bg, border: `0.5px solid ${s.border}`, color: s.color }}>
+        {s.label}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold mb-2">Members</h1>
-        <p className="text-muted-foreground">
+    <div>
+      <div style={{ marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 500, color: 'var(--text)', margin: '0 0 4px', letterSpacing: '-0.015em' }}>
+          Members
+        </h1>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
           Manage subscribers for this server.
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '1', maxWidth: '320px', minWidth: '200px' }}>
+          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+          <input
             placeholder="Search by email..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 bg-slate-900/40 border-slate-800/50"
+            style={{
+              width: '100%', padding: '7px 12px 7px 30px', borderRadius: '6px', fontSize: '13px',
+              background: 'var(--surface-1)', border: '0.5px solid var(--border)', color: 'var(--text)',
+              outline: 'none', transition: 'border-color 180ms ease',
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
+            onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
           />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
-              <Filter className="h-4 w-4 mr-2" />
-              {getSelectedPageName()}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handlePageFilter('')}>
-              All Pages
-            </DropdownMenuItem>
-            {pages?.map((page) => (
-              <DropdownMenuItem
-                key={page.id}
-                onClick={() => handlePageFilter(page.id)}
-              >
-                {page.offer_name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
-              <Filter className="h-4 w-4 mr-2" />
-              {getSelectedPaymentStatusName()}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('')}>
-              All Payment Status
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('active')}>
-              Active
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('trialing')}>
-              Trialing
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('canceling')}>
-              Canceling
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlePaymentStatusFilter('free')}>
-              Free
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="bg-slate-900/40 border-slate-800/50">
-              <Filter className="h-4 w-4 mr-2" />
-              {getSelectedAccessStatusName()}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleAccessStatusFilter('')}>
-              All Access Status
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAccessStatusFilter('active')}>
-              Active
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAccessStatusFilter('onboarding')}>
-              Onboarding
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAccessStatusFilter('free')}>
-              Free
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {[
+          { label: getSelectedPageName(), items: [{ label: 'All Pages', val: '' }, ...(pages?.map(p => ({ label: p.offer_name, val: p.id })) || [])], onChange: handlePageFilter, active: !!pageFilter },
+          { label: getSelectedPaymentStatusName(), items: [{ label: 'All', val: '' }, { label: 'Active', val: 'active' }, { label: 'Trialing', val: 'trialing' }, { label: 'Canceling', val: 'canceling' }, { label: 'Free', val: 'free' }], onChange: handlePaymentStatusFilter, active: !!paymentStatusFilter },
+          { label: getSelectedAccessStatusName(), items: [{ label: 'All', val: '' }, { label: 'Active', val: 'active' }, { label: 'Onboarding', val: 'onboarding' }, { label: 'Free', val: 'free' }], onChange: handleAccessStatusFilter, active: !!accessStatusFilter },
+        ].map((filter, fi) => (
+          <FilterDropdown key={fi} label={filter.label} items={filter.items} onChange={filter.onChange} active={filter.active} />
+        ))}
       </div>
 
-      <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50">
+      <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden' }}>
         {isLoading ? (
-          <div className="py-12 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} style={{ height: '56px', borderBottom: '0.5px solid var(--border-soft)', background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }} />
+            ))}
           </div>
         ) : totalMembers === 0 ? (
-          <div className="py-12">
-            <EmptyState
-              icon={Users}
-              title="No members yet"
-              description="Members will appear here when they subscribe to your roles"
-            />
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <Users size={16} style={{ color: 'var(--text-muted)' }} />
+            </div>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', margin: '0 0 6px' }}>No members yet</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Members will appear here when they subscribe to your roles</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-800/30">
-                <tr className="text-left text-sm text-muted-foreground">
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Email</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Role</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Price</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Payment Status</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Access Status</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Renewal Date</th>
-                  <th className="py-4 px-6 font-medium uppercase tracking-wider">Actions</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '0.5px solid var(--border-soft)' }}>
+                  {['Email', 'Role', 'Price', 'Payment', 'Access', 'Renewal', ''].map((h, i) => (
+                    <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {members?.map((member) => (
-                  <tr key={member.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1">
-                        <div className="font-medium">{member.email}</div>
-                        {member.discord_user_id && (
-                          <div className="text-xs text-muted-foreground">
-                            Discord: {member.discord_user_id}
-                          </div>
-                        )}
-                      </div>
+                  <tr key={member.id} style={{ borderBottom: '0.5px solid var(--border-soft)', transition: 'background 120ms ease' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.015)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: member.discord_user_id ? '3px' : 0 }}>{member.email}</div>
+                      {member.discord_user_id && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>Discord: {member.discord_user_id}</div>
+                      )}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm">{member.role_name || 'N/A'}</span>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{member.role_name || '—'}</span>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm font-medium">{formatPrice(member.price)}</span>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{formatPrice(member.price)}</span>
                     </td>
-                    <td className="py-4 px-6">
-                      {getPaymentStatusBadge(member.payment_status)}
+                    <td style={{ padding: '12px 16px' }}>{paymentChip(member.payment_status)}</td>
+                    <td style={{ padding: '12px 16px' }}>{accessChip(member.access_status)}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{formatDate(member.current_period_end)}</span>
                     </td>
-                    <td className="py-4 px-6">
-                      {getAccessStatusBadge(member.access_status)}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm">
-                        {formatDate(member.current_period_end)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
+                    <td style={{ padding: '12px 16px' }}>
                       {member.access_status === 'onboarding' && member.discord_connect_url && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
                           onClick={() => handleShareClick(member)}
-                          className="gap-2"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '5px',
+                            fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '5px',
+                            background: 'none', border: '0.5px solid var(--border)', color: 'var(--text-secondary)',
+                            cursor: 'pointer', transition: 'all 180ms ease',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                         >
-                          <Share2 className="h-4 w-4" />
+                          <Share2 size={12} />
                           Share
-                        </Button>
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -362,146 +296,95 @@ export default function MembersPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {!isLoading && totalMembers > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * membersPerPage + 1} to{' '}
-            {Math.min(currentPage * membersPerPage, totalMembers)} of {totalMembers} members
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 bg-slate-900/40 border-slate-800/50"
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
+          <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+            Showing {(currentPage - 1) * membersPerPage + 1}–{Math.min(currentPage * membersPerPage, totalMembers)} of {totalMembers} members
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
+              style={{ width: '30px', height: '30px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '0.5px solid var(--border)', color: 'var(--text-muted)', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.4 : 1, transition: 'all 180ms ease' }}
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            {totalPages <= 5 ? (
-              Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="icon"
-                  className={`h-9 w-9 ${
-                    currentPage === page
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                      : 'bg-slate-900/40 border-slate-800/50'
-                  }`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </Button>
-              ))
-            ) : (
-              <>
-                {currentPage > 2 && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 bg-slate-900/40 border-slate-800/50"
-                      onClick={() => setCurrentPage(1)}
-                    >
-                      1
-                    </Button>
-                    {currentPage > 3 && <span className="px-2">...</span>}
-                  </>
-                )}
-
-                {Array.from({ length: 3 }, (_, i) => {
-                  const page = currentPage === 1 ? i + 1 : currentPage === totalPages ? totalPages - 2 + i : currentPage - 1 + i;
-                  if (page < 1 || page > totalPages) return null;
-                  return (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size="icon"
-                      className={`h-9 w-9 ${
-                        currentPage === page
-                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                          : 'bg-slate-900/40 border-slate-800/50'
-                      }`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
-
-                {currentPage < totalPages - 1 && (
-                  <>
-                    {currentPage < totalPages - 2 && <span className="px-2">...</span>}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 bg-slate-900/40 border-slate-800/50"
-                      onClick={() => setCurrentPage(totalPages)}
-                    >
-                      {totalPages}
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 bg-slate-900/40 border-slate-800/50"
+              <ChevronLeft size={13} />
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let p = i + 1;
+              if (totalPages > 5) {
+                if (currentPage <= 3) p = i + 1;
+                else if (currentPage >= totalPages - 2) p = totalPages - 4 + i;
+                else p = currentPage - 2 + i;
+              }
+              if (p < 1 || p > totalPages) return null;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  style={{
+                    width: '30px', height: '30px', borderRadius: '6px', fontSize: '12.5px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: currentPage === p ? 'var(--surface-2)' : 'none',
+                    border: `0.5px solid ${currentPage === p ? 'var(--border-strong)' : 'var(--border)'}`,
+                    color: currentPage === p ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 180ms ease',
+                  }}
+                >{p}</button>
+              );
+            })}
+            <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
+              style={{ width: '30px', height: '30px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '0.5px solid var(--border)', color: 'var(--text-muted)', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.4 : 1, transition: 'all 180ms ease' }}
             >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <ChevronRight size={13} />
+            </button>
           </div>
         </div>
       )}
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 max-w-xl">
+        <DialogContent style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', maxWidth: '480px' }}>
           <DialogHeader>
-            <DialogTitle>Share Discord Connection Link</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: 'var(--text)' }}>Share Discord Connection Link</DialogTitle>
+            <DialogDescription style={{ color: 'var(--text-muted)' }}>
               This member has completed payment but hasn't connected their Discord account yet.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="p-4 bg-primary/8 border border-primary/20 rounded-lg">
-              <p className="text-sm text-slate-300">
-                Send this link to <strong>{selectedMember?.email}</strong> so they can connect their Discord account and gain access to the server.
+          <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ padding: '12px', background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)', borderRadius: '8px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                Send this link to <strong style={{ color: 'var(--text)' }}>{selectedMember?.email}</strong> so they can connect their Discord account and gain access to the server.
               </p>
             </div>
-
             {selectedMember?.discord_connect_url && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Discord Connect Link
-                </label>
-                <div className="flex gap-2">
-                  <Input
+              <div>
+                <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px' }}>Discord Connect Link</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
                     value={selectedMember.discord_connect_url}
                     readOnly
-                    className="bg-slate-800/50 border-slate-700 font-mono text-xs"
+                    style={{
+                      flex: 1, padding: '8px 12px', borderRadius: '6px', fontSize: '12px',
+                      background: 'var(--surface-2)', border: '0.5px solid var(--border)',
+                      color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', outline: 'none',
+                    }}
                   />
-                  <Button
-                    variant="outline"
-                    size="icon"
+                  <button
                     onClick={() => copyToClipboard(selectedMember.discord_connect_url!, 'discord')}
-                    className="shrink-0"
+                    style={{
+                      padding: '8px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 500,
+                      background: copiedField === 'discord' ? 'rgba(34,197,94,0.1)' : 'var(--surface-2)',
+                      border: `0.5px solid ${copiedField === 'discord' ? 'rgba(34,197,94,0.3)' : 'var(--border-strong)'}`,
+                      color: copiedField === 'discord' ? '#4ade80' : 'var(--text)', cursor: 'pointer', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', gap: '5px', transition: 'all 180ms ease',
+                    }}
                   >
-                    {copiedField === 'discord' ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+                    {copiedField === 'discord' ? <Check size={12} /> : <Copy size={12} />}
+                    {copiedField === 'discord' ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>
                   Once they click this link and authorize Discord, they'll automatically receive their role and access.
                 </p>
               </div>
@@ -509,6 +392,63 @@ export default function MembersPage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+interface FilterDropdownProps {
+  label: string;
+  items: { label: string; val: string }[];
+  onChange: (val: string) => void;
+  active: boolean;
+}
+
+function FilterDropdown({ label, items, onChange, active }: FilterDropdownProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px',
+          borderRadius: '6px', fontSize: '12.5px', fontWeight: 500, cursor: 'pointer',
+          background: active ? 'var(--surface-2)' : 'var(--surface-1)',
+          border: `0.5px solid ${active ? 'var(--border-strong)' : 'var(--border)'}`,
+          color: active ? 'var(--text)' : 'var(--text-secondary)',
+          transition: 'all 180ms ease',
+        }}
+      >
+        <Filter size={12} />
+        {label}
+        <ChevronDown size={11} style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 180ms ease' }} />
+      </button>
+      {open && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setOpen(false)} />
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 40,
+            background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '8px',
+            minWidth: '160px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: '4px',
+          }}>
+            {items.map(item => (
+              <button
+                key={item.val}
+                onClick={() => { onChange(item.val); setOpen(false); }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '7px 10px', borderRadius: '5px', fontSize: '13px',
+                  background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
+                  transition: 'background 120ms ease, color 120ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

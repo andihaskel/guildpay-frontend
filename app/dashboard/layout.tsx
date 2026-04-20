@@ -38,10 +38,14 @@ export default function DashboardLayout({
   }, [currentProduct?.id]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex' }}>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <Topbar onMenuClick={() => setSidebarOpen(true)} />
-      <main className="lg:ml-64 mt-16 p-4 lg:p-8">{children}</main>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="lg:ml-60">
+        <Topbar onMenuClick={() => setSidebarOpen(true)} />
+        <main style={{ flex: 1, padding: '32px 28px 64px', maxWidth: '1100px', width: '100%' }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
