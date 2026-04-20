@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider, ProductProvider } from '@/contexts';
 import { Toaster } from '@/components/ui/toaster';
-import MaintenanceGate from '@/components/MaintenanceGate';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,14 +44,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body style={{ fontFamily: 'var(--font-inter, Inter, ui-sans-serif, system-ui, sans-serif)' }}>
-        <MaintenanceGate>
-          <AuthProvider>
-            <ProductProvider>
-              {children}
-              <Toaster />
-            </ProductProvider>
-          </AuthProvider>
-        </MaintenanceGate>
+        <AuthProvider>
+          <ProductProvider>
+            {children}
+            <Toaster />
+          </ProductProvider>
+        </AuthProvider>
       </body>
     </html>
   );
