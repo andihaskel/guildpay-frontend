@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, LogOut, Settings, User, Menu } from 'lucide-react';
+import { LogOut, Settings, Menu } from 'lucide-react';
 import { useAuth, useProduct } from '@/contexts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
 
 interface TopbarProps {
   onMenuClick?: () => void;
@@ -14,7 +13,7 @@ interface TopbarProps {
 export function Topbar({ onMenuClick }: TopbarProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { currentProduct, isLoading } = useProduct();
+  const { currentProduct } = useProduct();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -28,36 +27,49 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 border-b border-border bg-background z-30">
-      <div className="flex items-center justify-between h-full px-4 lg:px-6">
-        <div className="flex items-center gap-3">
+    <header style={{
+      position: 'fixed', top: 0, left: 0, right: 0, height: '64px',
+      background: 'rgba(10,10,10,0.88)',
+      backdropFilter: 'saturate(140%) blur(10px)',
+      WebkitBackdropFilter: 'saturate(140%) blur(10px)',
+      borderBottom: '0.5px solid var(--border-soft)',
+      zIndex: 30,
+    }} className="lg:left-64">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%', padding: '0 16px' }} className="lg:px-6">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
+            className="lg:hidden"
+            style={{
+              padding: '8px', borderRadius: '6px', background: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', transition: 'color 200ms ease, background 200ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--surface-2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
           >
-            <Menu className="h-5 w-5" />
+            <Menu size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full" />
-          </button>
-
-          <div className="relative">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ position: 'relative' }}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="hover:opacity-80 transition-opacity"
+              style={{
+                background: 'none', cursor: 'pointer', borderRadius: '50%',
+                transition: 'opacity 200ms ease',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              <Avatar className="h-9 w-9">
+              <Avatar style={{ width: '34px', height: '34px', border: '0.5px solid var(--border)' }}>
                 {user?.discordAvatar ? (
                   <AvatarImage
                     src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.discordAvatar}.png`}
                     alt={user.discordUsername || user.username}
                   />
                 ) : null}
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                <AvatarFallback style={{ background: '#5865f2', color: '#fff', fontSize: '13px', fontWeight: 600 }}>
                   {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -65,50 +77,66 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
             {userMenuOpen && (
               <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setUserMenuOpen(false)}
-                />
-                <div className="absolute top-full right-0 mt-2 w-64 z-50 rounded-lg border border-border bg-popover shadow-lg">
-                  <div className="p-3 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setUserMenuOpen(false)} />
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '220px',
+                  zIndex: 50, background: 'var(--surface-1)',
+                  border: '0.5px solid var(--border)', borderRadius: '10px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)', overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--border-soft)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Avatar style={{ width: '36px', height: '36px', border: '0.5px solid var(--border)' }}>
                         {user?.discordAvatar ? (
                           <AvatarImage
                             src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.discordAvatar}.png`}
                             alt={user.discordUsername || user.username}
                           />
                         ) : null}
-                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                        <AvatarFallback style={{ background: '#5865f2', color: '#fff', fontSize: '13px', fontWeight: 600 }}>
                           {user?.email?.[0]?.toUpperCase() || user?.discordUsername?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         {(user?.discordUsername || user?.username) && (
-                          <p className="font-medium text-sm truncate">
+                          <p style={{ fontWeight: 500, fontSize: '13px', margin: '0 0 2px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {user?.discordUsername || user?.username}
                           </p>
                         )}
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user?.email || 'user@example.com'}
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user?.email || ''}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="p-2 space-y-1">
+                  <div style={{ padding: '6px' }}>
                     <button
                       onClick={handleAccountSettings}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm hover:bg-accent/50 transition-colors"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                        padding: '9px 12px', borderRadius: '6px', fontSize: '14px',
+                        color: 'var(--text)', background: 'none', cursor: 'pointer',
+                        transition: 'background 200ms ease',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                     >
-                      <Settings className="h-4 w-4" />
-                      <span>Account Settings</span>
+                      <Settings size={14} style={{ color: 'var(--text-muted)' }} />
+                      Account Settings
                     </button>
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                        padding: '9px 12px', borderRadius: '6px', fontSize: '14px',
+                        color: '#ef4444', background: 'none', cursor: 'pointer',
+                        transition: 'background 200ms ease',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                     >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
+                      <LogOut size={14} />
+                      Sign Out
                     </button>
                   </div>
                 </div>

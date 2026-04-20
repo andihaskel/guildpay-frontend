@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AccessGate — Turn your Discord into a paid community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* palette */
+    --bg: #0a0a0a;
+    --bg-alt: #0d0d0d;
+    --bg-cta: #0f0f0f;
+    --surface-1: #111111;
+    --surface-2: #161616;
+
+    --border-soft: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+
+    --text: #f0f0f0;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+    --text-faint: #2a2a2a;
+
+    --accent: #5865f2;
+    --accent-hover: #4752c4;
+    --accent-soft-bg: rgba(88, 101, 242, 0.12);
+    --accent-soft-border: rgba(88, 101, 242, 0.25);
+    --accent-soft-text: #8b92f8;
+
+    /* type */
+    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+    /* sizes */
+    --container: 1120px;
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.65;
+    font-feature-settings: "ss01", "cv11";
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+  ::selection { background: var(--accent); color: #fff; }
+
+  /* layout */
+  .container {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  @media (min-width: 768px) { .container { padding: 0 32px; } }
+  @media (min-width: 1024px) { .container { padding: 0 48px; } }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+    border: 0;
+    margin: 0;
+  }
+
+  /* ============ NAVBAR ============ */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 10, 10, 0.82);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    border-bottom: 0.5px solid var(--border-soft);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .wordmark {
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .logo-mark .arch {
+    stroke: var(--text);
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .logo-mark .bar {
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .logo-mark .base {
+    stroke: var(--text);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .logo-mark .dot {
+    fill: var(--accent);
+  }
+  .nav-links {
+    display: none;
+    gap: 32px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .nav-links a { transition: color 200ms ease; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+
+  @media (min-width: 768px) {
+    .nav-links { display: flex; }
+  }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    transition: transform 200ms ease, opacity 200ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: #ffffff;
+    color: #0a0a0a;
+    border: 0.5px solid #ffffff;
+  }
+  .btn-primary:hover { transform: scale(1.01); opacity: 0.95; }
+  .btn-primary:active { transform: scale(0.995); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+  }
+  .btn-secondary:hover { border-color: rgba(255, 255, 255, 0.4); background: rgba(255,255,255,0.03); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 9px 12px;
+  }
+  .btn-ghost:hover { color: var(--text); }
+
+  .btn-lg { padding: 14px 22px; font-size: 15px; }
+  .btn-xl { padding: 18px 28px; font-size: 16px; }
+
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 8px;
+    transition: color 200ms ease;
+  }
+  .link-arrow:hover { color: var(--text); }
+  .link-arrow svg { transition: transform 200ms ease; }
+  .link-arrow:hover svg { transform: translateX(2px); }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    padding: 96px 0 120px;
+    text-align: center;
+    overflow: hidden;
+  }
+  @media (min-width: 1024px) { .hero { padding: 140px 0 160px; } }
+
+  /* subtle grid */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse at center, black 0%, black 40%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, black 40%, transparent 75%);
+    pointer-events: none;
+  }
+  .hero > * { position: relative; z-index: 1; }
+  .hero .container { z-index: 2; }
+
+  /* Animated hero bg — SVG layer */
+  .hero-anim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 60% at center, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at center, black 20%, transparent 80%);
+  }
+  .hero-anim svg { width: 100%; height: 100%; display: block; }
+
+  /* Animated hero bg — drifting halos */
+  .hero-anim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 760px;
+    height: 760px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(88,101,242,0.24) 0%, rgba(88,101,242,0.06) 38%, transparent 65%);
+    animation: glowBreathe 7s ease-in-out infinite;
+    filter: blur(6px);
+  }
+  @keyframes glowBreathe {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
+  }
+
+  /* two slow drifting accent halos */
+  .hero-orb {
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.55;
+    will-change: transform;
+  }
+  .hero-orb-a {
+    top: 10%;
+    left: 18%;
+    background: radial-gradient(circle, rgba(88,101,242,0.5) 0%, transparent 70%);
+    animation: drift-a 18s ease-in-out infinite;
+  }
+  .hero-orb-b {
+    bottom: 6%;
+    right: 14%;
+    background: radial-gradient(circle, rgba(139,146,248,0.4) 0%, transparent 70%);
+    animation: drift-b 22s ease-in-out infinite;
+  }
+  @keyframes drift-a {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(80px, 40px) scale(1.1); }
+    66%      { transform: translate(-40px, 60px) scale(0.95); }
+  }
+  @keyframes drift-b {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(-90px, -50px) scale(1.15); }
+  }
+
+  /* a single slow-scanning highlight line across the hero */
+  .hero-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(139,146,248,0.45) 50%, transparent 100%);
+    top: 0;
+    animation: scanMove 9s linear infinite;
+    opacity: 0.6;
+  }
+  @keyframes scanMove {
+    0%   { transform: translateY(12%); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(88%); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-glow, .hero-orb-a, .hero-orb-b, .hero-scan { animation: none; }
+    .hero-scan { opacity: 0; }
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--accent-soft-bg);
+    border: 0.5px solid var(--accent-soft-border);
+    color: var(--accent-soft-text);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+  }
+  .pill-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-soft-text);
+    box-shadow: 0 0 8px var(--accent-soft-text);
+  }
+  .pill-divider {
+    width: 1px; height: 10px; background: var(--accent-soft-border);
+  }
+
+  .headline {
+    font-size: 44px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    margin: 28px auto 20px;
+    max-width: 880px;
+    color: var(--text);
+    text-wrap: balance;
+  }
+  @media (min-width: 768px) { .headline { font-size: 60px; } }
+  @media (min-width: 1024px) { .headline { font-size: 72px; } }
+  .headline .muted { color: var(--text-muted); }
+
+  .subheadline {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 36px;
+    text-wrap: pretty;
+  }
+  @media (min-width: 768px) { .subheadline { font-size: 20px; } }
+
+  .hero-ctas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+
+  .social-proof {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .avatars {
+    display: inline-flex;
+  }
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--bg);
+    margin-left: -8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+  .avatar:first-child { margin-left: 0; }
+  .a1 { background: linear-gradient(135deg, #5865f2, #7983f5); }
+  .a2 { background: linear-gradient(135deg, #2b7a4b, #3fb27a); }
+  .a3 { background: linear-gradient(135deg, #b84a3a, #e0735a); }
+  .a4 { background: linear-gradient(135deg, #6b3fb2, #9b6de0); }
+  .a5 { background: linear-gradient(135deg, #c4963a, #e8b85a); color: #1a1500; }
+
+  /* ============ SECTION base ============ */
+  section.block { padding: 120px 0; }
+  @media (max-width: 767px) { section.block { padding: 80px 0; } }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-soft-text);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  @media (min-width: 768px) { .section-title { font-size: 48px; } }
+
+  .section-subtitle {
+    font-size: 17px;
+    color: var(--text-secondary);
+    max-width: 540px;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .section-header {
+    margin-bottom: 64px;
+  }
+  .section-header.center {
+    text-align: center;
+  }
+  .section-header.center .section-subtitle { margin-left: auto; margin-right: auto; }
+
+  /* ============ HOW IT WORKS ============ */
+  .steps {
+    display: grid;
+    gap: 48px;
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+  @media (min-width: 768px) {
+    .steps {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 56px;
+    }
+    .steps::before {
+      content: "";
+      position: absolute;
+      top: 28px;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+      background-image: linear-gradient(to right, rgba(255,255,255,0.14) 50%, transparent 50%);
+      background-size: 8px 1px;
+      background-repeat: repeat-x;
+      z-index: 0;
+    }
+  }
+  .step { position: relative; z-index: 1; }
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 400;
+    color: var(--text-faint);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 24px;
+    display: block;
+  }
+  .step-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  .step-title {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    margin: 0 0 8px;
+  }
+  .step-desc {
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* ============ FEATURES ============ */
+  .features-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--border-soft);
+    border: 0.5px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .features-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .features-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .feature {
+    background: var(--surface-1);
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: background 200ms ease;
+  }
+  .feature:hover { background: var(--surface-2); }
+  .feature-icon {
+    width: 36px; height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-soft-text);
+    background: var(--accent-soft-bg);
+    border: 0.5px solid var(--accent-soft-border);
+    border-radius: 8px;
+  }
+  .feature-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .feature-desc {
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* ============ PRICING ============ */
+  .pricing-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px;
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: 999px;
+    margin: 0 auto 56px;
+  }
+  .pricing-toggle-wrap { display: flex; justify-content: center; }
+  .pricing-toggle button {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 999px;
+    transition: background 200ms ease, color 200ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pricing-toggle button[aria-pressed="true"] {
+    background: #fff;
+    color: #0a0a0a;
+  }
+  .save-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    font-size: 10.5px;
+    font-weight: 500;
+    border-radius: 999px;
+    background: var(--accent-soft-bg);
+    border: 0.5px solid var(--accent-soft-border);
+    color: var(--accent-soft-text);
+    letter-spacing: 0.01em;
+  }
+  .pricing-toggle button[aria-pressed="true"] .save-badge {
+    background: rgba(88,101,242,0.18);
+    border-color: rgba(88,101,242,0.35);
+    color: var(--accent);
+  }
+
+  .plans {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  @media (min-width: 768px) { .plans { grid-template-columns: 1fr 1fr; } }
+
+  .plan {
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .plan-featured {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    position: relative;
+  }
+  .plan-featured::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+  .plan-head { display: flex; flex-direction: column; gap: 8px; }
+  .plan-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plan-tagline {
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 4px 0 8px;
+  }
+  .plan-amount {
+    font-size: 48px;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    line-height: 1;
+  }
+  .plan-period {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14.5px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .plan-features li svg {
+    flex-shrink: 0;
+    color: var(--accent-soft-text);
+    margin-top: 4px;
+  }
+  .plan .btn { width: 100%; padding: 12px 16px; font-size: 14px; }
+
+  .pricing-note {
+    max-width: 640px;
+    margin: 40px auto 0;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 16px 24px;
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent) 1;
+  }
+  .pricing-note strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ============ TESTIMONIALS ============ */
+  .testimonials {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) { .testimonials { grid-template-columns: repeat(3, 1fr); } }
+
+  .testimonial {
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .testimonial-quote {
+    font-size: 15.5px;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    letter-spacing: -0.005em;
+    flex-grow: 1;
+  }
+  .testimonial-quote::before { content: "\201C"; color: var(--text-muted); margin-right: 2px; }
+  .testimonial-quote::after { content: "\201D"; color: var(--text-muted); }
+  .testimonial-person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--border-soft);
+  }
+  .testimonial-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+  .testimonial-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin: 0 0 2px;
+    letter-spacing: -0.005em;
+  }
+  .testimonial-role {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ============ FAQ ============ */
+  .faq {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--bg-alt);
+    border: 0.5px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .faq-item {
+    border-bottom: 0.5px solid var(--border-soft);
+  }
+  .faq-item:last-child { border-bottom: 0; }
+  .faq-trigger {
+    width: 100%;
+    text-align: left;
+    padding: 22px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    transition: color 200ms ease, background 200ms ease;
+  }
+  .faq-trigger:hover { background: rgba(255,255,255,0.015); }
+  .faq-trigger .chev {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 200ms ease, color 200ms ease;
+  }
+  .faq-item[aria-expanded="true"] .faq-trigger .chev {
+    transform: rotate(180deg);
+    color: var(--text);
+  }
+  .faq-panel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 260ms ease;
+  }
+  .faq-panel-inner {
+    padding: 0 28px 24px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    max-width: 620px;
+  }
+  .faq-item[aria-expanded="true"] .faq-panel { max-height: 320px; }
+
+  /* ============ CTA FINAL ============ */
+  .cta-final {
+    border-top: 0.5px solid var(--border-soft);
+    background: var(--bg-cta);
+    padding: 140px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-final::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100px 100%;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-final > * { position: relative; }
+  .cta-final h2 {
+    font-size: 44px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  @media (min-width: 768px) { .cta-final h2 { font-size: 56px; } }
+  .cta-final p {
+    font-size: 17px;
+    color: var(--text-secondary);
+    margin: 0 0 36px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    border-top: 0.5px solid var(--border-soft);
+    padding: 32px 0;
+    background: var(--bg);
+  }
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .footer-links a { transition: color 200ms ease; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-copy {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* focus */
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent-soft-text);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<header class="nav" role="banner">
+  <div class="container nav-inner">
+    <a href="#" class="wordmark" aria-label="AccessGate home">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <!-- Gate arch: two uprights joined by a rounded top -->
+        <path class="arch" d="M6 28 L6 14 A10 10 0 0 1 26 14 L26 28" />
+        <!-- Base line -->
+        <path class="base" d="M4 28 L28 28" />
+        <!-- Accent bar inside the gate (access indicator) -->
+        <path class="bar" d="M11 20 L21 20" />
+        <!-- Access dot -->
+        <circle class="dot" cx="16" cy="12" r="1.8" />
+      </svg>
+      AccessGate
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <a href="#" class="btn btn-ghost">Sign in</a>
+      <a href="#" class="btn btn-primary">Get started</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-anim" aria-hidden="true">
+    <div class="hero-orb hero-orb-a"></div>
+    <div class="hero-orb hero-orb-b"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-scan"></div>
+  </div>
+
+  <div class="container">
+    <span class="pill" role="status">
+      <span class="pill-dot" aria-hidden="true"></span>
+      Now in public beta
+      <span class="pill-divider" aria-hidden="true"></span>
+      Free to start
+    </span>
+    <h1 class="headline">
+      Turn your Discord<br />
+      into a paid community.
+    </h1>
+    <p class="subheadline">
+      Connect Stripe, set a price, done. AccessGate handles payments, access, and cancellations — automatically.
+    </p>
+    <div class="hero-ctas">
+      <a href="#" class="btn btn-primary btn-lg">Start for free</a>
+      <a href="#how" class="link-arrow">
+        See how it works
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+    <div class="social-proof">
+      <div class="avatars" aria-hidden="true">
+        <span class="avatar a1">MK</span>
+        <span class="avatar a2">JT</span>
+        <span class="avatar a3">AR</span>
+        <span class="avatar a4">SN</span>
+        <span class="avatar a5">DV</span>
+      </div>
+      <span>Trusted by 1,200+ Discord creators</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="block" id="how">
+  <div class="container">
+    <div class="section-header center">
+      <div class="eyebrow">How it works</div>
+      <h2 class="section-title">Up and running in minutes.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M7 4l10 4v8l-10 4V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M17 8l4-1.5v11L17 16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="1.3" fill="currentColor"/>
+          </svg>
+        </span>
+        <h3 class="step-title">Connect your Discord server</h3>
+        <p class="step-desc">Authorize the bot with one click. No server config, no webhooks to manage.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M3 10h18" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="17" cy="15" r="1.3" fill="currentColor"/>
+          </svg>
+        </span>
+        <h3 class="step-title">Set your price</h3>
+        <p class="step-desc">Monthly, annual, or one-time. Paid through your own Stripe account.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="6" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="18" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="12" cy="18" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 7.5l3 8.5M16 7.5l-3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <h3 class="step-title">Share your link</h3>
+        <p class="step-desc">Members pay, get added, and lose access on cancel. We handle all of it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ============ FEATURES ============ -->
+<section class="block" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="eyebrow">Features</div>
+      <h2 class="section-title">Everything you need. Nothing you don't.</h2>
+      <p class="section-subtitle">Every tool needed to run a paid Discord community — without the bloat, the fees, or the learning curve.</p>
+    </div>
+
+    <div class="features-grid">
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M4 7c0-1.1.9-2 2-2h12a2 2 0 0 1 2 2v2H4V7z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M4 9h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 14.5l2 2 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Stripe-native payments</h3>
+        <p class="feature-desc">Payments flow straight to your Stripe account. We never take a cut.</p>
+      </article>
+
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 20c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M17.5 7.5l1.8 1.8 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Auto role management</h3>
+        <p class="feature-desc">Roles assigned on payment, revoked on cancel. Zero manual moderation.</p>
+      </article>
+
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="14" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3" y="10.5" width="18" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3" y="17" width="11" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Multiple tiers</h3>
+        <p class="feature-desc">Free, monthly, annual, or one-time — stack tiers in a single server.</p>
+      </article>
+
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M3 8h18" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="5.5" cy="6" r="0.6" fill="currentColor"/>
+            <circle cx="7.5" cy="6" r="0.6" fill="currentColor"/>
+            <path d="M8 21h8M12 18v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Custom landing page</h3>
+        <p class="feature-desc">Your brand, your copy, your domain. Looks like yours, not ours.</p>
+      </article>
+
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M3 17l5-5 4 3 5-7 4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="12" cy="15" r="1.5" fill="currentColor"/>
+            <circle cx="17" cy="8" r="1.5" fill="currentColor"/>
+            <path d="M3 21h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Real-time analytics</h3>
+        <p class="feature-desc">Active members, MRR, and churn — all in a single quiet dashboard.</p>
+      </article>
+
+      <article class="feature">
+        <span class="feature-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 10V7a4 4 0 0 1 7.5-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M10 14l4 4M14 14l-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <h3 class="feature-title">Cancellation handling</h3>
+        <p class="feature-desc">If a member cancels, their access is revoked the moment it ends.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ============ PRICING ============ -->
+<section class="block" id="pricing">
+  <div class="container">
+    <div class="section-header center">
+      <div class="eyebrow">Pricing</div>
+      <h2 class="section-title">Simple pricing. No surprises.</h2>
+      <p class="section-subtitle">Free until you have real revenue. You keep 100% — we never take a cut.</p>
+    </div>
+
+    <div class="pricing-toggle-wrap">
+      <div class="pricing-toggle" role="tablist" aria-label="Billing period">
+        <button type="button" id="bill-monthly" role="tab" aria-pressed="true" aria-selected="true">Monthly</button>
+        <button type="button" id="bill-annual" role="tab" aria-pressed="false" aria-selected="false">
+          Annual
+          <span class="save-badge">Save 20%</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="plans">
+      <article class="plan">
+        <div class="plan-head">
+          <p class="plan-name">Starter</p>
+          <p class="plan-tagline">For new communities testing the waters.</p>
+        </div>
+        <div class="plan-price">
+          <span class="plan-amount">$0</span>
+          <span class="plan-period">/ forever</span>
+        </div>
+        <ul class="plan-features">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Up to 50 members</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>1 Discord server</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Standard Stripe fees only — we charge nothing extra</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Email support</li>
+        </ul>
+        <a href="#" class="btn btn-secondary">Start free</a>
+      </article>
+
+      <article class="plan plan-featured">
+        <div class="plan-head">
+          <p class="plan-name" style="color: var(--accent-soft-text);">Pro</p>
+          <p class="plan-tagline">For creators running a serious community.</p>
+        </div>
+        <div class="plan-price">
+          <span class="plan-amount" data-price-monthly="$9" data-price-annual="$7">$9</span>
+          <span class="plan-period" data-period-monthly="/ month" data-period-annual="/ month, billed annually">/ month</span>
+        </div>
+        <ul class="plan-features">
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited members</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Up to 5 Discord servers</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Custom domain</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Advanced analytics &amp; exports</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Priority support</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Get Pro</a>
+      </article>
+    </div>
+
+    <p class="pricing-note">
+      <strong>We never take a cut of your revenue.</strong> You keep 100%, minus Stripe's standard fees. That's the whole deal.
+    </p>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="block">
+  <div class="container">
+    <div class="section-header">
+      <div class="eyebrow">Testimonials</div>
+      <h2 class="section-title">Built for creators who value their time.</h2>
+    </div>
+    <div class="testimonials">
+      <article class="testimonial">
+        <p class="testimonial-quote">I went from invoicing manually through PayPal to having everything automated in one afternoon. My members didn't even notice the switch.</p>
+        <div class="testimonial-person">
+          <span class="testimonial-avatar a1" aria-hidden="true">MK</span>
+          <div>
+            <p class="testimonial-name">Marina Kovac</p>
+            <p class="testimonial-role">Discord community owner</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="testimonial">
+        <p class="testimonial-quote">I tried LaunchPass and it was too expensive for a community just starting out. With AccessGate I pay zero until I have real revenue.</p>
+        <div class="testimonial-person">
+          <span class="testimonial-avatar a3" aria-hidden="true">JT</span>
+          <div>
+            <p class="testimonial-name">Julian Torres</p>
+            <p class="testimonial-role">Discord community owner</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="testimonial">
+        <p class="testimonial-quote">The UX is clean. My members don't get lost in the onboarding flow, and conversion noticeably went up the week we switched.</p>
+        <div class="testimonial-person">
+          <span class="testimonial-avatar a4" aria-hidden="true">SN</span>
+          <div>
+            <p class="testimonial-name">Sofia Navarro</p>
+            <p class="testimonial-role">Discord community owner</p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ============ FAQ ============ -->
+<section class="block" id="faq">
+  <div class="container">
+    <div class="section-header center">
+      <div class="eyebrow">FAQ</div>
+      <h2 class="section-title">Common questions.</h2>
+    </div>
+
+    <div class="faq" role="list">
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-1" aria-expanded="false">
+          Does AccessGate take a commission on my payments?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-1" role="region">
+          <div class="faq-panel-inner">
+            No. You keep 100% of your revenue, minus Stripe's standard processing fees. Payments flow directly from your members into your Stripe account — we never touch the money.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-2" aria-expanded="false">
+          What happens if a member cancels their subscription?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-2" role="region">
+          <div class="faq-panel-inner">
+            Their role and access are revoked automatically as soon as their billing period ends. If they cancel mid-cycle, access continues until the paid period is over — then it's removed without any action from you.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-3" aria-expanded="false">
+          Can I run multiple roles or tiers in the same server?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-3" role="region">
+          <div class="faq-panel-inner">
+            Yes. Create as many tiers as you want — each mapped to its own Discord role. Members can upgrade, downgrade, or stack tiers, and role permissions update in real time.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-4" aria-expanded="false">
+          Do I need to know how to code to set this up?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-4" role="region">
+          <div class="faq-panel-inner">
+            Not a line. Setup is three clicks: authorize the bot, connect Stripe, set your price. Most creators are live in about two minutes.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-5" aria-expanded="false">
+          Does it work alongside existing Discord bots?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-5" role="region">
+          <div class="faq-panel-inner">
+            Yes. AccessGate only touches the roles you assign to it — your existing mod, music, or utility bots keep working normally. No permission conflicts.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" aria-expanded="false" role="listitem">
+        <button class="faq-trigger" aria-controls="faq-6" aria-expanded="false">
+          Can I use my own domain for the checkout page?
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-panel" id="faq-6" role="region">
+          <div class="faq-panel-inner">
+            On the Pro plan, yes. Point a subdomain at AccessGate with a single CNAME record and your checkout page lives on your brand — not ours.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA FINAL ============ -->
+<section class="cta-final">
+  <div class="container">
+    <h2>Start monetizing today.</h2>
+    <p>Free to start. No credit card required. Setup in 2 minutes — and you keep 100% of your revenue.</p>
+    <a href="#" class="btn btn-primary btn-xl">Create your AccessGate</a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <a href="#" class="wordmark">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path class="arch" d="M6 28 L6 14 A10 10 0 0 1 26 14 L26 28" />
+        <path class="base" d="M4 28 L28 28" />
+        <path class="bar" d="M11 20 L21 20" />
+        <circle class="dot" cx="16" cy="12" r="1.8" />
+      </svg>
+      AccessGate
+    </a>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Contact</a>
+    </nav>
+    <p class="footer-copy">© 2026 AccessGate</p>
+  </div>
+</footer>
+
+<script>
+  // FAQ accordion — single open at a time, keyboard accessible via native button
+  (function () {
+    const items = document.querySelectorAll(".faq-item");
+    items.forEach((item) => {
+      const trigger = item.querySelector(".faq-trigger");
+      trigger.addEventListener("click", () => {
+        const isOpen = item.getAttribute("aria-expanded") === "true";
+        // close all
+        items.forEach((i) => {
+          i.setAttribute("aria-expanded", "false");
+          i.querySelector(".faq-trigger").setAttribute("aria-expanded", "false");
+        });
+        if (!isOpen) {
+          item.setAttribute("aria-expanded", "true");
+          trigger.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+  })();
+
+  // Pricing toggle monthly/annual
+  (function () {
+    const monthlyBtn = document.getElementById("bill-monthly");
+    const annualBtn = document.getElementById("bill-annual");
+    const amount = document.querySelector(".plan-featured .plan-amount");
+    const period = document.querySelector(".plan-featured .plan-period");
+
+    function set(mode) {
+      const isAnnual = mode === "annual";
+      monthlyBtn.setAttribute("aria-pressed", isAnnual ? "false" : "true");
+      monthlyBtn.setAttribute("aria-selected", isAnnual ? "false" : "true");
+      annualBtn.setAttribute("aria-pressed", isAnnual ? "true" : "false");
+      annualBtn.setAttribute("aria-selected", isAnnual ? "true" : "false");
+      amount.textContent = isAnnual ? amount.dataset.priceAnnual : amount.dataset.priceMonthly;
+      period.textContent = isAnnual ? period.dataset.periodAnnual : period.dataset.periodMonthly;
+    }
+    monthlyBtn.addEventListener("click", () => set("monthly"));
+    annualBtn.addEventListener("click", () => set("annual"));
+  })();
+</script>
+</body>
+</html>

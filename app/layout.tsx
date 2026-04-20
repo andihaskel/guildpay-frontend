@@ -1,15 +1,25 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider, ProductProvider } from '@/contexts';
 import { Toaster } from '@/components/ui/toaster';
 import MaintenanceGate from '@/components/MaintenanceGate';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-inter',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
-  title: 'AccessGate - Monetize Your Discord Server',
-  description: 'Sell access to exclusive roles with automated Stripe subscriptions. No manual approvals. No hassle.',
+  title: 'AccessGate — Turn your Discord into a paid community',
+  description: 'Connect Stripe, set a price, done. AccessGate handles payments, access, and cancellations — automatically.',
   openGraph: {
     images: [
       {
@@ -33,8 +43,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body style={{ fontFamily: 'var(--font-inter, Inter, ui-sans-serif, system-ui, sans-serif)' }}>
         <MaintenanceGate>
           <AuthProvider>
             <ProductProvider>

@@ -4,25 +4,55 @@
 
 @layer base {
   :root {
-    --background: 214 28% 6%;
-    --foreground: 210 20% 98%;
-    --card: 215 30% 8%;
-    --card-foreground: 210 20% 98%;
-    --popover: 215 30% 8%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 33 70% 86%;
-    --primary-foreground: 0 0% 10%;
-    --secondary: 215 25% 12%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 25% 12%;
-    --muted-foreground: 215 10% 50%;
-    --accent: 215 25% 14%;
-    --accent-foreground: 210 20% 98%;
+    --bg: #0a0a0a;
+    --bg-alt: #0d0d0d;
+    --bg-cta: #0f0f0f;
+    --surface-1: #111111;
+    --surface-2: #161616;
+
+    --border-soft: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+
+    --text: #f0f0f0;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+    --text-faint: #2a2a2a;
+
+    --accent: #5865f2;
+    --accent-hover: #4752c4;
+    --accent-soft-bg: rgba(88, 101, 242, 0.12);
+    --accent-soft-border: rgba(88, 101, 242, 0.25);
+    --accent-soft-text: #8b92f8;
+
+    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+    --container: 1120px;
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+
+    /* shadcn/ui compatibility tokens */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 94%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 94%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 235 85% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 0 0% 9%;
+    --accent-foreground: 0 0% 94%;
     --destructive: 0 72% 71%;
     --destructive-foreground: 0 0% 10%;
-    --border: 215 20% 16%;
-    --input: 215 20% 16%;
-    --ring: 33 70% 86%;
+    --border: 0 0% 8%;
+    --input: 0 0% 8%;
+    --ring: 235 85% 63%;
     --radius: 0.5rem;
   }
 }
@@ -30,40 +60,22 @@
 @layer base {
   * {
     @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground antialiased;
+    box-sizing: border-box;
   }
 
   html {
     @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
-}
 
-@keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-2%, -3%); }
-  20% { transform: translate(3%, 2%); }
-  30% { transform: translate(-1%, 4%); }
-  40% { transform: translate(2%, -1%); }
-  50% { transform: translate(-3%, 3%); }
-  60% { transform: translate(1%, -2%); }
-  70% { transform: translate(-2%, 1%); }
-  80% { transform: translate(3%, -3%); }
-  90% { transform: translate(-1%, 2%); }
-}
-
-.grain::before {
-  content: '';
-  position: fixed;
-  inset: -200%;
-  width: 400%;
-  height: 400%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  opacity: 0.022;
-  pointer-events: none;
-  animation: grain 8s steps(10) infinite;
-  z-index: 9999;
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    font-feature-settings: "ss01", "cv11";
+  }
 }

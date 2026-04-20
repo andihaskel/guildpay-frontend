@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Chrome as HomeIcon, Users, ChartBar as BarChart3, CreditCard, Settings, FileText, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Home', href: '/dashboard/home', icon: HomeIcon },
@@ -13,6 +12,15 @@ const navigation = [
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
+
+const LogoMark = () => (
+  <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true" style={{ display: 'inline-block', flexShrink: 0 }}>
+    <path d="M6 28 L6 14 A10 10 0 0 1 26 14 L26 28" stroke="#f0f0f0" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4 28 L28 28" stroke="#f0f0f0" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M11 20 L21 20" stroke="#5865f2" strokeWidth="1.6" strokeLinecap="round" />
+    <circle cx="16" cy="12" r="1.8" fill="#5865f2" />
+  </svg>
+);
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -26,35 +34,47 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40 }}
+          className="lg:hidden"
           onClick={onClose}
         />
       )}
 
-      <aside className={cn(
-        "fixed left-0 top-0 h-screen w-64 border-r border-border bg-card/50 backdrop-blur z-50 transition-transform duration-300 ease-in-out",
-        "lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex h-16 items-center justify-between px-6 border-b border-border">
-          <Link href="/dashboard/home" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-foreground" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-              </svg>
-            </div>
-            <span className="font-semibold">AccessGate</span>
+      <aside
+        style={{
+          position: 'fixed', left: 0, top: 0, height: '100vh', width: '256px',
+          background: 'var(--surface-1)', borderRight: '0.5px solid var(--border-soft)',
+          zIndex: 50, transition: 'transform 300ms ease',
+        }}
+        className={`lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div style={{
+          display: 'flex', height: '64px', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 20px', borderBottom: '0.5px solid var(--border-soft)',
+        }}>
+          <Link
+            href="/dashboard/home"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '15px', letterSpacing: '-0.01em', color: 'var(--text)', textDecoration: 'none' }}
+          >
+            <LogoMark />
+            AccessGate
           </Link>
 
           <button
             onClick={onClose}
-            className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
+            className="lg:hidden"
+            style={{
+              padding: '6px', borderRadius: '6px', background: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', transition: 'color 200ms ease, background 200ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--surface-2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
           >
-            <X className="h-5 w-5" />
+            <X size={18} />
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 px-3 mt-2">
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '12px 8px' }}>
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
             return (
@@ -62,17 +82,34 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 onClick={onClose}
-                className={cn(
-                  'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
-                  isActive
-                    ? 'bg-accent text-foreground font-medium'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground font-medium'
-                )}
+                style={{
+                  position: 'relative', display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '9px 12px', borderRadius: '6px', fontSize: '14px', fontWeight: 500,
+                  textDecoration: 'none', transition: 'background 200ms ease, color 200ms ease',
+                  color: isActive ? 'var(--text)' : 'var(--text-muted)',
+                  background: isActive ? 'var(--surface-2)' : 'transparent',
+                  letterSpacing: '-0.005em',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    e.currentTarget.style.color = 'var(--text)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                  }
+                }}
               >
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-r-full" />
+                  <div style={{
+                    position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+                    width: '2px', height: '18px', background: '#5865f2', borderRadius: '0 2px 2px 0',
+                  }} />
                 )}
-                <item.icon className="h-5 w-5" />
+                <item.icon size={16} style={{ color: isActive ? '#8b92f8' : 'var(--text-muted)', flexShrink: 0 }} />
                 {item.name}
               </Link>
             );
