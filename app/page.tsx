@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, LogOut, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, LogOut, ChevronDown, Check } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const LogoMark = () => (
@@ -258,6 +258,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 
   useEffect(() => {
     checkAuthAndRedirect();
@@ -361,6 +362,7 @@ export default function Home() {
 
           <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: 'var(--text-secondary)' }} aria-label="Primary" className="hidden md:flex">
             <a href="#features" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>Features</a>
+            <a href="#pricing" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>Pricing</a>
             <a href="#faq" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>FAQ</a>
           </nav>
 
@@ -608,6 +610,129 @@ export default function Home() {
 
       <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
 
+      {/* PRICING */}
+      <section id="pricing" style={{ padding: '120px 0' }}>
+        <div style={containerStyle}>
+          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent-soft-text)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Pricing</div>
+            <h2 style={{ fontSize: 'clamp(36px, 4vw, 48px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)', margin: '0 0 12px' }}>Simple pricing. No surprises.</h2>
+            <p style={{ fontSize: '17px', color: 'var(--text-secondary)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.55 }}>Free until you have real revenue. You keep 100% — we never take a cut.</p>
+          </div>
+
+          {/* Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '56px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', padding: '4px', background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '999px' }}>
+              <button
+                onClick={() => setBillingPeriod('monthly')}
+                style={{
+                  padding: '8px 18px', fontSize: '13px', fontWeight: 500, borderRadius: '999px',
+                  color: billingPeriod === 'monthly' ? '#0a0a0a' : 'var(--text-secondary)',
+                  background: billingPeriod === 'monthly' ? '#fff' : 'transparent',
+                  border: 'none', cursor: 'pointer', transition: 'background 200ms ease, color 200ms ease',
+                }}
+              >Monthly</button>
+              <button
+                onClick={() => setBillingPeriod('annual')}
+                style={{
+                  padding: '8px 18px', fontSize: '13px', fontWeight: 500, borderRadius: '999px',
+                  color: billingPeriod === 'annual' ? '#0a0a0a' : 'var(--text-secondary)',
+                  background: billingPeriod === 'annual' ? '#fff' : 'transparent',
+                  border: 'none', cursor: 'pointer', transition: 'background 200ms ease, color 200ms ease',
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                }}
+              >
+                Annual
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', padding: '2px 7px',
+                  fontSize: '10.5px', fontWeight: 500, borderRadius: '999px',
+                  background: billingPeriod === 'annual' ? 'rgba(88,101,242,0.18)' : 'var(--accent-soft-bg)',
+                  border: `0.5px solid ${billingPeriod === 'annual' ? 'rgba(88,101,242,0.35)' : 'var(--accent-soft-border)'}`,
+                  color: billingPeriod === 'annual' ? '#5865f2' : 'var(--accent-soft-text)',
+                  letterSpacing: '0.01em',
+                }}>Save 20%</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Plans grid */}
+          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '1060px', margin: '0 auto' }}>
+            {/* Free */}
+            <PlanCard
+              name="Free"
+              tagline="For new communities testing the waters."
+              price="$0"
+              period="/ forever"
+              features={[
+                'Up to 50 members',
+                '1 Discord server',
+                '1 access page',
+                'Standard Stripe fees only',
+                'Email support',
+              ]}
+              ctaLabel="Start free"
+              ctaVariant="secondary"
+              onCtaClick={handleDiscordLogin}
+              loading={loading}
+              user={user}
+            />
+
+            {/* Standard */}
+            <PlanCard
+              name="Standard"
+              tagline="For growing communities ready to scale."
+              price={billingPeriod === 'monthly' ? '$9' : '$7'}
+              period={billingPeriod === 'monthly' ? '/ month' : '/ month, billed annually'}
+              features={[
+                'Up to 500 members',
+                '3 Discord servers',
+                'Unlimited access pages',
+                'Basic analytics',
+                'Priority email support',
+              ]}
+              ctaLabel="Get Standard"
+              ctaVariant="secondary"
+              onCtaClick={handleDiscordLogin}
+              loading={loading}
+              user={user}
+            />
+
+            {/* Pro */}
+            <PlanCard
+              name="Pro"
+              nameColor="var(--accent-soft-text)"
+              tagline="For creators running a serious community."
+              price={billingPeriod === 'monthly' ? '$19' : '$15'}
+              period={billingPeriod === 'monthly' ? '/ month' : '/ month, billed annually'}
+              features={[
+                'Unlimited members',
+                'Unlimited Discord servers',
+                'Custom domain',
+                'Advanced analytics & exports',
+                'Priority support',
+              ]}
+              ctaLabel="Get Pro"
+              ctaVariant="primary"
+              featured
+              onCtaClick={handleDiscordLogin}
+              loading={loading}
+              user={user}
+            />
+          </div>
+
+          <p style={{
+            maxWidth: '640px', margin: '40px auto 0', textAlign: 'center',
+            fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6,
+            padding: '16px 24px',
+            borderTop: '1px solid transparent',
+            borderImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent) 1',
+          }}>
+            <strong style={{ color: 'var(--text)', fontWeight: 500 }}>We never take a cut of your revenue.</strong> You keep 100%, minus Stripe&apos;s standard fees. That&apos;s the whole deal.
+          </p>
+        </div>
+      </section>
+
+      <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
+
       {/* FAQ */}
       <section id="faq" style={{ padding: '120px 0', background: 'var(--bg-alt)' }}>
         <div style={containerStyle}>
@@ -734,6 +859,118 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: stri
       }}>{icon}</span>
       <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em', margin: 0 }}>{title}</h3>
       <p style={{ fontSize: '14.5px', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{desc}</p>
+    </article>
+  );
+}
+
+interface PlanCardProps {
+  name: string;
+  nameColor?: string;
+  tagline: string;
+  price: string;
+  period: string;
+  features: string[];
+  ctaLabel: string;
+  ctaVariant: 'primary' | 'secondary';
+  featured?: boolean;
+  onCtaClick: () => void;
+  loading: boolean;
+  user: User | null;
+}
+
+function PlanCard({ name, nameColor, tagline, price, period, features, ctaLabel, ctaVariant, featured, onCtaClick, loading, user }: PlanCardProps) {
+  const [hovered, setHovered] = useState(false);
+
+  const cardStyle: React.CSSProperties = {
+    background: featured ? 'var(--surface-2)' : 'var(--surface-1)',
+    border: `0.5px solid ${featured ? 'var(--border-strong)' : 'var(--border)'}`,
+    borderRadius: '14px',
+    padding: '36px 32px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const btnBase: React.CSSProperties = {
+    width: '100%', padding: '12px 16px', fontSize: '14px', fontWeight: 500,
+    borderRadius: '6px', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+    letterSpacing: '-0.005em',
+    transition: 'transform 200ms ease, opacity 200ms ease, background 200ms ease, border-color 200ms ease',
+  };
+
+  const btnStyle: React.CSSProperties = ctaVariant === 'primary'
+    ? { ...btnBase, background: '#ffffff', color: '#0a0a0a', border: '0.5px solid #ffffff' }
+    : { ...btnBase, background: 'transparent', color: 'var(--text)', border: '0.5px solid rgba(255,255,255,0.2)' };
+
+  return (
+    <article
+      style={cardStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {featured && (
+        <div style={{
+          position: 'absolute', inset: '-1px', borderRadius: 'inherit', padding: '1px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02))',
+          WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+          WebkitMaskComposite: 'xor',
+          mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+          maskComposite: 'exclude',
+          pointerEvents: 'none',
+        }} />
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 500, color: nameColor || 'var(--text-secondary)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>{name}</p>
+        <p style={{ fontSize: '14.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{tagline}</p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '4px 0 8px' }}>
+        <span style={{ fontSize: '48px', fontWeight: 500, letterSpacing: '-0.035em', color: 'var(--text)', lineHeight: 1 }}>{price}</span>
+        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{period}</span>
+      </div>
+
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {features.map(f => (
+          <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '14.5px', color: 'var(--text)', lineHeight: 1.5 }}>
+            <Check size={14} style={{ flexShrink: 0, color: 'var(--accent-soft-text)', marginTop: '4px' }} />
+            {f}
+          </li>
+        ))}
+      </ul>
+
+      {loading ? (
+        <div style={{ height: '42px', background: 'var(--surface-2)', borderRadius: '6px' }} />
+      ) : user ? (
+        <button
+          onClick={() => window.location.href = '/dashboard/overview'}
+          style={btnStyle}
+          onMouseEnter={e => {
+            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }
+            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }
+          }}
+          onMouseLeave={e => {
+            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }
+            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }
+          }}
+        >Go to dashboard</button>
+      ) : (
+        <button
+          onClick={onCtaClick}
+          style={btnStyle}
+          onMouseEnter={e => {
+            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }
+            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }
+          }}
+          onMouseLeave={e => {
+            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }
+            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }
+          }}
+        >{ctaLabel}</button>
+      )}
     </article>
   );
 }
