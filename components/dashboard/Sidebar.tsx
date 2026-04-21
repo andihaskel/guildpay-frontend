@@ -17,10 +17,10 @@ const navigation = [
 
 const LogoMark = () => (
   <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true" style={{ display: 'inline-block', flexShrink: 0 }}>
-    <path d="M6 28 L6 14 A10 10 0 0 1 26 14 L26 28" stroke="#f0f0f0" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M4 28 L28 28" stroke="#f0f0f0" strokeWidth="1.6" strokeLinecap="round" />
-    <path d="M11 20 L21 20" stroke="#5865f2" strokeWidth="1.6" strokeLinecap="round" />
-    <circle cx="16" cy="12" r="1.8" fill="#5865f2" />
+    <rect x="6" y="14" width="20" height="14" rx="3" stroke="#f0f0f0" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10 14V10a6 6 0 0 1 12 0v4" stroke="#f0f0f0" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="16" cy="20" r="2" fill="#5865f2" />
+    <path d="M16 22v2" stroke="#5865f2" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
 
