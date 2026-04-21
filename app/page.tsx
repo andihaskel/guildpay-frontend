@@ -678,7 +678,7 @@ export default function Home() {
 
             {/* Standard */}
             <PlanCard
-              name="Standard"
+              name="Pro"
               tagline="For growing communities ready to scale."
               price={billingPeriod === 'monthly' ? '$9' : '$7'}
               period={billingPeriod === 'monthly' ? '/ month' : '/ month, billed annually'}
@@ -698,7 +698,7 @@ export default function Home() {
 
             {/* Pro */}
             <PlanCard
-              name="Pro"
+              name="Scale"
               nameColor="var(--accent-soft-text)"
               tagline="For creators running a serious community."
               price={billingPeriod === 'monthly' ? '$19' : '$15'}
