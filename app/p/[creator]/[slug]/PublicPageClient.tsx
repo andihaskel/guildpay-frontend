@@ -111,6 +111,18 @@ export default function PublicPageClient() {
     return clientSecret;
   }, [clientSecret]);
 
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+      if (e.key === 'ArrowRight') setLightboxIdx(prev => prev + 1);
+      if (e.key === 'ArrowLeft') setLightboxIdx(prev => prev - 1);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [lightboxOpen]);
+
   const resolvedStyle = pageData?.style ?? pageData?.settings?.page_style ?? 'dark';
   const isLight = resolvedStyle === 'light';
 
@@ -211,20 +223,8 @@ export default function PublicPageClient() {
 
   const openLightbox = (i: number) => { setLightboxIdx(i); setLightboxOpen(true); };
   const closeLightbox = () => setLightboxOpen(false);
-  const nextLightbox = () => setLightboxIdx((lightboxIdx + 1) % mediaItems.length);
-  const prevLightbox = () => setLightboxIdx((lightboxIdx - 1 + mediaItems.length) % mediaItems.length);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowRight') nextLightbox();
-      if (e.key === 'ArrowLeft') prevLightbox();
-    };
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
-  }, [lightboxOpen, lightboxIdx]);
+  const nextLightbox = () => setLightboxIdx((prev: number) => (prev + 1) % Math.max(mediaItems.length, 1));
+  const prevLightbox = () => setLightboxIdx((prev: number) => (prev - 1 + Math.max(mediaItems.length, 1)) % Math.max(mediaItems.length, 1));
 
   if (step === 'checkout' && clientSecret && stripePromise) {
     return (
@@ -579,7 +579,10 @@ export default function PublicPageClient() {
       )}
 
       {/* Lightbox */}
-      {lightboxOpen && mediaItems.length > 0 && (
+      {lightboxOpen && mediaItems.length > 0 && (() => {
+        const safeIdx = ((lightboxIdx % mediaItems.length) + mediaItems.length) % mediaItems.length;
+        const lbItem = mediaItems[safeIdx];
+        return (
         <div
           style={{
             position: 'fixed', inset: 0,
@@ -594,7 +597,7 @@ export default function PublicPageClient() {
             position: 'absolute', top: '22px', left: '50%', transform: 'translateX(-50%)',
             fontFamily: 'monospace', fontSize: '12px', color: 'rgba(255,255,255,0.7)',
             letterSpacing: '0.04em', zIndex: 10,
-          }}>{lightboxIdx + 1} / {mediaItems.length}</span>
+          }}>{safeIdx + 1} / {mediaItems.length}</span>
 
           {/* Close */}
           <button onClick={closeLightbox} style={{
@@ -635,13 +638,13 @@ export default function PublicPageClient() {
             aspectRatio: '16 / 10', borderRadius: '14px', overflow: 'hidden',
             border: `0.5px solid ${c.borderStrong}`, background: c.surface2,
           }}>
-            {mediaItems[lightboxIdx]?.url ? (
-              <img src={mediaItems[lightboxIdx].url} alt={mediaItems[lightboxIdx].caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            {lbItem?.url ? (
+              <img src={lbItem.url} alt={lbItem.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div style={{ position: 'absolute', inset: 0, background: GALLERY_GRADIENTS[lightboxIdx % 8] || GALLERY_GRADIENTS[0] }} />
+              <div style={{ position: 'absolute', inset: 0, background: GALLERY_GRADIENTS[safeIdx % 8] || GALLERY_GRADIENTS[0] }} />
             )}
 
-            {mediaItems[lightboxIdx]?.type === 'video' && (
+            {lbItem?.type === 'video' && (
               <div style={{
                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
                 width: '72px', height: '72px', borderRadius: '50%',
@@ -659,15 +662,16 @@ export default function PublicPageClient() {
               color: '#fff', fontSize: '15px', letterSpacing: '-0.005em', zIndex: 3,
             }}>
               <span style={{ fontFamily: 'monospace', fontSize: '11px', color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>
-                {mediaItems[lightboxIdx]?.type === 'video'
-                  ? `Video${mediaItems[lightboxIdx]?.duration ? ` - ${mediaItems[lightboxIdx].duration}` : ''}`
+                {lbItem?.type === 'video'
+                  ? `Video${lbItem?.duration ? ` - ${lbItem.duration}` : ''}`
                   : 'Photo'}
               </span>
-              <span>{mediaItems[lightboxIdx]?.caption || (mediaItems[lightboxIdx]?.type === 'video' ? 'Video' : 'Photo')}</span>
+              <span>{lbItem?.caption || (lbItem?.type === 'video' ? 'Video' : 'Photo')}</span>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* FAQ strip */}
       <section style={{ padding: '24px 0 64px', borderTop: `0.5px solid ${c.borderSoft}` }}>
