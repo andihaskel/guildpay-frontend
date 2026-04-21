@@ -157,6 +157,13 @@ export interface PageMemberCounts {
   canceling: number;
 }
 
+export interface MediaItem {
+  id: string;
+  type: 'photo' | 'video';
+  url: string;
+  caption?: string;
+}
+
 export interface AccessPage {
   id: string;
   slug: string;
@@ -165,6 +172,8 @@ export interface AccessPage {
   description: any;
   features: any;
   media_gallery_enabled: boolean;
+  media_items?: MediaItem[];
+  discord_channels_enabled?: boolean;
   discord_role_id: string;
   discord_welcome_channel_id?: string;
   published: boolean;
@@ -190,6 +199,8 @@ export interface CreatePageRequest {
   description: any;
   features: any;
   media_gallery_enabled: boolean;
+  media_items?: MediaItem[];
+  discord_channels_enabled?: boolean;
   discord_role_id: string;
   discord_welcome_channel_id?: string;
   accepts_signups?: boolean;

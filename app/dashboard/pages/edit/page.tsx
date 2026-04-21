@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Upload, Plus, Trash2, GripVertical, CircleCheck as CheckCircle2, Circle as XCircle, Loader as Loader2, Monitor, Tablet, Smartphone, Link as LinkIcon, Lock } from 'lucide-react';
+import { ArrowLeft, Upload, Plus, Trash2, GripVertical, CircleCheck as CheckCircle2, Circle as XCircle, Loader as Loader2, Monitor, Tablet, Smartphone, Link as LinkIcon, Lock, Image, X } from 'lucide-react';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { RichTextEditor } from '@/components/dashboard/RichTextEditor';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
-import { DiscordRole, DiscordChannel } from '@/lib/types';
+import { DiscordRole, DiscordChannel, MediaItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 type PageStyle = 'dark' | 'light';
@@ -35,6 +35,8 @@ interface FormData {
   welcomeChannel: string;
   roleToAssign: string;
   mediaGalleryEnabled: boolean;
+  mediaItems: MediaItem[];
+  discordChannelsEnabled: boolean;
   pageStyle: PageStyle;
   couponsEnabled: boolean;
   cryptoEnabled: boolean;
@@ -87,6 +89,8 @@ export default function EditPagePage() {
     welcomeChannel: 'welcome',
     roleToAssign: '',
     mediaGalleryEnabled: false,
+    mediaItems: [],
+    discordChannelsEnabled: false,
     pageStyle: 'dark',
     couponsEnabled: false,
     cryptoEnabled: false,
@@ -154,6 +158,8 @@ export default function EditPagePage() {
           welcomeChannel: pageData.discord_welcome_channel_id || 'welcome',
           roleToAssign: pageData.discord_role_id,
           mediaGalleryEnabled: pageData.media_gallery_enabled,
+          mediaItems: Array.isArray(pageData.media_items) ? pageData.media_items : [],
+          discordChannelsEnabled: pageData.discord_channels_enabled ?? false,
           pageStyle: (pageData.settings?.page_style as PageStyle) || 'dark',
           couponsEnabled: false, cryptoEnabled: false, requireNameOnCard: false, termsAndConditions: false,
           isActive: pageData.status ? pageData.status === 'active' : (pageData.accepts_signups ?? true),
@@ -222,6 +228,7 @@ export default function EditPagePage() {
     if (slugStatus === 'taken') { toast({ title: 'Validation Error', description: 'This URL is already taken.', variant: 'destructive' }); return; }
     if (slugStatus === 'checking') { toast({ title: 'Please wait', description: 'Checking URL availability...', variant: 'destructive' }); return; }
     if (!formData.offerName.trim()) { toast({ title: 'Validation Error', description: 'Offer Name is required', variant: 'destructive' }); return; }
+    if (formData.mediaGalleryEnabled && formData.mediaItems.length === 0) { toast({ title: 'Validation Error', description: 'Add at least one image or video to the media gallery, or disable it.', variant: 'destructive' }); setActiveSection(0); return; }
     if (!formData.roleToAssign) { toast({ title: 'Validation Error', description: 'Please select a role to assign', variant: 'destructive' }); return; }
     if (!formData.welcomeChannel || formData.welcomeChannel === '_empty') { toast({ title: 'Validation Error', description: 'Please select a welcome channel', variant: 'destructive' }); return; }
     const params = new URLSearchParams();
@@ -414,6 +421,82 @@ export default function EditPagePage() {
                         aria-checked={formData.mediaGalleryEnabled}
                       >
                         <span className={`absolute top-[1px] w-3.5 h-3.5 rounded-full transition-all ${formData.mediaGalleryEnabled ? 'left-[calc(100%-15px)] bg-white' : 'left-[1px] bg-[#888]'}`} />
+                      </button>
+                    </div>
+
+                    {formData.mediaGalleryEnabled && (
+                      <div className="mt-4 pt-4 border-t border-dashed border-white/[0.06]">
+                        <div className="grid grid-cols-4 gap-2 mb-3">
+                          {formData.mediaItems.map(item => (
+                            <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border border-white/[0.08] bg-[#161616]">
+                              {item.type === 'photo' ? (
+                                <img src={item.url} alt={item.caption || ''} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-[#161616]">
+                                  <video src={item.url} className="w-full h-full object-cover" muted />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => updateForm('mediaItems', formData.mediaItems.filter(m => m.id !== item.id))}
+                                  className="w-7 h-7 rounded-full bg-red-500/80 flex items-center justify-center text-white hover:bg-red-500 transition-colors"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/60 text-white/80 uppercase">{item.type}</span>
+                            </div>
+                          ))}
+                          <label className="aspect-square rounded-lg border border-dashed border-white/[0.12] bg-[#0d0d0d] flex flex-col items-center justify-center cursor-pointer hover:border-white/[0.2] hover:bg-white/[0.02] transition-all">
+                            <Image className="h-4 w-4 text-[#555] mb-1" />
+                            <span className="text-[10.5px] text-[#555] font-medium">Add</span>
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              multiple
+                              className="hidden"
+                              onChange={e => {
+                                const files = e.target.files;
+                                if (!files) return;
+                                Array.from(files).forEach(file => {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    const isVideo = file.type.startsWith('video/');
+                                    const newItem: MediaItem = {
+                                      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+                                      type: isVideo ? 'video' : 'photo',
+                                      url: reader.result as string,
+                                      caption: '',
+                                    };
+                                    setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                });
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <p className="text-[11px] text-[#555]">{formData.mediaItems.length} file{formData.mediaItems.length !== 1 ? 's' : ''} added {formData.mediaItems.length === 0 && <span className="text-amber-500/80">- at least 1 required</span>}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-5 py-4 border-t border-white/[0.06]">
+                    <div className="flex items-start justify-between gap-5">
+                      <div>
+                        <h4 className="text-[13.5px] font-medium text-[#f0f0f0] mb-0.5">Show Discord channels</h4>
+                        <p className="text-[12.5px] text-[#555]">Display available channels for the selected role on the signup page.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateForm('discordChannelsEnabled', !formData.discordChannelsEnabled)}
+                        className={`relative w-8 h-[18px] rounded-full border transition-all flex-shrink-0 mt-0.5 ${formData.discordChannelsEnabled ? 'bg-[#5865f2] border-[#5865f2]' : 'bg-[#1a1a1a] border-white/[0.08]'}`}
+                        role="switch"
+                        aria-checked={formData.discordChannelsEnabled}
+                      >
+                        <span className={`absolute top-[1px] w-3.5 h-3.5 rounded-full transition-all ${formData.discordChannelsEnabled ? 'left-[calc(100%-15px)] bg-white' : 'left-[1px] bg-[#888]'}`} />
                       </button>
                     </div>
                   </div>
@@ -854,6 +937,40 @@ function PreviewContent({ formData, isLight, initials }: { formData: FormData; i
                   <p style={{ fontSize: '12px', fontWeight: 500, margin: '0 0 2px', color: text }}>{f.title || 'Feature'}</p>
                   {f.description && <p style={{ fontSize: '11px', color: subText, margin: 0, lineHeight: 1.45 }}>{f.description}</p>}
                 </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {formData.mediaGalleryEnabled && formData.mediaItems.length > 0 && (
+        <>
+          <div style={{ height: '1px', background: dividerColor, margin: '20px -20px' }} />
+          <p style={{ fontSize: '10.5px', fontWeight: 500, color: mutedText, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Gallery</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', borderRadius: '10px', overflow: 'hidden' }}>
+            {formData.mediaItems.slice(0, 6).map(item => (
+              <div key={item.id} style={{ aspectRatio: '1', background: '#161616', position: 'relative', overflow: 'hidden' }}>
+                {item.type === 'photo' ? (
+                  <img src={item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {formData.discordChannelsEnabled && (
+        <>
+          <div style={{ height: '1px', background: dividerColor, margin: '20px -20px' }} />
+          <p style={{ fontSize: '10.5px', fontWeight: 500, color: mutedText, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Discord channels</p>
+          <div style={{ background: featureBg, border: `0.5px solid ${featureBorder}`, borderRadius: '10px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            {['welcome', 'general', 'announcements'].map((ch, i) => (
+              <div key={ch} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: '5px', fontSize: '12px', fontWeight: 500, color: i === 0 ? text : mutedText, background: i === 0 ? 'rgba(88,101,242,0.08)' : 'transparent' }}>
+                <span style={{ color: mutedText, fontSize: '13px', width: '14px', textAlign: 'center' }}>#</span>
+                {ch}
+                {i > 0 && <Lock style={{ width: '10px', height: '10px', marginLeft: 'auto', opacity: 0.5 }} />}
               </div>
             ))}
           </div>
