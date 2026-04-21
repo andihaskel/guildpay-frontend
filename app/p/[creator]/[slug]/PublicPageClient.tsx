@@ -231,7 +231,7 @@ export default function PublicPageClient() {
       <div style={{ minHeight: '100vh', background: c.bg, fontFamily: font }}>
         <header style={{ height: '48px', borderBottom: `0.5px solid ${c.borderSoft}`, display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 20, background: isLight ? 'rgba(250,250,250,0.85)' : 'rgba(10,10,10,0.85)', backdropFilter: 'saturate(140%) blur(10px)' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: c.textSecondary, fontWeight: 500 }}>
-            <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true" style={{ flexShrink: 0 }}><rect x="6" y="14" width="20" height="14" rx="3" stroke={c.accentSoftText} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 14V10a6 6 0 0 1 12 0v4" stroke={c.accentSoftText} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /><circle cx="16" cy="20" r="2" fill="#5865f2" /><path d="M16 22v2" stroke="#5865f2" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M10 6 L5 6 L5 26 L10 26" fill="none" stroke={c.accentSoftText} strokeWidth="1.8" /><path d="M22 6 L27 6 L27 26 L22 26" fill="none" stroke={c.accentSoftText} strokeWidth="1.8" /><circle cx="16" cy="16" r="3.2" fill={c.accentSoftText} /></svg>
             Secured by AccessGate
           </span>
         </header>
@@ -265,7 +265,7 @@ export default function PublicPageClient() {
       {/* Top chrome */}
       <header style={{ height: '48px', borderBottom: `0.5px solid ${c.borderSoft}`, display: 'flex', alignItems: 'center', padding: '0 24px', position: 'sticky', top: 0, zIndex: 20, background: isLight ? 'rgba(250,250,250,0.85)' : 'rgba(10,10,10,0.85)', backdropFilter: 'saturate(140%) blur(10px)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: c.textSecondary, fontWeight: 500, letterSpacing: '-0.005em' }}>
-          <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true" style={{ flexShrink: 0 }}><rect x="6" y="14" width="20" height="14" rx="3" stroke={c.accentSoftText} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 14V10a6 6 0 0 1 12 0v4" stroke={c.accentSoftText} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /><circle cx="16" cy="20" r="2" fill="#5865f2" /><path d="M16 22v2" stroke="#5865f2" strokeWidth="1.6" strokeLinecap="round" /></svg>
+          <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M10 6 L5 6 L5 26 L10 26" fill="none" stroke={c.accentSoftText} strokeWidth="1.8" /><path d="M22 6 L27 6 L27 26 L22 26" fill="none" stroke={c.accentSoftText} strokeWidth="1.8" /><circle cx="16" cy="16" r="3.2" fill={c.accentSoftText} /></svg>
           Secured by AccessGate
         </span>
       </header>
