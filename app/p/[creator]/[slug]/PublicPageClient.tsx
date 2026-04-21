@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader as Loader2, Check, ArrowLeft, Lock, Shield, Users, Calendar } from 'lucide-react';
+import { Loader as Loader2, Check, ArrowLeft, Lock, Shield, Users, Calendar, Play, Image, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
@@ -23,6 +23,15 @@ interface PageData {
     description: string;
   }>;
   media_gallery_enabled: boolean;
+  media_items?: Array<{
+    id: string;
+    type: 'photo' | 'video';
+    url?: string;
+    caption?: string;
+    duration?: string;
+    wide?: boolean;
+    tall?: boolean;
+  }>;
   monthly_amount_minor: number;
   yearly_amount_minor: number;
   currency: string;
@@ -49,6 +58,8 @@ export default function PublicPageClient() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState(0);
 
   const publicPath = `/p/${params.creator}/${params.slug}`;
 
@@ -171,6 +182,49 @@ export default function PublicPageClient() {
   const currSym = pageData.currency === 'usd' ? '$' : pageData.currency === 'eur' ? '€' : pageData.currency === 'gbp' ? '£' : pageData.currency.toUpperCase();
   const trialDays = pageData.trial_days && pageData.trial_days > 0 ? pageData.trial_days : null;
   const initials = pageData.offer_name.trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'A';
+
+  const GALLERY_GRADIENTS: Record<number, string> = {
+    0: 'radial-gradient(circle at 30% 30%, #5865f2 0%, #1a1a2e 55%, #0a0a0a 100%)',
+    1: 'linear-gradient(135deg, #1a1a2e 0%, #4752c4 60%, #0a0a0a 100%)',
+    2: 'radial-gradient(circle at 70% 60%, #3b82f6 0%, #1e3a5e 45%, #0a0a0a 100%)',
+    3: 'linear-gradient(160deg, #0a0a0a 0%, #1e3a8a 55%, #5865f2 100%)',
+    4: 'radial-gradient(circle at 50% 100%, #f97316 0%, #7c2d12 45%, #0a0a0a 100%)',
+    5: 'linear-gradient(135deg, #064e3b 0%, #10b981 50%, #0a0a0a 100%)',
+    6: 'radial-gradient(circle at 20% 80%, #0ea5e9 0%, #0c4a6e 50%, #0a0a0a 100%)',
+    7: 'linear-gradient(135deg, #1e3a5e 0%, #3b82f6 100%)',
+  };
+
+  const DEFAULT_MEDIA_ITEMS: PageData['media_items'] = [
+    { id: '1', type: 'video', caption: 'Welcome stream — Monthly Q&A kickoff', duration: '12:04', wide: true, tall: true },
+    { id: '2', type: 'photo', caption: 'Members-only channel layout' },
+    { id: '3', type: 'video', caption: 'Breakdown — how I prep each stream', duration: '04:31' },
+    { id: '4', type: 'photo', caption: 'Community game night — 140+ players', wide: true },
+    { id: '5', type: 'photo', caption: 'Weekly sticker drops' },
+    { id: '6', type: 'video', caption: 'Setup tour — July edition', duration: '07:18' },
+    { id: '7', type: 'photo', caption: 'Private event — IRL meetup' },
+    { id: '8', type: 'photo', caption: 'New resources drop — Notion templates & presets', wide: true },
+  ];
+
+  const mediaItems = pageData?.media_items && pageData.media_items.length > 0
+    ? pageData.media_items
+    : (pageData?.media_gallery_enabled ? DEFAULT_MEDIA_ITEMS : []);
+
+  const openLightbox = (i: number) => { setLightboxIdx(i); setLightboxOpen(true); };
+  const closeLightbox = () => setLightboxOpen(false);
+  const nextLightbox = () => setLightboxIdx((lightboxIdx + 1) % mediaItems.length);
+  const prevLightbox = () => setLightboxIdx((lightboxIdx - 1 + mediaItems.length) % mediaItems.length);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextLightbox();
+      if (e.key === 'ArrowLeft') prevLightbox();
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [lightboxOpen, lightboxIdx]);
 
   if (step === 'checkout' && clientSecret && stripePromise) {
     return (
@@ -431,6 +485,190 @@ export default function PublicPageClient() {
         </div>
       </section>
 
+      {/* Gallery */}
+      {mediaItems.length > 0 && (
+        <section style={{ padding: '72px 0 56px', borderTop: `0.5px solid ${c.borderSoft}` }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 32px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontFamily: 'monospace', fontSize: '11px', color: c.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#5865f2', boxShadow: '0 0 8px rgba(88,101,242,0.6)' }} />
+              Inside the community
+            </span>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', marginBottom: '28px', flexWrap: 'wrap' }}>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', margin: '0 0 6px', color: c.text }}>A peek at what&apos;s inside</h2>
+                <p style={{ fontSize: '13.5px', color: c.textSecondary, margin: 0, maxWidth: '520px' }}>Streams, behind-the-scenes clips, screenshots, and the kind of stuff you won&apos;t find anywhere else.</p>
+              </div>
+              <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: c.textMuted, letterSpacing: '0.02em' }}>{mediaItems.length} items</span>
+            </div>
+
+            <div className="public-gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: '110px', gap: '8px' }}>
+              {mediaItems.map((item, i) => (
+                <div
+                  key={item.id}
+                  onClick={() => openLightbox(i)}
+                  className={`public-gallery-item ${item.wide ? 'gallery-w2' : ''} ${item.tall ? 'gallery-h2' : ''}`}
+                  style={{
+                    position: 'relative',
+                    background: item.url ? c.surface2 : (GALLERY_GRADIENTS[i % 8] || GALLERY_GRADIENTS[0]),
+                    border: `0.5px solid ${c.border}`,
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'transform 220ms cubic-bezier(0.2,0.7,0.2,1), border-color 220ms ease',
+                    gridColumn: item.wide ? 'span 2' : undefined,
+                    gridRow: item.tall ? 'span 2' : undefined,
+                  }}
+                >
+                  {item.url && (
+                    <img src={item.url} alt={item.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+
+                  {/* Type chip */}
+                  <span style={{
+                    position: 'absolute', top: '10px', left: '10px',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '4px 8px', background: 'rgba(10,10,10,0.65)',
+                    backdropFilter: 'blur(8px)', border: '0.5px solid rgba(255,255,255,0.1)',
+                    borderRadius: '999px', fontFamily: 'monospace', fontSize: '10.5px',
+                    color: '#f0f0f0', letterSpacing: '0.02em', zIndex: 2,
+                  }}>
+                    {item.type === 'video' ? <Play style={{ width: '10px', height: '10px', fill: 'currentColor' }} /> : <Image style={{ width: '10px', height: '10px' }} />}
+                    {item.type === 'video' ? 'Video' : 'Photo'}
+                  </span>
+
+                  {/* Duration badge for videos */}
+                  {item.type === 'video' && item.duration && (
+                    <span style={{
+                      position: 'absolute', bottom: '10px', right: '10px',
+                      padding: '2px 6px', background: 'rgba(10,10,10,0.78)',
+                      borderRadius: '4px', fontFamily: 'monospace', fontSize: '10.5px',
+                      color: '#fff', letterSpacing: '0.02em', zIndex: 3,
+                    }}>{item.duration}</span>
+                  )}
+
+                  {/* Play button for videos */}
+                  {item.type === 'video' && (
+                    <span className="gallery-play-btn" style={{
+                      position: 'absolute', top: '50%', left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '44px', height: '44px', borderRadius: '50%',
+                      background: 'rgba(10,10,10,0.55)', backdropFilter: 'blur(8px)',
+                      border: '0.5px solid rgba(255,255,255,0.15)',
+                      display: 'grid', placeItems: 'center', zIndex: 2,
+                      transition: 'transform 220ms ease, background 220ms ease',
+                    }}>
+                      <Play style={{ width: '14px', height: '14px', color: '#fff', fill: '#fff', marginLeft: '2px' }} />
+                    </span>
+                  )}
+
+                  {/* Caption */}
+                  {item.caption && (item.wide || item.tall) && (
+                    <span style={{
+                      position: 'absolute', left: 0, right: 0, bottom: 0,
+                      padding: '14px 12px 11px',
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)',
+                      fontSize: '12px', color: 'rgba(255,255,255,0.92)',
+                      letterSpacing: '-0.005em', zIndex: 2, lineHeight: 1.35,
+                    }}>{item.caption}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Lightbox */}
+      {lightboxOpen && mediaItems.length > 0 && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 200, padding: '40px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeLightbox(); }}
+        >
+          {/* Counter */}
+          <span style={{
+            position: 'absolute', top: '22px', left: '50%', transform: 'translateX(-50%)',
+            fontFamily: 'monospace', fontSize: '12px', color: 'rgba(255,255,255,0.7)',
+            letterSpacing: '0.04em', zIndex: 10,
+          }}>{lightboxIdx + 1} / {mediaItems.length}</span>
+
+          {/* Close */}
+          <button onClick={closeLightbox} style={{
+            position: 'absolute', top: '18px', right: '18px',
+            width: '38px', height: '38px', borderRadius: '50%',
+            background: 'rgba(10,10,10,0.6)', border: '0.5px solid rgba(255,255,255,0.15)',
+            color: '#fff', display: 'grid', placeItems: 'center',
+            cursor: 'pointer', zIndex: 10, transition: 'background 200ms ease',
+          }}>
+            <X style={{ width: '16px', height: '16px' }} />
+          </button>
+
+          {/* Prev */}
+          <button onClick={prevLightbox} className="lb-nav-btn" style={{
+            position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)',
+            width: '38px', height: '38px', borderRadius: '50%',
+            background: 'rgba(10,10,10,0.6)', border: '0.5px solid rgba(255,255,255,0.15)',
+            color: '#fff', display: 'grid', placeItems: 'center',
+            cursor: 'pointer', zIndex: 10, transition: 'background 200ms ease',
+          }}>
+            <ChevronLeft style={{ width: '16px', height: '16px' }} />
+          </button>
+
+          {/* Next */}
+          <button onClick={nextLightbox} className="lb-nav-btn" style={{
+            position: 'absolute', right: '24px', top: '50%', transform: 'translateY(-50%)',
+            width: '38px', height: '38px', borderRadius: '50%',
+            background: 'rgba(10,10,10,0.6)', border: '0.5px solid rgba(255,255,255,0.15)',
+            color: '#fff', display: 'grid', placeItems: 'center',
+            cursor: 'pointer', zIndex: 10, transition: 'background 200ms ease',
+          }}>
+            <ChevronRight style={{ width: '16px', height: '16px' }} />
+          </button>
+
+          {/* Frame */}
+          <div style={{
+            position: 'relative', width: 'min(1100px, 100%)', maxHeight: '86vh',
+            aspectRatio: '16 / 10', borderRadius: '14px', overflow: 'hidden',
+            border: `0.5px solid ${c.borderStrong}`, background: c.surface2,
+          }}>
+            {mediaItems[lightboxIdx]?.url ? (
+              <img src={mediaItems[lightboxIdx].url} alt={mediaItems[lightboxIdx].caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, background: GALLERY_GRADIENTS[lightboxIdx % 8] || GALLERY_GRADIENTS[0] }} />
+            )}
+
+            {mediaItems[lightboxIdx]?.type === 'video' && (
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: '72px', height: '72px', borderRadius: '50%',
+                background: 'rgba(88,101,242,0.92)', display: 'grid', placeItems: 'center',
+                zIndex: 4, pointerEvents: 'none',
+              }}>
+                <Play style={{ width: '22px', height: '22px', color: '#fff', fill: '#fff', marginLeft: '3px' }} />
+              </div>
+            )}
+
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0,
+              padding: '28px 32px',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
+              color: '#fff', fontSize: '15px', letterSpacing: '-0.005em', zIndex: 3,
+            }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '11px', color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>
+                {mediaItems[lightboxIdx]?.type === 'video'
+                  ? `Video${mediaItems[lightboxIdx]?.duration ? ` - ${mediaItems[lightboxIdx].duration}` : ''}`
+                  : 'Photo'}
+              </span>
+              <span>{mediaItems[lightboxIdx]?.caption || (mediaItems[lightboxIdx]?.type === 'video' ? 'Video' : 'Photo')}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FAQ strip */}
       <section style={{ padding: '24px 0 64px', borderTop: `0.5px solid ${c.borderSoft}` }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 32px' }}>
@@ -465,9 +703,20 @@ export default function PublicPageClient() {
           .public-pricing-col { position: static !important; }
           .public-faq-grid { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 820px) {
+          .public-gallery-grid { grid-template-columns: repeat(3, 1fr) !important; grid-auto-rows: 120px !important; }
+        }
+        @media (max-width: 480px) {
+          .public-gallery-grid { grid-template-columns: repeat(2, 1fr) !important; grid-auto-rows: 140px !important; }
+          .gallery-w2 { grid-column: span 1 !important; }
+          .gallery-h2 { grid-row: span 1 !important; }
+        }
         @media (max-width: 700px) {
           section > div[style*="padding: 0 32px"] { padding: 0 20px !important; }
         }
+        .public-gallery-item:hover { border-color: rgba(255,255,255,0.12) !important; transform: translateY(-1px); }
+        .public-gallery-item:hover .gallery-play-btn { background: rgba(88,101,242,0.92) !important; border-color: transparent !important; transform: translate(-50%, -50%) scale(1.08) !important; }
+        .lb-nav-btn:hover { background: #5865f2 !important; border-color: transparent !important; }
       `}</style>
     </div>
   );
