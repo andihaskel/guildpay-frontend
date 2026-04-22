@@ -577,24 +577,6 @@ export default function EditPagePage() {
                   </div>
 
                   <div className="px-5 py-4 border-t border-white/[0.06]">
-                    <div className="flex items-start justify-between gap-5">
-                      <div>
-                        <h4 className="text-[13.5px] font-medium text-[#f0f0f0] mb-0.5">Show Discord channels</h4>
-                        <p className="text-[12.5px] text-[#555]">Display available channels for the selected role on the signup page.</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateForm('discordChannelsEnabled', !formData.discordChannelsEnabled)}
-                        className={`relative w-8 h-[18px] rounded-full border transition-all flex-shrink-0 mt-0.5 ${formData.discordChannelsEnabled ? 'bg-[#5865f2] border-[#5865f2]' : 'bg-[#1a1a1a] border-white/[0.08]'}`}
-                        role="switch"
-                        aria-checked={formData.discordChannelsEnabled}
-                      >
-                        <span className={`absolute top-[1px] w-3.5 h-3.5 rounded-full transition-all ${formData.discordChannelsEnabled ? 'left-[calc(100%-15px)] bg-white' : 'left-[1px] bg-[#888]'}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="px-5 py-4 border-t border-white/[0.06]">
                     <label className="text-[12.5px] font-medium text-[#f0f0f0] block mb-3">Page style</label>
                     <div className="grid grid-cols-2 gap-2.5">
                       {(['dark', 'light'] as PageStyle[]).map(style => (
