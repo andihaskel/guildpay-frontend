@@ -217,10 +217,16 @@ export default function EditPagePage() {
     load();
   }, [formData.roleToAssign, guildId]);
 
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !currentProduct?.id) return;
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Only JPEG, PNG, WebP, and GIF images are supported.', variant: 'destructive' });
+      return;
+    }
     try {
       const compressed = await compressImage(file);
       let presign: Awaited<ReturnType<typeof api.presignMedia>>;
@@ -491,25 +497,26 @@ export default function EditPagePage() {
                             )}
                             <input
                               type="file"
-                              accept="image/*,video/*"
+                              accept="image/jpeg,image/png,image/webp,image/gif,video/*"
                               multiple
                               disabled={uploadingMedia}
                               className="hidden"
                               onChange={async e => {
-                                console.log('[media] onChange fired', e.target.files);
                                 const files = Array.from(e.target.files ?? []);
                                 e.target.value = '';
-                                if (files.length === 0) { console.log('[media] no files'); return; }
+                                if (files.length === 0) return;
                                 if (!currentProduct?.id) {
-                                  console.log('[media] no currentProduct');
                                   toast({ title: 'Error', description: 'No product selected.', variant: 'destructive' });
                                   return;
                                 }
-                                console.log('[media] product', currentProduct.id, 'files', files.length);
                                 setUploadingMedia(true);
                                 try {
                                   for (const file of files) {
                                     const isVideo = file.type.startsWith('video/');
+                                    if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                                      toast({ title: 'Invalid file type', description: 'Only JPEG, PNG, WebP, and GIF images are supported.', variant: 'destructive' });
+                                      break;
+                                    }
                                     let blob: Blob = file;
                                     let contentType = file.type;
                                     let filename = file.name;
@@ -542,13 +549,18 @@ export default function EditPagePage() {
                                       toast({ title: 'Could not upload file', description: `Upload failed with status ${uploadResp.status}.`, variant: 'destructive' });
                                       break;
                                     }
-                                    const newItem: MediaItem = {
-                                      id: presign.asset_key,
-                                      type: isVideo ? 'video' : 'image',
-                                      url: presign.asset_url,
-                                      caption: '',
-                                    };
-                                    setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
+                                    setFormData(prev => {
+                                      const order = prev.mediaItems.length;
+                                      const newItem: MediaItem = {
+                                        id: presign.asset_key,
+                                        type: isVideo ? 'video' : 'image',
+                                        url: presign.asset_url,
+                                        alt: '',
+                                        order,
+                                        caption: '',
+                                      };
+                                      return { ...prev, mediaItems: [...prev.mediaItems, newItem] };
+                                    });
                                   }
                                 } catch (err) {
                                   toast({ title: 'Could not upload file', description: err instanceof Error ? err.message : 'Unexpected error during upload.', variant: 'destructive' });
