@@ -468,9 +468,9 @@ export default function EditPagePage() {
                               className="hidden"
                               onChange={async e => {
                                 console.log('[media] onChange fired', e.target.files);
-                                const files = e.target.files;
+                                const files = Array.from(e.target.files ?? []);
                                 e.target.value = '';
-                                if (!files || files.length === 0) { console.log('[media] no files'); return; }
+                                if (files.length === 0) { console.log('[media] no files'); return; }
                                 if (!currentProduct?.id) {
                                   console.log('[media] no currentProduct');
                                   toast({ title: 'Error', description: 'No product selected.', variant: 'destructive' });
@@ -479,7 +479,7 @@ export default function EditPagePage() {
                                 console.log('[media] product', currentProduct.id, 'files', files.length);
                                 setUploadingMedia(true);
                                 try {
-                                  for (const file of Array.from(files)) {
+                                  for (const file of files) {
                                     console.log('[media] processing', file.name, file.type, file.size);
                                     const isVideo = file.type.startsWith('video/');
                                     let blob: Blob = file;
