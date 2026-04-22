@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AccessPage } from '@/lib/types';
+import { normalizeAssetUrl } from '@/lib/utils';
 
 interface AccessPageListItemProps {
   page: AccessPage;
@@ -66,7 +67,7 @@ export function AccessPageListItem({ page }: AccessPageListItemProps) {
         background: 'var(--surface-2)', border: '0.5px solid var(--border)', flexShrink: 0,
       }}>
         {page.hero_image_url ? (
-          <img src={page.hero_image_url} alt={page.offer_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={normalizeAssetUrl(page.hero_image_url)} alt={page.offer_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'var(--surface-2)' }} />
         )}

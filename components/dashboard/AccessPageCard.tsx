@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AccessPage } from '@/lib/types';
+import { normalizeAssetUrl } from '@/lib/utils';
 
 interface AccessPageCardProps {
   page: AccessPage;
@@ -54,7 +55,7 @@ export function AccessPageCard({ page, gradientClass }: AccessPageCardProps) {
     <Card className={`overflow-hidden bg-slate-900/60 border-slate-800/50 hover:border-slate-700/50 transition-all hover:shadow-lg ${isDisabled || isPaymentConfigRequired ? 'opacity-60' : ''}`}>
       <div className={`h-40 ${gradientClass} relative flex items-center justify-center`}>
         {page.hero_image_url ? (
-          <img src={page.hero_image_url} alt={page.offer_name} className="w-full h-full object-cover" />
+          <img src={normalizeAssetUrl(page.hero_image_url)} alt={page.offer_name} className="w-full h-full object-cover" />
         ) : (
           <Icon className="h-16 w-16 text-white/30" />
         )}

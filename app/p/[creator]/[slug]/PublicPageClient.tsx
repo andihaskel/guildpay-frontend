@@ -7,6 +7,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { api } from '@/lib/api';
+import { normalizeAssetUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface PageData {
@@ -74,8 +75,12 @@ export default function PublicPageClient() {
       if (!params.creator || !params.slug) return;
       try {
         setIsLoading(true);
-        const data = await api.getPublicPage(publicPath);
-        setPageData(data);
+        const raw = await api.getPublicPage(publicPath) as any;
+        if (raw.hero_image_url) raw.hero_image_url = normalizeAssetUrl(raw.hero_image_url) || raw.hero_image_url;
+        if (raw.media_items) {
+          raw.media_items = raw.media_items.map((m: any) => ({ ...m, url: normalizeAssetUrl(m.url) || m.url }));
+        }
+        setPageData(raw);
         setError(null);
       } catch (err: any) {
         setError(err.message || 'Page not found');

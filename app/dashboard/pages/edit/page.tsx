@@ -9,6 +9,7 @@ import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
 import { DiscordRole, DiscordChannel, MediaItem } from '@/lib/types';
 import { compressImage } from '@/lib/compress-image';
+import { normalizeAssetUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 type PageStyle = 'dark' | 'light';
@@ -144,9 +145,10 @@ export default function EditPagePage() {
           ? pageData.hero_image_url.split('seed=')[1] || pageData.slug
           : pageData.slug;
         setInitialImageSeed(imageSeed);
-        setHasCustomImage(!pageData.hero_image_url?.includes('dicebear.com'));
+        const heroUrl = normalizeAssetUrl(pageData.hero_image_url);
+        setHasCustomImage(!heroUrl?.includes('dicebear.com'));
         setFormData({
-          offerImage: pageData.hero_image_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${imageSeed}`,
+          offerImage: heroUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${imageSeed}`,
           offerUrl: pageData.slug,
           offerName: pageData.offer_name,
           businessName: currentProduct.name || '',
@@ -160,7 +162,9 @@ export default function EditPagePage() {
           welcomeChannel: pageData.discord_welcome_channel_id || 'welcome',
           roleToAssign: pageData.discord_role_id,
           mediaGalleryEnabled: pageData.media_gallery_enabled,
-          mediaItems: Array.isArray(pageData.media_items) ? pageData.media_items : [],
+          mediaItems: Array.isArray(pageData.media_items)
+            ? pageData.media_items.map((m: MediaItem) => ({ ...m, url: normalizeAssetUrl(m.url) || m.url }))
+            : [],
           discordChannelsEnabled: pageData.discord_channels_enabled ?? false,
           pageStyle: (pageData.settings?.page_style as PageStyle) || 'dark',
           couponsEnabled: false, cryptoEnabled: false, requireNameOnCard: false, termsAndConditions: false,
