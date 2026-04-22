@@ -358,43 +358,6 @@ export default function PublicPageClient() {
               </div>
             )}
 
-            {/* Discord preview card */}
-            {pageData.discord_channels_enabled && (
-              <div style={{ background: c.surface1, border: `0.5px solid ${c.border}`, borderRadius: '14px', padding: '20px 22px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <span style={{ width: '36px', height: '36px', borderRadius: '9px', background: '#5865f2', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
-                  </span>
-                  <div>
-                    <h3 style={{ fontSize: '14.5px', fontWeight: 500, margin: 0, letterSpacing: '-0.01em', color: c.text }}>What&apos;s inside the server</h3>
-                    <p style={{ fontSize: '12.5px', color: c.textMuted, margin: '2px 0 0' }}>A peek at the channels you&apos;ll unlock.</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {(pageData.discord_channels && pageData.discord_channels.length > 0
-                    ? pageData.discord_channels.map(ch => ch.name)
-                    : ['welcome', 'general', 'announcements', 'members-only']
-                  ).map((ch, i) => (
-                    <div
-                      key={ch}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '10px',
-                        padding: '8px 10px', borderRadius: '6px',
-                        fontSize: '13.5px', fontWeight: 500, letterSpacing: '-0.005em',
-                        color: i === 0 ? c.text : c.textMuted,
-                        background: i === 0 ? c.accentSoftBg : 'transparent',
-                      }}
-                    >
-                      <span style={{ color: c.textMuted, fontSize: '15px', fontWeight: 400, width: '16px', textAlign: 'center' }}>#</span>
-                      {ch}
-                      {i > 0 && (
-                        <Lock style={{ width: '12px', height: '12px', marginLeft: 'auto', opacity: 0.6 }} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right column: pricing sticky */}
@@ -506,26 +469,27 @@ export default function PublicPageClient() {
               <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: c.textMuted, letterSpacing: '0.02em' }}>{mediaItems.length} items</span>
             </div>
 
-            <div className="public-gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: '110px', gap: '8px' }}>
+            <div className="public-gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
               {mediaItems.map((item, i) => (
                 <div
                   key={item.id}
                   onClick={() => openLightbox(i)}
-                  className={`public-gallery-item ${item.wide ? 'gallery-w2' : ''} ${item.tall ? 'gallery-h2' : ''}`}
+                  className="public-gallery-item"
                   style={{
                     position: 'relative',
+                    aspectRatio: '4 / 3',
                     background: item.url ? c.surface2 : (GALLERY_GRADIENTS[i % 8] || GALLERY_GRADIENTS[0]),
                     border: `0.5px solid ${c.border}`,
                     borderRadius: '10px',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     transition: 'transform 220ms cubic-bezier(0.2,0.7,0.2,1), border-color 220ms ease',
-                    gridColumn: item.wide ? 'span 2' : undefined,
-                    gridRow: item.tall ? 'span 2' : undefined,
                   }}
                 >
                   {item.url && (
-                    <img src={item.url} alt={item.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    item.type === 'video'
+                      ? <video src={item.url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} muted />
+                      : <img src={item.url} alt={item.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                   )}
 
                   {/* Type chip */}
@@ -644,7 +608,7 @@ export default function PublicPageClient() {
             border: `0.5px solid ${c.borderStrong}`, background: c.surface2,
           }}>
             {lbItem?.url ? (
-              <img src={lbItem.url} alt={lbItem.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={lbItem.url} alt={lbItem.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
             ) : (
               <div style={{ position: 'absolute', inset: 0, background: GALLERY_GRADIENTS[safeIdx % 8] || GALLERY_GRADIENTS[0] }} />
             )}
@@ -712,13 +676,8 @@ export default function PublicPageClient() {
           .public-pricing-col { position: static !important; }
           .public-faq-grid { grid-template-columns: 1fr !important; }
         }
-        @media (max-width: 820px) {
-          .public-gallery-grid { grid-template-columns: repeat(3, 1fr) !important; grid-auto-rows: 120px !important; }
-        }
         @media (max-width: 480px) {
-          .public-gallery-grid { grid-template-columns: repeat(2, 1fr) !important; grid-auto-rows: 140px !important; }
-          .gallery-w2 { grid-column: span 1 !important; }
-          .gallery-h2 { grid-row: span 1 !important; }
+          .public-gallery-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 700px) {
           section > div[style*="padding: 0 32px"] { padding: 0 20px !important; }

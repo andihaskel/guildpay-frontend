@@ -305,7 +305,7 @@ export default function EditPagePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
-      <header className="h-[52px] border-b border-white/[0.06] flex items-center justify-between px-6 sticky top-0 z-20 bg-[rgba(10,10,10,0.88)] backdrop-blur-[10px]">
+      <header className="h-[52px] border-b border-white/[0.06] flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 bg-[rgba(10,10,10,0.88)] backdrop-blur-[10px]">
         <div className="flex items-center gap-2.5 text-[12.5px] text-[#888]">
           <button onClick={() => router.push('/dashboard/pages')} className="hover:text-[#f0f0f0] transition-colors">Pages</button>
           <span className="text-[#2a2a2a]">/</span>
@@ -326,7 +326,7 @@ export default function EditPagePage() {
       </header>
 
       <div className="grid lg:grid-cols-[1fr_480px] xl:grid-cols-[1fr_520px] min-h-[calc(100vh-52px)]">
-        <div className="py-8 px-10 pb-24 max-w-[780px] w-full mx-auto">
+        <div className="py-8 px-4 sm:px-6 md:px-10 pb-24 max-w-[780px] w-full mx-auto">
           <div className="mb-8">
             <button
               onClick={() => router.push('/dashboard/pages')}
@@ -341,15 +341,15 @@ export default function EditPagePage() {
             <p className="text-[14px] text-[#888]">Everything below updates the live preview on the right.</p>
           </div>
 
-          <div className="flex gap-1 mb-8 bg-[#111] border border-white/[0.08] rounded-lg p-1">
+          <div className="flex flex-wrap gap-1 mb-8 bg-[#111] border border-white/[0.08] rounded-lg p-1">
             {sections.map((s, i) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setActiveSection(i)}
-                className={`flex-1 py-2 px-3 rounded-md text-[12.5px] font-medium flex items-center justify-center gap-2 transition-all ${activeSection === i ? 'bg-[#1a1a1a] text-[#f0f0f0]' : 'text-[#888] hover:text-[#f0f0f0]'}`}
+                className={`flex-1 min-w-[70px] py-2 px-2 sm:px-3 rounded-md text-[12.5px] font-medium flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${activeSection === i ? 'bg-[#1a1a1a] text-[#f0f0f0]' : 'text-[#888] hover:text-[#f0f0f0]'}`}
               >
-                <span className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10.5px] font-medium border transition-all ${activeSection === i ? 'bg-[rgba(88,101,242,0.12)] border-[rgba(88,101,242,0.25)] text-[#8b92f8]' : 'bg-[#161616] border-white/[0.08] text-[#555]'}`}>
+                <span className={`w-[18px] h-[18px] rounded-full flex-shrink-0 flex items-center justify-center text-[10.5px] font-medium border transition-all ${activeSection === i ? 'bg-[rgba(88,101,242,0.12)] border-[rgba(88,101,242,0.25)] text-[#8b92f8]' : 'bg-[#161616] border-white/[0.08] text-[#555]'}`}>
                   {i + 1}
                 </span>
                 {s}
@@ -366,7 +366,7 @@ export default function EditPagePage() {
                     <p className="text-[12px] text-[#555] mt-0.5">What your members will see first.</p>
                   </div>
                   <div className="p-5 space-y-5">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-[12.5px] font-medium text-[#f0f0f0] block mb-2">Offer image</label>
                         <div className="flex items-center gap-4">
@@ -577,24 +577,6 @@ export default function EditPagePage() {
                   </div>
 
                   <div className="px-5 py-4 border-t border-white/[0.06]">
-                    <div className="flex items-start justify-between gap-5">
-                      <div>
-                        <h4 className="text-[13.5px] font-medium text-[#f0f0f0] mb-0.5">Show Discord channels</h4>
-                        <p className="text-[12.5px] text-[#555]">Display available channels for the selected role on the signup page.</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateForm('discordChannelsEnabled', !formData.discordChannelsEnabled)}
-                        className={`relative w-8 h-[18px] rounded-full border transition-all flex-shrink-0 mt-0.5 ${formData.discordChannelsEnabled ? 'bg-[#5865f2] border-[#5865f2]' : 'bg-[#1a1a1a] border-white/[0.08]'}`}
-                        role="switch"
-                        aria-checked={formData.discordChannelsEnabled}
-                      >
-                        <span className={`absolute top-[1px] w-3.5 h-3.5 rounded-full transition-all ${formData.discordChannelsEnabled ? 'left-[calc(100%-15px)] bg-white' : 'left-[1px] bg-[#888]'}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="px-5 py-4 border-t border-white/[0.06]">
                     <label className="text-[12.5px] font-medium text-[#f0f0f0] block mb-3">Page style</label>
                     <div className="grid grid-cols-2 gap-2.5">
                       {(['dark', 'light'] as PageStyle[]).map(style => (
@@ -703,8 +685,8 @@ export default function EditPagePage() {
                   <p className="text-[12px] text-[#555] mt-0.5">Paid via your connected Stripe account.</p>
                 </div>
                 <div className="p-5 space-y-4">
-                  <div className="grid grid-cols-[140px_1fr_1fr] gap-3">
-                    <div>
+                  <div className="grid grid-cols-2 sm:grid-cols-[140px_1fr_1fr] gap-3">
+                    <div className="col-span-2 sm:col-span-1">
                       <label className="text-[12.5px] font-medium text-[#f0f0f0] block mb-2">Price</label>
                       <div className="flex bg-[#0d0d0d] border border-white/[0.08] rounded-md overflow-hidden focus-within:border-[rgba(88,101,242,0.4)]">
                         <span className="px-3 py-2.5 text-[13px] text-[#555] bg-white/[0.02] border-r border-white/[0.08]">$</span>
@@ -798,7 +780,7 @@ export default function EditPagePage() {
                     <h2 className="text-[14px] font-medium text-[#f0f0f0] tracking-tight">Discord settings</h2>
                     <p className="text-[12px] text-[#555] mt-0.5">Configure where members land after subscribing.</p>
                   </div>
-                  <div className="p-5 grid grid-cols-2 gap-4">
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-[12.5px] font-medium text-[#f0f0f0] block mb-2">
                         Role to assign <span className="text-[#8b92f8]">*</span>
@@ -836,7 +818,7 @@ export default function EditPagePage() {
                   <div className="px-5 py-4 border-b border-white/[0.06]">
                     <h2 className="text-[14px] font-medium text-[#f0f0f0] tracking-tight">Premium features</h2>
                   </div>
-                  <div className="p-5 grid grid-cols-2 gap-4">
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {([
                       { key: 'couponsEnabled', label: 'Coupons enabled', desc: 'Allow discount codes at checkout.' },
                       { key: 'cryptoEnabled', label: 'Crypto enabled', desc: 'Accept cryptocurrency payments.' },
@@ -1018,12 +1000,22 @@ function PreviewContent({ formData, isLight, initials }: { formData: FormData; i
         </h1>
       </div>
 
-      {formData.businessFeatures.length > 0 && (
+      {formData.description && formData.description.trim() && formData.description.replace(/<[^>]*>/g, '').trim() && (
         <>
           <div style={{ height: '1px', background: dividerColor, margin: '0 -20px 20px' }} />
+          <div
+            style={{ fontSize: '12.5px', color: subText, lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: formData.description }}
+          />
+        </>
+      )}
+
+      {formData.businessFeatures.length > 0 && (
+        <>
+          <div style={{ height: '1px', background: dividerColor, margin: '20px -20px' }} />
           <p style={{ fontSize: '10.5px', fontWeight: 500, color: mutedText, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>What's included</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {formData.businessFeatures.slice(0, 3).map(f => (
+            {formData.businessFeatures.map(f => (
               <div key={f.id} style={{ display: 'flex', gap: '10px', padding: '10px 12px', background: featureBg, border: `0.5px solid ${featureBorder}`, borderRadius: '10px', alignItems: 'flex-start' }}>
                 <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>{f.icon}</span>
                 <div>

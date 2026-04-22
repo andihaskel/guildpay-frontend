@@ -57,7 +57,6 @@ export default function PreviewPage() {
         features: formData.businessFeatures,
         media_gallery_enabled: formData.mediaGalleryEnabled,
         media_items: formData.mediaGalleryEnabled ? formData.mediaItems : undefined,
-        discord_channels_enabled: formData.discordChannelsEnabled,
         discord_role_id: formData.roleToAssign,
         discord_welcome_channel_id: formData.welcomeChannel && formData.welcomeChannel !== 'welcome' ? formData.welcomeChannel : undefined,
         accepts_signups: formData.isActive,
