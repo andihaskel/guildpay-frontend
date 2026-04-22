@@ -468,8 +468,12 @@ export default function EditPagePage() {
                               className="hidden"
                               onChange={async e => {
                                 const files = e.target.files;
-                                if (!files || !currentProduct?.id) return;
                                 e.target.value = '';
+                                if (!files || files.length === 0) return;
+                                if (!currentProduct?.id) {
+                                  toast({ title: 'Error', description: 'No product selected.', variant: 'destructive' });
+                                  return;
+                                }
                                 setUploadingMedia(true);
                                 try {
                                   for (const file of Array.from(files)) {
@@ -488,11 +492,12 @@ export default function EditPagePage() {
                                       content_type: contentType,
                                       page_id: pageId || undefined,
                                     });
-                                    await fetch(presign.upload_url, {
+                                    const uploadResp = await fetch(presign.upload_url, {
                                       method: presign.method,
                                       headers: presign.headers,
                                       body: blob,
                                     });
+                                    if (!uploadResp.ok) throw new Error(`Upload failed: ${uploadResp.status}`);
                                     const newItem: MediaItem = {
                                       id: presign.asset_key,
                                       type: isVideo ? 'video' : 'photo',
@@ -501,8 +506,9 @@ export default function EditPagePage() {
                                     };
                                     setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
                                   }
-                                } catch {
-                                  toast({ title: 'Upload failed', description: 'Could not upload media file. Please try again.', variant: 'destructive' });
+                                } catch (err) {
+                                  console.error('[media upload]', err);
+                                  toast({ title: 'Upload failed', description: err instanceof Error ? err.message : 'Could not upload media file. Please try again.', variant: 'destructive' });
                                 } finally {
                                   setUploadingMedia(false);
                                 }
