@@ -467,36 +467,45 @@ export default function EditPagePage() {
                               disabled={uploadingMedia}
                               className="hidden"
                               onChange={async e => {
+                                console.log('[media] onChange fired', e.target.files);
                                 const files = e.target.files;
                                 e.target.value = '';
-                                if (!files || files.length === 0) return;
+                                if (!files || files.length === 0) { console.log('[media] no files'); return; }
                                 if (!currentProduct?.id) {
+                                  console.log('[media] no currentProduct');
                                   toast({ title: 'Error', description: 'No product selected.', variant: 'destructive' });
                                   return;
                                 }
+                                console.log('[media] product', currentProduct.id, 'files', files.length);
                                 setUploadingMedia(true);
                                 try {
                                   for (const file of Array.from(files)) {
+                                    console.log('[media] processing', file.name, file.type, file.size);
                                     const isVideo = file.type.startsWith('video/');
                                     let blob: Blob = file;
                                     let contentType = file.type;
                                     let filename = file.name;
                                     if (!isVideo) {
+                                      console.log('[media] compressing...');
                                       const compressed = await compressImage(file);
                                       blob = compressed.blob;
                                       contentType = compressed.content_type;
                                       filename = compressed.filename;
+                                      console.log('[media] compressed', contentType, blob.size);
                                     }
+                                    console.log('[media] presigning', filename, contentType);
                                     const presign = await api.presignMedia(currentProduct.id, {
                                       filename,
                                       content_type: contentType,
                                       page_id: pageId || undefined,
                                     });
+                                    console.log('[media] presign ok', presign.upload_url);
                                     const uploadResp = await fetch(presign.upload_url, {
                                       method: presign.method,
                                       headers: presign.headers,
                                       body: blob,
                                     });
+                                    console.log('[media] PUT', uploadResp.status);
                                     if (!uploadResp.ok) throw new Error(`Upload failed: ${uploadResp.status}`);
                                     const newItem: MediaItem = {
                                       id: presign.asset_key,
@@ -504,10 +513,11 @@ export default function EditPagePage() {
                                       url: presign.asset_url,
                                       caption: '',
                                     };
+                                    console.log('[media] done', presign.asset_url);
                                     setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
                                   }
                                 } catch (err) {
-                                  console.error('[media upload]', err);
+                                  console.error('[media upload] ERROR', err);
                                   toast({ title: 'Upload failed', description: err instanceof Error ? err.message : 'Could not upload media file. Please try again.', variant: 'destructive' });
                                 } finally {
                                   setUploadingMedia(false);
