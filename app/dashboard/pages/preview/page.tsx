@@ -59,7 +59,7 @@ export default function PreviewPage() {
         media_items: formData.mediaGalleryEnabled ? formData.mediaItems : undefined,
         discord_channels_enabled: formData.discordChannelsEnabled,
         discord_role_id: formData.roleToAssign,
-        discord_welcome_channel_id: formData.welcomeChannel || undefined,
+        discord_welcome_channel_id: formData.welcomeChannel && formData.welcomeChannel !== 'welcome' ? formData.welcomeChannel : undefined,
         accepts_signups: formData.isActive,
         monthly_amount_minor: parsePrice(formData.price),
         yearly_amount_minor: formData.yearlyOption === 'yes' ? parsePrice(formData.yearlyPrice) : undefined,

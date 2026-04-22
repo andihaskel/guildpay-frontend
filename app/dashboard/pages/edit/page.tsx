@@ -89,7 +89,7 @@ export default function EditPagePage() {
     freeTrialPeriod: 'None',
     yearlyOption: 'yes',
     yearlyPrice: '300.00',
-    welcomeChannel: 'welcome',
+    welcomeChannel: '',
     roleToAssign: '',
     mediaGalleryEnabled: false,
     mediaItems: [],
@@ -159,7 +159,7 @@ export default function EditPagePage() {
           freeTrialPeriod: trialDaysMap[pageData.trial_days || 0] || 'None',
           yearlyOption: pageData.yearly_amount_minor ? 'yes' : 'no',
           yearlyPrice: pageData.yearly_amount_minor ? (pageData.yearly_amount_minor / 100).toFixed(2) : '300.00',
-          welcomeChannel: pageData.discord_welcome_channel_id || 'welcome',
+          welcomeChannel: pageData.discord_welcome_channel_id || '',
           roleToAssign: pageData.discord_role_id,
           mediaGalleryEnabled: pageData.media_gallery_enabled,
           mediaItems: Array.isArray(pageData.media_items)
@@ -268,7 +268,7 @@ export default function EditPagePage() {
     if (!formData.offerName.trim()) { toast({ title: 'Validation Error', description: 'Offer Name is required', variant: 'destructive' }); return; }
     if (formData.mediaGalleryEnabled && formData.mediaItems.length === 0) { toast({ title: 'Validation Error', description: 'Add at least one image or video to the media gallery, or disable it.', variant: 'destructive' }); setActiveSection(0); return; }
     if (!formData.roleToAssign) { toast({ title: 'Validation Error', description: 'Please select a role to assign', variant: 'destructive' }); return; }
-    if (!formData.welcomeChannel || formData.welcomeChannel === '_empty') { toast({ title: 'Validation Error', description: 'Please select a welcome channel', variant: 'destructive' }); return; }
+
     const params = new URLSearchParams();
     if (pageId) params.append('id', pageId);
     params.append('data', JSON.stringify(formData));
