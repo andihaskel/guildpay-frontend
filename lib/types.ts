@@ -159,7 +159,7 @@ export interface PageMemberCounts {
 
 export interface MediaItem {
   id: string;
-  type: 'photo' | 'video';
+  type: 'image' | 'video';
   url: string;
   caption?: string;
 }

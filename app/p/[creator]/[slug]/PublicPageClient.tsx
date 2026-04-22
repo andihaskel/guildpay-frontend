@@ -25,7 +25,7 @@ interface PageData {
   media_gallery_enabled: boolean;
   media_items?: Array<{
     id: string;
-    type: 'photo' | 'video';
+    type: 'image' | 'video';
     url?: string;
     caption?: string;
     duration?: string;

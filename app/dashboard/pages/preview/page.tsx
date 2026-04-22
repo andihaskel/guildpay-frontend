@@ -84,7 +84,7 @@ export default function PreviewPage() {
       }
       router.push('/dashboard/pages');
     } catch (error: any) {
-      toast({ title: 'Error', description: error?.message || 'Failed to publish page', variant: 'destructive' });
+      toast({ title: 'Could not save page', description: error?.message || 'Failed to publish page. Please try again.', variant: 'destructive' });
     } finally {
       setIsPublishing(false);
     }
@@ -212,7 +212,7 @@ export default function PreviewPage() {
               <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
                 {formData.mediaItems.map((item: any, i: number) => (
                   <div key={i} style={{ aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', background: theme.surfaceAlt, position: 'relative' }}>
-                    {item.type === 'photo' ? (
+                    {item.type === 'image' ? (
                       <img src={item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />

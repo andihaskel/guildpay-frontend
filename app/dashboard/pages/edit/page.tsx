@@ -213,15 +213,40 @@ export default function EditPagePage() {
     load();
   }, [formData.roleToAssign, guildId]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, offerImage: reader.result as string }));
+    e.target.value = '';
+    if (!file || !currentProduct?.id) return;
+    try {
+      const compressed = await compressImage(file);
+      let presign: Awaited<ReturnType<typeof api.presignMedia>>;
+      try {
+        presign = await api.presignMedia(currentProduct.id, {
+          filename: compressed.filename,
+          content_type: compressed.content_type,
+          page_id: pageId || undefined,
+        });
+      } catch (err: any) {
+        const status = err?.statusCode;
+        if (status === 400) toast({ title: 'Invalid file type', description: 'This file type is not supported for upload.', variant: 'destructive' });
+        else if (status === 404) toast({ title: 'Not found', description: 'Product or page not found.', variant: 'destructive' });
+        else toast({ title: 'Could not prepare upload', description: 'Failed to initialize file upload. Please try again.', variant: 'destructive' });
+        return;
+      }
+      const uploadResp = await fetch(presign.upload_url, {
+        method: presign.method,
+        headers: { 'Content-Type': compressed.content_type },
+        body: compressed.blob,
+      });
+      if (!uploadResp.ok) {
+        toast({ title: 'Could not upload file', description: `Upload failed with status ${uploadResp.status}.`, variant: 'destructive' });
+        return;
+      }
+      setFormData(prev => ({ ...prev, offerImage: presign.asset_url }));
       setHasCustomImage(true);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      toast({ title: 'Could not upload file', description: 'An unexpected error occurred during upload.', variant: 'destructive' });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -432,7 +457,7 @@ export default function EditPagePage() {
                         <div className="grid grid-cols-4 gap-2 mb-3">
                           {formData.mediaItems.map(item => (
                             <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border border-white/[0.08] bg-[#161616]">
-                              {item.type === 'photo' ? (
+                              {item.type === 'image' ? (
                                 <img src={item.url} alt={item.caption || ''} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-[#161616]">
@@ -480,45 +505,49 @@ export default function EditPagePage() {
                                 setUploadingMedia(true);
                                 try {
                                   for (const file of files) {
-                                    console.log('[media] processing', file.name, file.type, file.size);
                                     const isVideo = file.type.startsWith('video/');
                                     let blob: Blob = file;
                                     let contentType = file.type;
                                     let filename = file.name;
                                     if (!isVideo) {
-                                      console.log('[media] compressing...');
                                       const compressed = await compressImage(file);
                                       blob = compressed.blob;
                                       contentType = compressed.content_type;
                                       filename = compressed.filename;
-                                      console.log('[media] compressed', contentType, blob.size);
                                     }
-                                    console.log('[media] presigning', filename, contentType);
-                                    const presign = await api.presignMedia(currentProduct.id, {
-                                      filename,
-                                      content_type: contentType,
-                                      page_id: pageId || undefined,
-                                    });
-                                    console.log('[media] presign ok', presign.upload_url);
+                                    let presign: Awaited<ReturnType<typeof api.presignMedia>>;
+                                    try {
+                                      presign = await api.presignMedia(currentProduct.id, {
+                                        filename,
+                                        content_type: contentType,
+                                        page_id: pageId || undefined,
+                                      });
+                                    } catch (err: any) {
+                                      const status = err?.statusCode;
+                                      if (status === 400) toast({ title: 'Invalid file type', description: 'This file type is not supported.', variant: 'destructive' });
+                                      else if (status === 404) toast({ title: 'Not found', description: 'Product or page not found.', variant: 'destructive' });
+                                      else toast({ title: 'Could not prepare upload', description: 'Failed to initialize file upload. Please try again.', variant: 'destructive' });
+                                      break;
+                                    }
                                     const uploadResp = await fetch(presign.upload_url, {
                                       method: presign.method,
-                                      headers: presign.headers,
+                                      headers: { 'Content-Type': contentType },
                                       body: blob,
                                     });
-                                    console.log('[media] PUT', uploadResp.status);
-                                    if (!uploadResp.ok) throw new Error(`Upload failed: ${uploadResp.status}`);
+                                    if (!uploadResp.ok) {
+                                      toast({ title: 'Could not upload file', description: `Upload failed with status ${uploadResp.status}.`, variant: 'destructive' });
+                                      break;
+                                    }
                                     const newItem: MediaItem = {
                                       id: presign.asset_key,
-                                      type: isVideo ? 'video' : 'photo',
+                                      type: isVideo ? 'video' : 'image',
                                       url: presign.asset_url,
                                       caption: '',
                                     };
-                                    console.log('[media] done', presign.asset_url);
                                     setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
                                   }
                                 } catch (err) {
-                                  console.error('[media upload] ERROR', err);
-                                  toast({ title: 'Upload failed', description: err instanceof Error ? err.message : 'Could not upload media file. Please try again.', variant: 'destructive' });
+                                  toast({ title: 'Could not upload file', description: err instanceof Error ? err.message : 'Unexpected error during upload.', variant: 'destructive' });
                                 } finally {
                                   setUploadingMedia(false);
                                 }
@@ -998,7 +1027,7 @@ function PreviewContent({ formData, isLight, initials }: { formData: FormData; i
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', borderRadius: '10px', overflow: 'hidden' }}>
             {formData.mediaItems.slice(0, 6).map(item => (
               <div key={item.id} style={{ aspectRatio: '1', background: '#161616', position: 'relative', overflow: 'hidden' }}>
-                {item.type === 'photo' ? (
+                {item.type === 'image' ? (
                   <img src={item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <video src={item.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
