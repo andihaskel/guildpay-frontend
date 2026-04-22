@@ -96,7 +96,20 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
                 transition: 'opacity 180ms ease',
               }}
             >
-              <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                  background: step.completed ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: `0.5px solid ${step.completed ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.12)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 200ms ease, border-color 200ms ease',
+                }}>
+                  {step.completed && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5.5L4 7.5L8 3" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
                 <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                   {step.num}
                 </span>
