@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Chrome as Home, FileText, Users, ChartBar as BarChart4, CreditCard, Settings, X } from 'lucide-react';
+import { Chrome as Home, FileText, Users, CreditCard, Settings, X } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { ProductSwitcher } from './ProductSwitcher';
 
@@ -10,7 +10,6 @@ const navigation = [
   { name: 'Home', href: '/dashboard/home', icon: Home },
   { name: 'Pages', href: '/dashboard/pages', icon: FileText },
   { name: 'Members', href: '/dashboard/members', icon: Users },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart4 },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
