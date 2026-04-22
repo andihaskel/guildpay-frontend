@@ -163,14 +163,16 @@ export default function SubscribeSuccessContent() {
           </p>
         </div>
 
-        {discordConnectUrl && (
-          <div className="w-full bg-background/60 border border-border rounded-xl p-5 space-y-4 text-left">
-            <div>
-              <h3 className="font-semibold mb-1">Next Step: Connect Discord</h3>
-              <p className="text-sm text-muted-foreground">
-                Link your Discord account to access your exclusive roles and content.
-              </p>
-            </div>
+        <div className="w-full bg-background/60 border border-border rounded-xl p-5 space-y-4 text-left">
+          <div>
+            <h3 className="font-semibold mb-1">Next Step: Join Discord</h3>
+            <p className="text-sm text-muted-foreground">
+              {discordConnectUrl
+                ? 'Link your Discord account to unlock your exclusive roles and content.'
+                : 'Head to Discord to access your exclusive community and content.'}
+            </p>
+          </div>
+          {discordConnectUrl ? (
             <Button
               onClick={handleConnectDiscord}
               className="w-full gap-2.5 font-semibold hover:scale-[1.01] active:scale-[0.99] transition-transform"
@@ -180,16 +182,18 @@ export default function SubscribeSuccessContent() {
               Connect Discord Account
               <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
-          </div>
-        )}
-
-        <Button
-          onClick={() => router.push('/dashboard/home')}
-          variant="ghost"
-          className="text-muted-foreground hover:text-foreground text-sm"
-        >
-          Skip for now
-        </Button>
+          ) : (
+            <Button
+              onClick={() => window.open('https://discord.com/app', '_blank')}
+              className="w-full gap-2.5 font-semibold hover:scale-[1.01] active:scale-[0.99] transition-transform"
+              size="lg"
+            >
+              {DISCORD_SVG}
+              Open Discord
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </GlowWrapper>
   );
