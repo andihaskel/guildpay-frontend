@@ -252,7 +252,7 @@ export default function EditPagePage() {
         toast({ title: 'Could not upload file', description: `Upload failed with status ${uploadResp.status}.`, variant: 'destructive' });
         return;
       }
-      setFormData(prev => ({ ...prev, offerImage: presign.asset_url }));
+      setFormData(prev => ({ ...prev, offerImage: normalizeAssetUrl(presign.asset_url) || presign.asset_url }));
       setHasCustomImage(true);
     } catch {
       toast({ title: 'Could not upload file', description: 'An unexpected error occurred during upload.', variant: 'destructive' });
@@ -554,7 +554,7 @@ export default function EditPagePage() {
                                       const newItem: MediaItem = {
                                         id: presign.asset_key,
                                         type: isVideo ? 'video' : 'image',
-                                        url: presign.asset_url,
+                                        url: normalizeAssetUrl(presign.asset_url) || presign.asset_url,
                                         alt: '',
                                         order,
                                         caption: '',
