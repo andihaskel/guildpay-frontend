@@ -1000,12 +1000,22 @@ function PreviewContent({ formData, isLight, initials }: { formData: FormData; i
         </h1>
       </div>
 
-      {formData.businessFeatures.length > 0 && (
+      {formData.description && formData.description.trim() && formData.description.replace(/<[^>]*>/g, '').trim() && (
         <>
           <div style={{ height: '1px', background: dividerColor, margin: '0 -20px 20px' }} />
+          <div
+            style={{ fontSize: '12.5px', color: subText, lineHeight: 1.6 }}
+            dangerouslySetInnerHTML={{ __html: formData.description }}
+          />
+        </>
+      )}
+
+      {formData.businessFeatures.length > 0 && (
+        <>
+          <div style={{ height: '1px', background: dividerColor, margin: '20px -20px' }} />
           <p style={{ fontSize: '10.5px', fontWeight: 500, color: mutedText, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>What's included</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {formData.businessFeatures.slice(0, 3).map(f => (
+            {formData.businessFeatures.map(f => (
               <div key={f.id} style={{ display: 'flex', gap: '10px', padding: '10px 12px', background: featureBg, border: `0.5px solid ${featureBorder}`, borderRadius: '10px', alignItems: 'flex-start' }}>
                 <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>{f.icon}</span>
                 <div>
