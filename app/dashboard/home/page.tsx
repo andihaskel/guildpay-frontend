@@ -106,13 +106,11 @@ export default function HomePage() {
         </div>
       )}
 
-      {!onboardingDismissed && (
-        <OnboardingChecklist
-          status={onboardingStatus}
-          onDismiss={handleDismissOnboarding}
-          isLoading={isLoading}
-        />
-      )}
+      <OnboardingChecklist
+        status={onboardingStatus}
+        onDismiss={handleDismissOnboarding}
+        isLoading={isLoading}
+      />
 
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>

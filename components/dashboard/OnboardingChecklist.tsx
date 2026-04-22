@@ -66,8 +66,6 @@ export function OnboardingChecklist({ status, onDismiss, isLoading = false }: On
 
   const allCompleted = steps.every(s => s.completed);
 
-  if (allCompleted) return null;
-
   return (
     <div style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
