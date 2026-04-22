@@ -267,6 +267,18 @@ class ApiClient {
     return this.delete<void>(`/creator/products/${productId}/pages/${pageId}`);
   }
 
+  async presignMedia(productId: string, params: { filename: string; content_type: string; page_id?: string }): Promise<{
+    upload_url: string;
+    method: string;
+    headers: Record<string, string>;
+    asset_url: string;
+    asset_key: string;
+    expires_in: number;
+    content_type: string;
+  }> {
+    return this.post(`/creator/products/${productId}/pages/media/presign`, params);
+  }
+
   async checkSlug(productId: string, slug: string, excludePageId?: string): Promise<{ available: boolean }> {
     const params = new URLSearchParams({ slug });
     if (excludePageId) params.append('exclude_page_id', excludePageId);

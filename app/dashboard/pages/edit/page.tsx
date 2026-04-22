@@ -8,6 +8,7 @@ import { RichTextEditor } from '@/components/dashboard/RichTextEditor';
 import { useProduct } from '@/contexts';
 import { api } from '@/lib/api';
 import { DiscordRole, DiscordChannel, MediaItem } from '@/lib/types';
+import { compressImage } from '@/lib/compress-image';
 import { useToast } from '@/hooks/use-toast';
 
 type PageStyle = 'dark' | 'light';
@@ -71,6 +72,7 @@ export default function EditPagePage() {
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [deviceView, setDeviceView] = useState<DeviceView>('tablet');
   const [activeSection, setActiveSection] = useState(0);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastCheckedSlug = useRef<string>('');
 
@@ -224,6 +226,7 @@ export default function EditPagePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingMedia) { toast({ title: 'Please wait', description: 'Media is still uploading...', variant: 'destructive' }); return; }
     if (!formData.offerUrl.trim()) { toast({ title: 'Validation Error', description: 'Offer URL is required', variant: 'destructive' }); return; }
     if (slugStatus === 'taken') { toast({ title: 'Validation Error', description: 'This URL is already taken.', variant: 'destructive' }); return; }
     if (slugStatus === 'checking') { toast({ title: 'Please wait', description: 'Checking URL availability...', variant: 'destructive' }); return; }
@@ -448,37 +451,66 @@ export default function EditPagePage() {
                               <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/60 text-white/80 uppercase">{item.type}</span>
                             </div>
                           ))}
-                          <label className="aspect-square rounded-lg border border-dashed border-white/[0.12] bg-[#0d0d0d] flex flex-col items-center justify-center cursor-pointer hover:border-white/[0.2] hover:bg-white/[0.02] transition-all">
-                            <Image className="h-4 w-4 text-[#555] mb-1" />
-                            <span className="text-[10.5px] text-[#555] font-medium">Add</span>
+                          <label className={`aspect-square rounded-lg border border-dashed border-white/[0.12] bg-[#0d0d0d] flex flex-col items-center justify-center transition-all ${uploadingMedia ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-white/[0.2] hover:bg-white/[0.02]'}`}>
+                            {uploadingMedia ? (
+                              <Loader2 className="h-4 w-4 text-[#555] animate-spin" />
+                            ) : (
+                              <>
+                                <Image className="h-4 w-4 text-[#555] mb-1" />
+                                <span className="text-[10.5px] text-[#555] font-medium">Add</span>
+                              </>
+                            )}
                             <input
                               type="file"
                               accept="image/*,video/*"
                               multiple
+                              disabled={uploadingMedia}
                               className="hidden"
-                              onChange={e => {
+                              onChange={async e => {
                                 const files = e.target.files;
-                                if (!files) return;
-                                Array.from(files).forEach(file => {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
+                                if (!files || !currentProduct?.id) return;
+                                e.target.value = '';
+                                setUploadingMedia(true);
+                                try {
+                                  for (const file of Array.from(files)) {
                                     const isVideo = file.type.startsWith('video/');
+                                    let blob: Blob = file;
+                                    let contentType = file.type;
+                                    let filename = file.name;
+                                    if (!isVideo) {
+                                      const compressed = await compressImage(file);
+                                      blob = compressed.blob;
+                                      contentType = compressed.content_type;
+                                      filename = compressed.filename;
+                                    }
+                                    const presign = await api.presignMedia(currentProduct.id, {
+                                      filename,
+                                      content_type: contentType,
+                                      page_id: pageId || undefined,
+                                    });
+                                    await fetch(presign.upload_url, {
+                                      method: presign.method,
+                                      headers: presign.headers,
+                                      body: blob,
+                                    });
                                     const newItem: MediaItem = {
-                                      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+                                      id: presign.asset_key,
                                       type: isVideo ? 'video' : 'photo',
-                                      url: reader.result as string,
+                                      url: presign.asset_url,
                                       caption: '',
                                     };
                                     setFormData(prev => ({ ...prev, mediaItems: [...prev.mediaItems, newItem] }));
-                                  };
-                                  reader.readAsDataURL(file);
-                                });
-                                e.target.value = '';
+                                  }
+                                } catch {
+                                  toast({ title: 'Upload failed', description: 'Could not upload media file. Please try again.', variant: 'destructive' });
+                                } finally {
+                                  setUploadingMedia(false);
+                                }
                               }}
                             />
                           </label>
                         </div>
-                        <p className="text-[11px] text-[#555]">{formData.mediaItems.length} file{formData.mediaItems.length !== 1 ? 's' : ''} added {formData.mediaItems.length === 0 && <span className="text-amber-500/80">- at least 1 required</span>}</p>
+                        <p className="text-[11px] text-[#555]">{uploadingMedia ? 'Uploading...' : `${formData.mediaItems.length} file${formData.mediaItems.length !== 1 ? 's' : ''} added`}{!uploadingMedia && formData.mediaItems.length === 0 && <span className="text-amber-500/80"> - at least 1 required</span>}</p>
                       </div>
                     )}
                   </div>
