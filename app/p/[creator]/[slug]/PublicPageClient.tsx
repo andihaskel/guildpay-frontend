@@ -358,6 +358,43 @@ export default function PublicPageClient() {
               </div>
             )}
 
+            {/* Discord preview card */}
+            {pageData.discord_channels_enabled && (
+              <div style={{ background: c.surface1, border: `0.5px solid ${c.border}`, borderRadius: '14px', padding: '20px 22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <span style={{ width: '36px', height: '36px', borderRadius: '9px', background: '#5865f2', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
+                  </span>
+                  <div>
+                    <h3 style={{ fontSize: '14.5px', fontWeight: 500, margin: 0, letterSpacing: '-0.01em', color: c.text }}>What&apos;s inside the server</h3>
+                    <p style={{ fontSize: '12.5px', color: c.textMuted, margin: '2px 0 0' }}>A peek at the channels you&apos;ll unlock.</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {(pageData.discord_channels && pageData.discord_channels.length > 0
+                    ? pageData.discord_channels.map(ch => ch.name)
+                    : ['welcome', 'general', 'announcements', 'members-only']
+                  ).map((ch, i) => (
+                    <div
+                      key={ch}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 10px', borderRadius: '6px',
+                        fontSize: '13.5px', fontWeight: 500, letterSpacing: '-0.005em',
+                        color: i === 0 ? c.text : c.textMuted,
+                        background: i === 0 ? c.accentSoftBg : 'transparent',
+                      }}
+                    >
+                      <span style={{ color: c.textMuted, fontSize: '15px', fontWeight: 400, width: '16px', textAlign: 'center' }}>#</span>
+                      {ch}
+                      {i > 0 && (
+                        <Lock style={{ width: '12px', height: '12px', marginLeft: 'auto', opacity: 0.6 }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right column: pricing sticky */}
