@@ -244,7 +244,7 @@ export default function MembersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '0.5px solid var(--border-soft)' }}>
-                  {['Email', 'Role', 'Price', 'Payment', 'Access', 'Renewal', ''].map((h, i) => (
+                  {['Email', 'Role', 'Price', 'Payment', 'Access', 'Renewal', 'Joined', ''].map((h, i) => (
                     <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -271,6 +271,9 @@ export default function MembersPage() {
                     <td style={{ padding: '12px 16px' }}>{accessChip(member.access_status)}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{formatDate(member.current_period_end)}</span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{formatDate(member.created_at)}</span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       {member.access_status === 'onboarding' && member.discord_connect_url && (
