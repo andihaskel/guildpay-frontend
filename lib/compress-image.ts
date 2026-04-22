@@ -1,5 +1,5 @@
 const MAX_WIDTH = 1600;
-const JPEG_QUALITY = 0.82;
+const QUALITY = 0.82;
 
 export interface CompressedFile {
   blob: Blob;
@@ -7,14 +7,20 @@ export interface CompressedFile {
   filename: string;
 }
 
-export async function compressImage(file: File): Promise<CompressedFile> {
-  // GIFs: no recomprimir, devolver tal cual
-  if (file.type === 'image/gif') {
-    return { blob: file, content_type: file.type, filename: file.name };
-  }
+function replaceExt(name: string, ext: string): string {
+  return name.replace(/\.[^.]+$/, '') + ext;
+}
 
-  // Videos: no comprimir
-  if (file.type.startsWith('video/')) {
+function tryBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number,
+): Promise<Blob | null> {
+  return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+}
+
+export async function compressImage(file: File): Promise<CompressedFile> {
+  if (file.type === 'image/gif' || file.type.startsWith('video/')) {
     return { blob: file, content_type: file.type, filename: file.name };
   }
 
@@ -22,7 +28,7 @@ export async function compressImage(file: File): Promise<CompressedFile> {
     const img = new window.Image();
     const objectUrl = URL.createObjectURL(file);
 
-    img.onload = () => {
+    img.onload = async () => {
       URL.revokeObjectURL(objectUrl);
 
       let { width, height } = img;
@@ -38,18 +44,20 @@ export async function compressImage(file: File): Promise<CompressedFile> {
       if (!ctx) { reject(new Error('Canvas 2D not available')); return; }
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Prefer WebP, fall back to JPEG
-      const outputType = 'image/webp';
-      canvas.toBlob(
-        blob => {
-          if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
-          const ext = outputType === 'image/webp' ? '.webp' : '.jpg';
-          const base = file.name.replace(/\.[^.]+$/, '');
-          resolve({ blob, content_type: outputType, filename: base + ext });
-        },
-        outputType,
-        JPEG_QUALITY,
-      );
+      // Try WebP first, fall back to JPEG
+      let blob = await tryBlob(canvas, 'image/webp', QUALITY);
+      let contentType = 'image/webp';
+      let ext = '.webp';
+
+      if (!blob) {
+        blob = await tryBlob(canvas, 'image/jpeg', QUALITY);
+        contentType = 'image/jpeg';
+        ext = '.jpg';
+      }
+
+      if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
+
+      resolve({ blob, content_type: contentType, filename: replaceExt(file.name, ext) });
     };
 
     img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Failed to load image')); };
