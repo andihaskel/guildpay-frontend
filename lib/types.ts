@@ -262,3 +262,93 @@ export interface InvoicesResponse {
   invoices: Invoice[];
   has_more: boolean;
 }
+
+// ========== Communities API ==========
+
+export interface Community {
+  id: string;
+  name: string;
+  tagline?: string;
+  logo_url?: string;
+  discord_guild_id?: string;
+  members_count?: number;
+  pages_count?: number;
+  monthly_revenue?: number;
+  slug?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DashboardHome {
+  total_members: number;
+  total_mrr_minor: number;
+  communities: number;
+  churn_30d_bps: number;
+  top_cards?: Community[];
+}
+
+export interface CommunityOverview {
+  paying_members: number;
+  monthly_revenue: number;
+  trialing?: number;
+  canceling?: number;
+  stripe_connect_url?: string;
+  stripe_dashboard_url?: string;
+  onboarding: {
+    has_page: boolean;
+    stripe_connected: boolean;
+    has_guildpay_subscription?: boolean;
+    has_accessgate_subscription?: boolean;
+  };
+}
+
+export interface CommunityPage {
+  id: string;
+  offer_name: string;
+  slug?: string;
+  published?: boolean;
+  status?: 'active' | 'disabled' | 'payment_config_required';
+  monthly_amount_minor: number;
+  yearly_amount_minor?: number;
+  currency: string;
+  trial_days?: number;
+  discord_role_id?: string;
+  channel_ids?: string[];
+  member_counts: { active: number; trialing: number; canceling: number };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunityChannel {
+  id: string;
+  name: string;
+  provider: string;
+  connected?: boolean;
+  connection_status?: string;
+  members_synced?: number;
+  last_sync_at?: string;
+}
+
+export interface CommunityMember {
+  id: string;
+  display_name?: string;
+  email?: string;
+  avatar_url?: string;
+  source_page_name?: string;
+  page_name?: string;
+  payment_status: 'active' | 'trialing' | 'canceling' | 'free';
+  access_status?: 'active' | 'onboarding' | 'free';
+  created_at: string;
+}
+
+export interface ActivityItem {
+  id?: string;
+  message: string;
+  created_at: string;
+  metadata?: Record<string, any>;
+}
+
+export interface CreatorProfile {
+  slug: string;
+  name?: string;
+}

@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -321,6 +321,75 @@ class ApiClient {
       `${publicPath}/checkout-session`,
       { price_kind: priceKind }
     );
+  }
+
+  // ========== Communities API ==========
+
+  async getDashboardHome(): Promise<DashboardHome> {
+    return this.get<DashboardHome>('/creator/dashboard/home');
+  }
+
+  async getCommunities(): Promise<Community[]> {
+    return this.get<Community[]>('/creator/communities/');
+  }
+
+  async getCommunity(communityId: string): Promise<Community> {
+    return this.get<Community>(`/creator/communities/${communityId}`);
+  }
+
+  async updateCommunity(communityId: string, data: Partial<Community>): Promise<Community> {
+    return this.put<Community>(`/creator/communities/${communityId}`, data);
+  }
+
+  async getCommunityOverview(communityId: string): Promise<CommunityOverview> {
+    return this.get<CommunityOverview>(`/creator/communities/${communityId}/overview`);
+  }
+
+  async getCommunityPages(communityId: string, params?: { mode?: string; limit?: number }): Promise<CommunityPage[]> {
+    const q = new URLSearchParams();
+    if (params?.mode) q.append('mode', params.mode);
+    if (params?.limit) q.append('limit', String(params.limit));
+    const qs = q.toString();
+    return this.get<CommunityPage[]>(`/creator/communities/${communityId}/pages${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCommunityPage(communityId: string, pageId: string): Promise<CommunityPage> {
+    return this.get<CommunityPage>(`/creator/communities/${communityId}/pages/${pageId}`);
+  }
+
+  async createCommunityPage(communityId: string, data: Partial<CommunityPage>): Promise<CommunityPage> {
+    return this.post<CommunityPage>(`/creator/communities/${communityId}/pages`, data);
+  }
+
+  async updateCommunityPage(communityId: string, pageId: string, data: Partial<CommunityPage>): Promise<CommunityPage> {
+    return this.put<CommunityPage>(`/creator/communities/${communityId}/pages/${pageId}`, data);
+  }
+
+  async getCommunityChannels(communityId: string): Promise<CommunityChannel[]> {
+    return this.get<CommunityChannel[]>(`/creator/communities/${communityId}/channels`);
+  }
+
+  async getCommunityMembers(communityId: string, params?: { page?: number; limit?: number }): Promise<{ members: CommunityMember[]; total: number }> {
+    const q = new URLSearchParams();
+    if (params?.page) q.append('page', String(params.page));
+    if (params?.limit) q.append('limit', String(params.limit));
+    const qs = q.toString();
+    const res = await this.get<any>(`/creator/communities/${communityId}/members${qs ? `?${qs}` : ''}`);
+    if (Array.isArray(res)) return { members: res, total: res.length };
+    return { members: res.members ?? res.data ?? [], total: res.total ?? 0 };
+  }
+
+  async getCommunityActivity(communityId: string, params?: { window?: string; limit?: number }): Promise<ActivityItem[]> {
+    const q = new URLSearchParams();
+    if (params?.window) q.append('window', params.window);
+    if (params?.limit) q.append('limit', String(params.limit));
+    const qs = q.toString();
+    const res = await this.get<any>(`/creator/communities/${communityId}/activity${qs ? `?${qs}` : ''}`);
+    return Array.isArray(res) ? res : (res.items ?? res.data ?? []);
+  }
+
+  async getCreatorProfile(): Promise<CreatorProfile> {
+    return this.get<CreatorProfile>('/creator/profile');
   }
 }
 

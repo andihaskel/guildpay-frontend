@@ -1,208 +1,181 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, Zap, ExternalLink } from 'lucide-react';
-import { useProduct } from '@/contexts';
-import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
-import { AccessPageListItem } from '@/components/dashboard/AccessPageListItem';
-import { AccessPage, OnboardingStatus, ProductOverview } from '@/lib/types';
-import { api } from '@/lib/api';
+import { Plus } from 'lucide-react';
+import { useCommunity } from '@/contexts/CommunityContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Community } from '@/lib/types';
+
+const SERVER_COLORS = [
+  '#5865f2','#3b82f6','#10b981','#f59e0b','#ef4444',
+  '#8b5cf6','#06b6d4','#f97316','#ec4899','#14b8a6',
+];
+
+function communityColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return SERVER_COLORS[Math.abs(h) % SERVER_COLORS.length];
+}
+
+function communityInitial(name: string) {
+  return (name.trim()[0] || '?').toUpperCase();
+}
+
+function formatMrr(minor: number) {
+  const val = minor / 100;
+  if (val >= 1000) return `$${(val / 1000).toFixed(1)}k`;
+  return `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function formatChurn(bps: number) {
+  return `${(bps / 100).toFixed(1)}%`;
+}
+
+function StatCard({ label, value, delta, deltaDown }: { label: string; value: string; delta?: string; deltaDown?: boolean }) {
+  return (
+    <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '16px 18px' }}>
+      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--text)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      {delta && (
+        <div style={{ fontSize: '12px', color: deltaDown ? 'var(--danger-soft-text, #e06a6a)' : 'var(--success-soft-text, #4ab585)', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          {delta}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CommunityCard({ community, onClick }: { community: Community; onClick: () => void }) {
+  const color = communityColor(community.name);
+  const initial = communityInitial(community.name);
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px',
+        padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px',
+        textAlign: 'left', cursor: 'pointer', width: '100%',
+        transition: 'background 180ms ease, border-color 180ms ease',
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-1)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ width: '40px', height: '40px', borderRadius: '9px', flexShrink: 0, background: color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '16px', letterSpacing: '-0.01em' }}>
+          {initial}
+        </span>
+        <div>
+          <h3 style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em', margin: 0 }}>{community.name}</h3>
+          {community.tagline && <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '1px 0 0' }}>{community.tagline}</p>}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', paddingTop: '14px', borderTop: '0.5px solid var(--border-soft)' }}>
+        <div>
+          <div style={{ fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>Members</div>
+          <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>{community.members_count ?? 0}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>Pages</div>
+          <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>{community.pages_count ?? 0}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>MRR</div>
+          <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>
+            {community.monthly_revenue != null ? formatMrr(community.monthly_revenue) : '—'}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
-  const { currentProduct } = useProduct();
-  const [isLoading, setIsLoading] = useState(true);
-  const [pages, setPages] = useState<AccessPage[]>([]);
-  const [payingMembers, setPayingMembers] = useState(0);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const [overview, setOverview] = useState<ProductOverview | null>(null);
+  const { communities, homeStats, isLoading, setCurrentCommunityId } = useCommunity();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (currentProduct?.id) {
-      loadData();
-    }
-  }, [currentProduct?.id]);
+  const userName = user?.username || user?.discordUsername || user?.email?.split('@')[0] || 'there';
 
-  const loadData = async () => {
-    if (!currentProduct?.id) return;
-    try {
-      setIsLoading(true);
-      const [overviewData, pagesData] = await Promise.all([
-        api.getProductOverview(currentProduct.id),
-        api.getPages(currentProduct.id, 'popular'),
-      ]);
-      setOverview(overviewData);
-      setPages(pagesData);
-      setPayingMembers(overviewData.paying_members);
-      setMonthlyRevenue(overviewData.monthly_revenue);
-      setOnboardingStatus({
-        has_page: overviewData.onboarding.has_page,
-        stripe_connected: overviewData.onboarding.stripe_connected,
-        has_guildpay_subscription: overviewData.onboarding.has_guildpay_subscription ?? overviewData.onboarding.has_accessgate_subscription ?? false,
-      });
-      const dismissed = localStorage.getItem(`onboarding_dismissed_${currentProduct.id}`);
-      setOnboardingDismissed(dismissed === 'true');
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDismissOnboarding = () => {
-    if (!currentProduct?.id) return;
-    setOnboardingDismissed(true);
-    localStorage.setItem(`onboarding_dismissed_${currentProduct.id}`, 'true');
-  };
-
-  const showStripeCta = !isLoading && overview && !overview.onboarding.stripe_connected;
+  function goToCommunity(community: Community) {
+    setCurrentCommunityId(community.id);
+    router.push(`/dashboard/community/${community.id}`);
+  }
 
   return (
     <div>
-      <h1 style={{ fontSize: '20px', fontWeight: 500, color: 'var(--text)', margin: '0 0 28px', letterSpacing: '-0.015em' }}>
-        {currentProduct?.name || 'Dashboard'}
-      </h1>
+      {/* Header */}
+      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text)', margin: '0 0 2px', letterSpacing: '-0.02em' }}>
+            Welcome back, {userName}
+          </h1>
+          <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0 }}>
+            Pick a community to manage, or create a new one.
+          </p>
+        </div>
+        <button
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease', whiteSpace: 'nowrap' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+        >
+          <Plus size={14} />
+          New community
+        </button>
+      </div>
 
-      {showStripeCta && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
-          padding: '14px 16px', borderRadius: '10px', marginBottom: '28px',
-          background: 'rgba(245,158,11,0.06)', border: '0.5px solid rgba(245,158,11,0.2)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '8px',
-              background: 'rgba(245,158,11,0.1)', border: '0.5px solid rgba(245,158,11,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <Zap size={14} style={{ color: '#fbbf24' }} />
-            </div>
-            <div>
-              <p style={{ fontSize: '13px', fontWeight: 500, color: '#fbbf24', margin: '0 0 2px' }}>
-                Connect Stripe to start receiving payments
-              </p>
-              <p style={{ fontSize: '12px', color: 'rgba(251,191,36,0.6)', margin: 0 }}>
-                Your pages won't accept new members until Stripe is configured.
-              </p>
-            </div>
-          </div>
-          <a href={overview!.stripe_connect_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flexShrink: 0 }}>
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              fontSize: '12.5px', fontWeight: 500, padding: '7px 14px', borderRadius: '6px',
-              background: 'rgba(245,158,11,0.15)', border: '0.5px solid rgba(245,158,11,0.35)',
-              color: '#fbbf24', cursor: 'pointer', transition: 'background 180ms ease',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.25)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.15)')}
-            >
-              <ExternalLink size={12} />
-              Connect Stripe
-            </button>
-          </a>
+      {/* Stats */}
+      {isLoading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '28px' }}>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: '88px', borderRadius: '10px', background: 'var(--surface-1)', border: '0.5px solid var(--border)' }} />)}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '28px' }}>
+          <StatCard label="Total members" value={String(homeStats?.total_members ?? communities.reduce((a, c) => a + (c.members_count ?? 0), 0))} />
+          <StatCard label="MRR" value={homeStats?.total_mrr_minor != null ? formatMrr(homeStats.total_mrr_minor) : '—'} />
+          <StatCard label="Communities" value={String(homeStats?.communities ?? communities.length)} />
+          <StatCard
+            label="Churn (30d)"
+            value={homeStats?.churn_30d_bps != null ? formatChurn(homeStats.churn_30d_bps) : '—'}
+            deltaDown={homeStats?.churn_30d_bps != null && homeStats.churn_30d_bps > 0}
+          />
         </div>
       )}
 
-      <OnboardingChecklist
-        status={onboardingStatus}
-        onDismiss={handleDismissOnboarding}
-        isLoading={isLoading}
-      />
-
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>
-              Access Pages
-            </p>
-            {!isLoading && pages.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{payingMembers}</span>
-                  {' '}paying members
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>·</span>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>
-                    ${(monthlyRevenue / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                  {' '}/mo
-                </span>
-              </div>
-            )}
-          </div>
-          {!isLoading && pages.length > 0 && (
-            <button
-              onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px',
-                background: 'var(--surface-2)', border: '0.5px solid var(--border-strong)',
-                color: 'var(--text)', cursor: 'pointer', transition: 'background 180ms ease, border-color 180ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
-            >
-              <Plus size={13} />
-              Create page
-            </button>
-          )}
+      {/* Community cards */}
+      {isLoading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          {[1,2].map(i => <div key={i} style={{ height: '160px', borderRadius: '10px', background: 'var(--surface-1)', border: '0.5px solid var(--border)' }} />)}
         </div>
-
-        {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[1, 2].map(i => (
-              <div key={i} style={{
-                height: '76px', borderRadius: '10px',
-                background: 'var(--surface-1)', border: '0.5px solid var(--border)',
-              }} />
-            ))}
-          </div>
-        ) : pages.length === 0 ? (
-          <div style={{
-            padding: '48px 24px', textAlign: 'center',
-            background: 'var(--surface-1)', border: '0.5px solid var(--border)',
-            borderRadius: '10px',
-          }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '8px',
-              background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 14px',
-            }}>
-              <FileText size={16} style={{ color: 'var(--accent-soft-text)' }} />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          {communities.map(community => (
+            <CommunityCard key={community.id} community={community} onClick={() => goToCommunity(community)} />
+          ))}
+          <button
+            style={{
+              background: 'transparent', border: '1px dashed var(--border-strong)', borderRadius: '10px',
+              padding: '18px', display: 'flex', alignItems: 'center', gap: '12px',
+              textAlign: 'left', cursor: 'pointer', color: 'var(--text-secondary)',
+              minHeight: '100px', transition: 'background 180ms ease, border-color 180ms ease',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+          >
+            <span style={{ width: '40px', height: '40px', borderRadius: '9px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--border)', color: 'var(--text-muted)' }}>
+              <Plus size={18} />
+            </span>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Create a new community</div>
+              <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Each community is its own paywall + members + channels.</div>
             </div>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', margin: '0 0 6px' }}>
-              Create your first access page
-            </p>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '0 0 20px', maxWidth: '340px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
-              Set up a page where your community members can purchase access to exclusive content and perks
-            </p>
-            <button
-              onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                fontSize: '13px', fontWeight: 500, padding: '8px 16px', borderRadius: '6px',
-                background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer',
-                border: 'none', transition: 'opacity 180ms ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-            >
-              <Plus size={13} />
-              Create page
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {pages.map((page) => (
-              <AccessPageListItem key={page.id} page={page} />
-            ))}
-          </div>
-        )}
+          </button>
+        </div>
+      )}
+
+      {/* Hint */}
+      <div style={{ marginTop: '24px', padding: '12px 14px', background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)', borderRadius: '8px', color: 'var(--accent-soft-text)', fontSize: '12.5px', lineHeight: '1.55', display: 'flex', alignItems: 'flex-start', gap: '9px' }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v5M12 16.5v.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+        <span>A <strong style={{ color: 'var(--text)', fontWeight: 500 }}>community</strong> groups everything that belongs together: pages, channels, and members. One page can grant access to many channels at once — that&apos;s how you sell bundles.</span>
       </div>
     </div>
   );
