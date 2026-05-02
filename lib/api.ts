@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -416,6 +416,18 @@ class ApiClient {
 
   async getCreatorProfile(): Promise<CreatorProfile> {
     return this.get<CreatorProfile>('/creator/profile');
+  }
+
+  async getIntegrations(): Promise<IntegrationsResponse> {
+    return this.get<IntegrationsResponse>('/creator/integrations');
+  }
+
+  async getIntegrationChannels(providerId: string): Promise<IntegrationChannel[]> {
+    return this.get<IntegrationChannel[]>(`/creator/integrations/${providerId}/channels`);
+  }
+
+  async addCommunityChannel(communityId: string, data: { provider: string; channel_id: string; channel_name: string }): Promise<CommunityChannel> {
+    return this.post<CommunityChannel>(`/creator/communities/${communityId}/channels`, data);
   }
 }
 

@@ -353,3 +353,24 @@ export interface CreatorProfile {
   slug: string;
   name?: string;
 }
+
+export interface IntegrationProvider {
+  id: string;
+  label: string;
+  status: 'live' | 'coming_soon';
+  has_connection: boolean;
+  connection: Record<string, any> | null;
+}
+
+export interface IntegrationChannel {
+  id: string;
+  name: string;
+  type?: string;
+  guild_id?: string;
+  guild_name?: string;
+}
+
+export interface IntegrationsResponse {
+  providers: IntegrationProvider[];
+  integrations: any[];
+}

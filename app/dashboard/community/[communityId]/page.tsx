@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal } from 'lucide-react';
+import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal, Loader as Loader2, Settings, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem } from '@/lib/types';
+import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem, IntegrationProvider, IntegrationChannel } from '@/lib/types';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -303,20 +303,291 @@ function PlansTab({ communityId, plans, onNewPlan, onRefresh }: { communityId: s
 
 // ─── tab: Channels ────────────────────────────────────────────────────────────
 
-function ChannelIcon({ provider }: { provider: string }) {
-  if (provider === 'discord') return (
-    <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', color: '#8b92f8', flexShrink: 0 }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
-    </span>
+function ProviderIcon({ id, size = 18 }: { id: string; size?: number }) {
+  if (id === 'discord') return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
+  );
+  if (id === 'telegram') return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M21.7 3.3 2.6 10.7c-1.3.5-1.3 1.3-.2 1.6l4.9 1.5 1.9 5.8c.2.7.4.9.8.9.5 0 .7-.2 1-.5l2.4-2.3 5 3.7c.9.5 1.5.2 1.7-.8L22.7 5c.3-1.3-.5-1.9-1-1.7zM18 7l-8 7.3-.4 4.3-1.3-4.2 9.7-7.4z"/></svg>
   );
   return (
-    <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '0.5px solid var(--border)', color: 'var(--text-muted)', flexShrink: 0 }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9.5 13.5l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  );
+}
+
+function providerColors(id: string): { bg: string; border: string; color: string } {
+  if (id === 'discord') return { bg: 'rgba(88,101,242,0.12)', border: 'rgba(88,101,242,0.25)', color: '#8b92f8' };
+  if (id === 'telegram') return { bg: 'rgba(34,158,217,0.12)', border: 'rgba(34,158,217,0.25)', color: '#5cb8e6' };
+  return { bg: 'rgba(74,181,133,0.12)', border: 'rgba(74,181,133,0.25)', color: '#4ab585' };
+}
+
+function ChannelProviderIcon({ provider, size = 36 }: { provider: string; size?: number }) {
+  const c = providerColors(provider);
+  return (
+    <span style={{ width: `${size}px`, height: `${size}px`, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: c.bg, border: `0.5px solid ${c.border}`, color: c.color, flexShrink: 0 }}>
+      <ProviderIcon id={provider} size={Math.round(size * 0.5)} />
     </span>
   );
 }
 
-function ChannelsTab({ channels }: { channels: CommunityChannel[] }) {
+// ─── Add Channel Modal ────────────────────────────────────────────────────────
+
+type ModalScreen = 'providers' | 'channels';
+
+function AddChannelModal({ communityId, onClose, onAdded }: {
+  communityId: string;
+  onClose: () => void;
+  onAdded: () => void;
+}) {
+  const router = useRouter();
+  const [screen, setScreen] = useState<ModalScreen>('providers');
+  const [providers, setProviders] = useState<IntegrationProvider[]>([]);
+  const [loadingProviders, setLoadingProviders] = useState(true);
+  const [selectedProvider, setSelectedProvider] = useState<IntegrationProvider | null>(null);
+  const [intChannels, setIntChannels] = useState<IntegrationChannel[]>([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getIntegrations()
+      .then(res => setProviders(res.providers))
+      .catch(() => {})
+      .finally(() => setLoadingProviders(false));
+  }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  function selectProvider(p: IntegrationProvider) {
+    if (p.status === 'coming_soon') return;
+    if (!p.has_connection) return;
+    setSelectedProvider(p);
+    setScreen('channels');
+    setLoadingChannels(true);
+    api.getIntegrationChannels(p.id)
+      .then(setIntChannels)
+      .catch(() => setIntChannels([]))
+      .finally(() => setLoadingChannels(false));
+  }
+
+  async function addChannel(ch: IntegrationChannel) {
+    if (!selectedProvider || addingId) return;
+    setAddingId(ch.id);
+    try {
+      await api.addCommunityChannel(communityId, {
+        provider: selectedProvider.id,
+        channel_id: ch.id,
+        channel_name: ch.name,
+      });
+      onAdded();
+      onClose();
+    } catch {
+      setAddingId(null);
+    }
+  }
+
+  const modalStyle: React.CSSProperties = {
+    width: '100%', maxWidth: '480px',
+    background: 'var(--surface-1)',
+    border: '0.5px solid rgba(255,255,255,0.10)',
+    borderRadius: '14px',
+    boxShadow: '0 30px 80px -20px rgba(0,0,0,0.7)',
+    display: 'flex', flexDirection: 'column',
+    maxHeight: 'calc(100vh - 48px)',
+    position: 'relative',
+    transform: 'translateY(0) scale(1)',
+    overflow: 'hidden',
+  };
+
+  const closeBtn = (
+    <button
+      onClick={onClose}
+      style={{ width: '28px', height: '28px', borderRadius: '6px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+    </button>
+  );
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,7,0.62)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 100 }}
+    >
+      <div style={modalStyle} onClick={e => e.stopPropagation()}>
+        {/* gradient border shimmer */}
+        <div style={{ position: 'absolute', inset: '-1px', borderRadius: 'inherit', background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.01))', WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', WebkitMaskComposite: 'xor', mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', maskComposite: 'exclude', padding: '1px', pointerEvents: 'none' }} />
+
+        {/* ─── Screen: Provider list ─── */}
+        {screen === 'providers' && (
+          <>
+            <div style={{ padding: '20px 22px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px', flexShrink: 0 }}>
+              <div>
+                <h2 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text)', margin: 0 }}>Add a channel</h2>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  Choose a platform to connect. Members get access when they subscribe.
+                </p>
+              </div>
+              {closeBtn}
+            </div>
+
+            <div style={{ padding: '16px 22px 20px', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1 }}>
+              {loadingProviders ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
+                  <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', flexShrink: 0 }} />
+                  Loading integrations...
+                </div>
+              ) : providers.map(p => {
+                const c = providerColors(p.id);
+                const isComingSoon = p.status === 'coming_soon';
+                const noConnection = p.status === 'live' && !p.has_connection;
+                const clickable = p.status === 'live' && p.has_connection;
+
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => clickable && selectProvider(p)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      padding: '16px 18px',
+                      borderRadius: '10px',
+                      background: 'var(--surface-2)',
+                      border: `0.5px solid rgba(255,255,255,0.08)`,
+                      cursor: clickable ? 'pointer' : 'default',
+                      opacity: isComingSoon ? 0.55 : 1,
+                      transition: 'background 180ms ease, border-color 180ms ease',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={e => { if (clickable) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; } }}
+                    onMouseLeave={e => { if (clickable) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; } }}
+                  >
+                    <span style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: c.bg, border: `0.5px solid ${c.border}`, color: c.color, flexShrink: 0 }}>
+                      <ProviderIcon id={p.id} size={20} />
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em' }}>{p.label}</span>
+                        {isComingSoon && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 7px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 500, background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.10)', color: 'var(--text-muted)' }}>
+                            Coming soon
+                          </span>
+                        )}
+                        {p.has_connection && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '1px 7px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 500, background: 'rgba(47,157,107,0.10)', border: '0.5px solid rgba(47,157,107,0.22)', color: '#4ab585' }}>
+                            <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                            Connected
+                          </span>
+                        )}
+                      </div>
+                      {noConnection && (
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.4 }}>
+                          Connect your {p.label} account in Settings first.
+                        </p>
+                      )}
+                    </div>
+                    {noConnection && (
+                      <button
+                        onClick={e => { e.stopPropagation(); router.push('/dashboard/settings'); }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', flexShrink: 0 }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                      >
+                        <Settings size={11} />
+                        Go to Settings
+                      </button>
+                    )}
+                    {clickable && (
+                      <ChevronRight size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ─── Screen: Channel list ─── */}
+        {screen === 'channels' && selectedProvider && (
+          <>
+            <div style={{ padding: '20px 22px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <button
+                  onClick={() => { setScreen('providers'); setSelectedProvider(null); setIntChannels([]); }}
+                  style={{ width: '28px', height: '28px', borderRadius: '6px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
+                >
+                  <ArrowLeft size={14} />
+                </button>
+                <div style={{ minWidth: 0 }}>
+                  <h2 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text)', margin: 0 }}>Select a channel</h2>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>{selectedProvider.label}</p>
+                </div>
+              </div>
+              {closeBtn}
+            </div>
+
+            <div style={{ padding: '16px 22px 20px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
+              {loadingChannels ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
+                  <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', flexShrink: 0 }} />
+                  Loading channels...
+                </div>
+              ) : intChannels.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                  No channels found for this {selectedProvider.label} account.
+                </div>
+              ) : intChannels.map(ch => {
+                const isAdding = addingId === ch.id;
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={() => addChannel(ch)}
+                    disabled={!!addingId}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      padding: '13px 16px',
+                      borderRadius: '10px',
+                      background: 'var(--surface-2)',
+                      border: '0.5px solid rgba(255,255,255,0.08)',
+                      cursor: addingId ? 'not-allowed' : 'pointer',
+                      textAlign: 'left',
+                      opacity: addingId && !isAdding ? 0.4 : 1,
+                      transition: 'background 180ms ease, border-color 180ms ease, opacity 180ms ease',
+                      width: '100%',
+                    }}
+                    onMouseEnter={e => { if (!addingId) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; } }}
+                    onMouseLeave={e => { if (!addingId) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; } }}
+                  >
+                    <ChannelProviderIcon provider={selectedProvider.id} size={36} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)', margin: '0 0 1px', letterSpacing: '-0.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.name}</p>
+                      {ch.type && <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, textTransform: 'capitalize' }}>{ch.type}</p>}
+                    </div>
+                    {isAdding ? (
+                      <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', color: 'var(--text-muted)', flexShrink: 0 }} />
+                    ) : (
+                      <Plus size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+      <style>{`@keyframes ag-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function ChannelsTab({ communityId, channels, onChannelAdded }: { communityId: string; channels: CommunityChannel[]; onChannelAdded: () => void }) {
+  const [addOpen, setAddOpen] = useState(false);
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
@@ -324,7 +595,9 @@ function ChannelsTab({ channels }: { channels: CommunityChannel[] }) {
           <h2 style={{ fontSize: '15px', fontWeight: 500, margin: 0, letterSpacing: '-0.01em', color: 'var(--text)' }}>Channels</h2>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0' }}>The places paying members get access to when they subscribe.</p>
         </div>
-        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
+        <button
+          onClick={() => setAddOpen(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
           onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
         >
@@ -336,10 +609,10 @@ function ChannelsTab({ channels }: { channels: CommunityChannel[] }) {
         {channels.map(ch => (
           <div key={ch.id} style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <ChannelIcon provider={ch.provider} />
+              <ChannelProviderIcon provider={ch.provider} />
               <div>
                 <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', margin: 0 }}>{ch.name}</h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: '1px 0 0' }}>{ch.provider}</p>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: '1px 0 0', textTransform: 'capitalize' }}>{ch.provider}</p>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '12px', borderTop: '0.5px solid var(--border-soft)' }}>
@@ -356,7 +629,9 @@ function ChannelsTab({ channels }: { channels: CommunityChannel[] }) {
             No channels connected yet.
           </div>
         )}
-        <button style={{ background: 'transparent', border: '1px dashed var(--border-strong)', borderRadius: '10px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text-secondary)', minHeight: '100px', transition: 'background 180ms ease, border-color 180ms ease', flexDirection: 'column' }}
+        <button
+          onClick={() => setAddOpen(true)}
+          style={{ background: 'transparent', border: '1px dashed var(--border-strong)', borderRadius: '10px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text-secondary)', minHeight: '100px', transition: 'background 180ms ease, border-color 180ms ease', flexDirection: 'column' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--text-muted)'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)'; }}
         >
@@ -369,6 +644,14 @@ function ChannelsTab({ channels }: { channels: CommunityChannel[] }) {
           </div>
         </button>
       </div>
+
+      {addOpen && (
+        <AddChannelModal
+          communityId={communityId}
+          onClose={() => setAddOpen(false)}
+          onAdded={() => { onChannelAdded(); setAddOpen(false); }}
+        />
+      )}
     </div>
   );
 }
@@ -652,7 +935,14 @@ export default function CommunityPage() {
         <PlansTab communityId={communityId} plans={allPlans.length > 0 ? allPlans : previewPlans} onNewPlan={handleOpenNewPlan} onRefresh={loadAllPlans} />
       )}
       {activeTab === 'channels' && (
-        <ChannelsTab channels={channels} />
+        <ChannelsTab
+          communityId={communityId}
+          channels={channels}
+          onChannelAdded={() => {
+            setChannels([]);
+            api.getCommunityChannels(communityId).then(setChannels).catch(() => {});
+          }}
+        />
       )}
       {activeTab === 'members' && (
         <MembersTab members={members} total={memberTotal} />
