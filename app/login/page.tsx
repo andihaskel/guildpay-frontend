@@ -20,8 +20,10 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [countdown, setCountdown] = useState(600);
-  const [resendEnabled, setResendEnabled] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
   const [resendSent, setResendSent] = useState(false);
+
+  const MAX_RESENDS = 3;
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,16 +31,11 @@ export default function LoginPage() {
   const startCountdown = useCallback(() => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     setCountdown(600);
-    setResendEnabled(false);
     let remaining = 600;
     countdownRef.current = setInterval(() => {
       remaining -= 1;
       setCountdown(remaining);
-      if (remaining <= 570) setResendEnabled(true);
-      if (remaining <= 0) {
-        clearInterval(countdownRef.current!);
-        setResendEnabled(true);
-      }
+      if (remaining <= 0) clearInterval(countdownRef.current!);
     }, 1000);
   }, []);
 
@@ -67,14 +64,16 @@ export default function LoginPage() {
       });
     } catch { /* always advance */ }
     setEmailLoading(false);
+    setResendCount(0);
     setScreen('verify');
     startCountdown();
     setTimeout(() => otpRefs.current[0]?.focus(), 50);
   };
 
   const handleResend = async () => {
-    if (!resendEnabled) return;
+    if (resendCount >= MAX_RESENDS || countdown <= 0) return;
     setResendSent(true);
+    setResendCount(c => c + 1);
     try {
       await fetch(`${API_BASE}/auth/email-otp/request`, {
         method: 'POST',
@@ -83,7 +82,6 @@ export default function LoginPage() {
         credentials: 'include',
       });
     } catch { /* ignore */ }
-    startCountdown();
     setTimeout(() => setResendSent(false), 1800);
   };
 
@@ -309,10 +307,10 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    disabled={!resendEnabled}
-                    style={{ color: resendEnabled ? '#8b92f8' : '#555', background: 'none', border: 0, cursor: resendEnabled ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '12.5px', padding: 0, transition: 'color 180ms' }}
+                    disabled={resendCount >= MAX_RESENDS || countdown <= 0}
+                    style={{ color: resendCount < MAX_RESENDS && countdown > 0 ? '#8b92f8' : '#555', background: 'none', border: 0, cursor: resendCount < MAX_RESENDS && countdown > 0 ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '12.5px', padding: 0, transition: 'color 180ms' }}
                   >
-                    {resendSent ? 'Sent ✓' : 'Resend code'}
+                    {resendSent ? 'Sent ✓' : resendCount >= MAX_RESENDS ? 'No more retries' : `Resend code (${MAX_RESENDS - resendCount} left)`}
                   </button>
                 </div>
 
