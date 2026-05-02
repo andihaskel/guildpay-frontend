@@ -57,10 +57,15 @@ const DEFAULT_FEATURES: BusinessFeature[] = [
 export default function EditPagePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { currentProduct } = useProduct();
+  const { currentProduct, setPendingProductId } = useProduct();
   const { toast } = useToast();
   const pageId = searchParams.get('id');
   const isEditing = !!pageId;
+  const productIdParam = searchParams.get('product_id');
+
+  useEffect(() => {
+    if (productIdParam) setPendingProductId(productIdParam);
+  }, [productIdParam]);
 
   const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
   const [discordChannels, setDiscordChannels] = useState<DiscordChannel[]>([]);

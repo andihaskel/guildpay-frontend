@@ -70,7 +70,7 @@ export default function PagesPage() {
             </div>
           )}
           <button
-            onClick={() => router.push('/dashboard/pages/edit')}
+            onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               fontSize: '13px', fontWeight: 500, padding: '7px 14px', borderRadius: '6px',
@@ -112,7 +112,7 @@ export default function PagesPage() {
             Set up a page where your community members can purchase access to exclusive content and perks
           </p>
           <button
-            onClick={() => router.push('/dashboard/pages/edit')}
+            onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               fontSize: '13px', fontWeight: 500, padding: '8px 16px', borderRadius: '6px',
