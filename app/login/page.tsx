@@ -310,7 +310,7 @@ export default function LoginPage() {
                     disabled={resendCount >= MAX_RESENDS || countdown <= 0}
                     style={{ color: resendCount < MAX_RESENDS && countdown > 0 ? '#8b92f8' : '#555', background: 'none', border: 0, cursor: resendCount < MAX_RESENDS && countdown > 0 ? 'pointer' : 'not-allowed', fontFamily: 'inherit', fontSize: '12.5px', padding: 0, transition: 'color 180ms' }}
                   >
-                    {resendSent ? 'Sent ✓' : resendCount >= MAX_RESENDS ? 'No more retries' : `Resend code (${MAX_RESENDS - resendCount} left)`}
+                    {resendSent ? 'Sent ✓' : 'Resend code'}
                   </button>
                 </div>
 
