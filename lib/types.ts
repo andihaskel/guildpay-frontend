@@ -28,6 +28,9 @@ export interface Product {
   stripeAccountId?: string;
   createdAt?: string;
   updatedAt?: string;
+  members_count?: number;
+  roles_count?: number;
+  pages_count?: number;
 }
 
 export interface Role {
