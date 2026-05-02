@@ -27,47 +27,36 @@ function serverInitials(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || name[0]?.toUpperCase() || '?';
 }
 
-function ServerStatusChip({ product }: { product: Product }) {
-  const hasPages = (product.pages_count ?? 0) > 0;
-  const hasMembers = (product.members_count ?? 0) > 0;
-
-  if (hasMembers) {
-    return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: '5px',
-        padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500,
-        background: 'var(--success-soft-bg)', border: '0.5px solid var(--success-soft-border)',
-        color: 'var(--success-soft-text)', whiteSpace: 'nowrap',
-      }}>
-        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-        Active
-      </span>
-    );
-  }
-  if (hasPages) {
-    return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: '5px',
-        padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500,
-        background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)',
-        color: 'var(--accent-soft-text)', whiteSpace: 'nowrap',
-      }}>
-        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-        Connected
-      </span>
-    );
-  }
+function Chip({ variant, children }: { variant: 'success' | 'accent' | 'warning' | 'muted'; children: React.ReactNode }) {
+  const styles: Record<string, React.CSSProperties> = {
+    success: { background: 'var(--success-soft-bg)', border: '0.5px solid var(--success-soft-border)', color: 'var(--success-soft-text)' },
+    accent:  { background: 'var(--accent-soft-bg)',  border: '0.5px solid var(--accent-soft-border)',  color: 'var(--accent-soft-text)' },
+    warning: { background: 'var(--warning-soft-bg)', border: '0.5px solid var(--warning-soft-border)', color: 'var(--warning-soft-text)' },
+    muted:   { background: 'rgba(255,255,255,0.04)', border: '0.5px solid var(--border)',              color: 'var(--text-secondary)' },
+  };
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '5px',
       padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500,
-      background: 'var(--warning-soft-bg)', border: '0.5px solid var(--warning-soft-border)',
-      color: 'var(--warning-soft-text)', whiteSpace: 'nowrap',
+      whiteSpace: 'nowrap', ...styles[variant],
     }}>
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-      Not in use
+      {children}
     </span>
   );
+}
+
+function ServerStatusChip({ product }: { product: Product }) {
+  if (!product.bot_installed) {
+    return <Chip variant="warning">Bot not installed</Chip>;
+  }
+  if ((product.members_count ?? 0) > 0) {
+    return <Chip variant="success">Connected</Chip>;
+  }
+  if ((product.pages_count ?? 0) > 0) {
+    return <Chip variant="accent">Connected</Chip>;
+  }
+  return <Chip variant="muted">Not in use</Chip>;
 }
 
 function ServerRow({ product, isSelected, onSelect }: { product: Product; isSelected: boolean; onSelect: () => void }) {
@@ -282,7 +271,7 @@ export default function CommunitiesPage() {
           </button>
 
           <a
-            href={`https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=8&scope=bot`}
+            href={`https://discord.com/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID}&permissions=268435456&scope=bot`}
             target="_blank"
             rel="noopener noreferrer"
             style={{

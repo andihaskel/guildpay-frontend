@@ -200,22 +200,6 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                       >
                         {product.name}
                       </span>
-                      <Link
-                        href="/dashboard/communities"
-                        onClick={(e) => { e.stopPropagation(); onClose?.(); }}
-                        style={{
-                          fontSize: '10.5px', fontWeight: 500,
-                          color: 'var(--text-muted)', padding: '2px 6px',
-                          borderRadius: '4px', border: '0.5px solid var(--border)',
-                          background: 'var(--surface-2)', textDecoration: 'none',
-                          transition: 'color 150ms ease, border-color 150ms ease',
-                          flexShrink: 0,
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-                      >
-                        Manage
-                      </Link>
                     </div>
                   );
                 })}
