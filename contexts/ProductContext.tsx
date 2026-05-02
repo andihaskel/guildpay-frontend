@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Product } from '@/lib/types';
 import { api } from '@/lib/api';
 
@@ -10,6 +10,7 @@ interface ProductContextType {
   isLoading: boolean;
   setCurrentProductId: (id: string) => void;
   refetchProducts: () => Promise<void>;
+  setPendingProductId: (id: string) => void;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const pendingIdRef = useRef<string | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -25,10 +27,15 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       const productsData = await api.getProducts();
       setProducts(productsData);
 
-      if (productsData.length > 0 && !currentProduct) {
-        setCurrentProduct(productsData[0]);
+      if (productsData.length > 0) {
+        const pending = pendingIdRef.current;
+        const target = pending
+          ? productsData.find((p) => p.id === pending) ?? productsData[0]
+          : productsData[0];
+        setCurrentProduct((prev) => prev ?? target);
+        pendingIdRef.current = null;
       }
-    } catch (error) {
+    } catch {
       setProducts([]);
     } finally {
       setIsLoading(false);
@@ -37,9 +44,14 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
   const setCurrentProductId = (id: string) => {
     const product = products.find((p) => p.id === id);
-    if (product) {
-      setCurrentProduct(product);
-    }
+    if (product) setCurrentProduct(product);
+  };
+
+  const setPendingProductId = (id: string) => {
+    pendingIdRef.current = id;
+    // If products are already loaded, apply immediately
+    const product = products.find((p) => p.id === id);
+    if (product) setCurrentProduct(product);
   };
 
   useEffect(() => {
@@ -54,6 +66,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         isLoading,
         setCurrentProductId,
         refetchProducts: fetchProducts,
+        setPendingProductId,
       }}
     >
       {children}
