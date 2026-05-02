@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useProduct } from '@/contexts';
 import { cn } from '@/lib/utils';
@@ -72,6 +73,7 @@ function ConnectServerButton({ label = 'Connect new server' }: { label?: string 
 export function ProductSwitcher() {
   const { products, currentProduct, setCurrentProductId } = useProduct();
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   if (!currentProduct) {
     return (
@@ -117,6 +119,7 @@ export function ProductSwitcher() {
                       onClick={() => {
                         setCurrentProductId(product.id);
                         setOpen(false);
+                        router.push('/dashboard/home');
                       }}
                       className={cn(
                         'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm transition-colors',

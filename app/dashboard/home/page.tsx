@@ -136,7 +136,7 @@ export default function HomePage() {
           </div>
           {!isLoading && pages.length > 0 && (
             <button
-              onClick={() => router.push('/dashboard/pages/edit')}
+              onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px',
@@ -182,7 +182,7 @@ export default function HomePage() {
               Set up a page where your community members can purchase access to exclusive content and perks
             </p>
             <button
-              onClick={() => router.push('/dashboard/pages/edit')}
+              onClick={() => router.push(`/dashboard/pages/edit${currentProduct?.id ? `?product_id=${currentProduct.id}` : ''}`)}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 fontSize: '13px', fontWeight: 500, padding: '8px 16px', borderRadius: '6px',
