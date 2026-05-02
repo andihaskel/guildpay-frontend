@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { NewCommunityModal } from '@/components/dashboard/NewCommunityModal';
 import { Plus } from 'lucide-react';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,6 +95,7 @@ export default function HomePage() {
   const router = useRouter();
   const { communities, homeStats, isLoading, setCurrentCommunityId } = useCommunity();
   const { user } = useAuth();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const userName = user?.username || user?.discordUsername || user?.email?.split('@')[0] || 'there';
 
@@ -114,6 +117,7 @@ export default function HomePage() {
           </p>
         </div>
         <button
+          onClick={() => setModalOpen(true)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease', whiteSpace: 'nowrap' }}
           onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
@@ -152,6 +156,7 @@ export default function HomePage() {
             <CommunityCard key={community.id} community={community} onClick={() => goToCommunity(community)} />
           ))}
           <button
+            onClick={() => setModalOpen(true)}
             style={{
               background: 'transparent', border: '1px dashed var(--border-strong)', borderRadius: '10px',
               padding: '18px', display: 'flex', alignItems: 'center', gap: '12px',
@@ -177,6 +182,8 @@ export default function HomePage() {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v5M12 16.5v.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
         <span>A <strong style={{ color: 'var(--text)', fontWeight: 500 }}>community</strong> groups everything that belongs together: pages, channels, and members. One page can grant access to many channels at once — that&apos;s how you sell bundles.</span>
       </div>
+
+      <NewCommunityModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }

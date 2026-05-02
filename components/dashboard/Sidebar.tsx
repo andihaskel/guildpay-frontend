@@ -33,9 +33,10 @@ const LogoMark = () => (
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  onNewCommunity?: () => void;
 }
 
-export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+export function Sidebar({ isOpen = false, onClose, onNewCommunity }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { communities, currentCommunity, setCurrentCommunityId } = useCommunity();
@@ -116,6 +117,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <span style={{ fontSize: '10.5px', fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Communities</span>
               <button
                 aria-label="New community"
+                onClick={() => { onClose?.(); onNewCommunity?.(); }}
                 style={{ color: 'var(--text-muted)', width: '18px', height: '18px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'color 180ms ease, background 180ms ease', background: 'none', border: 'none', cursor: 'pointer' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
@@ -166,6 +168,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             })}
 
             <button
+              onClick={() => { onClose?.(); onNewCommunity?.(); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '8px 10px', borderRadius: '6px', color: 'var(--text-muted)',

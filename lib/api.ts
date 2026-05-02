@@ -329,6 +329,10 @@ class ApiClient {
     return this.get<DashboardHome>('/creator/dashboard/home');
   }
 
+  async createCommunity(data: { name: string; description?: string; logo_url?: string }): Promise<Community> {
+    return this.post<Community>('/creator', data);
+  }
+
   async getCommunities(): Promise<Community[]> {
     return this.get<Community[]>('/creator/communities/');
   }
