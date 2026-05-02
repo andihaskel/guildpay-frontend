@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal } from 'lucide-react';
 import { useCommunity } from '@/contexts/CommunityContext';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem } from '@/lib/types';
-import { NewPlanModal } from '@/components/dashboard/NewPlanModal';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -516,6 +516,7 @@ function SettingsTab({ community, overview }: { community: Community; overview: 
 
 export default function CommunityPage() {
   const { communityId } = useParams<{ communityId: string }>();
+  const router = useRouter();
   const { communities, setCurrentCommunityId } = useCommunity();
 
   const [community, setCommunity] = useState<Community | null>(null);
@@ -528,7 +529,6 @@ export default function CommunityPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabName>('overview');
   const [isLoading, setIsLoading] = useState(true);
-  const [newPlanOpen, setNewPlanOpen] = useState(false);
 
   const loadAllPlans = useCallback(() => {
     if (!communityId) return;
@@ -579,17 +579,11 @@ export default function CommunityPage() {
     }
   }, [activeTab, communityId]);
 
-  function handleOpenNewPlan() {
-    setActiveTab('plans');
-    setNewPlanOpen(true);
-  }
-
-  function handlePlanCreated() {
-    setAllPlans([]);
-    loadAllPlans();
-  }
-
   const comm = community ?? communities.find(c => c.id === communityId) ?? null;
+
+  function handleOpenNewPlan() {
+    router.push(`/dashboard/plans/new?community_id=${communityId}&community_name=${encodeURIComponent(comm?.name || '')}`);
+  }
 
   if (!comm && isLoading) {
     return (
@@ -655,7 +649,7 @@ export default function CommunityPage() {
         <OverviewTab communityId={communityId} overview={overview} plans={previewPlans} activity={activity} onNewPlan={handleOpenNewPlan} />
       )}
       {activeTab === 'plans' && (
-        <PlansTab communityId={communityId} plans={allPlans.length > 0 ? allPlans : previewPlans} onNewPlan={() => setNewPlanOpen(true)} onRefresh={loadAllPlans} />
+        <PlansTab communityId={communityId} plans={allPlans.length > 0 ? allPlans : previewPlans} onNewPlan={handleOpenNewPlan} onRefresh={loadAllPlans} />
       )}
       {activeTab === 'channels' && (
         <ChannelsTab channels={channels} />
@@ -667,12 +661,6 @@ export default function CommunityPage() {
         <SettingsTab community={comm} overview={overview} />
       )}
 
-      <NewPlanModal
-        open={newPlanOpen}
-        communityId={communityId}
-        onClose={() => setNewPlanOpen(false)}
-        onCreated={handlePlanCreated}
-      />
     </div>
   );
 }
