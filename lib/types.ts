@@ -302,10 +302,9 @@ export interface CommunityOverview {
   };
 }
 
-export interface CommunityPage {
+export interface CommunityPlan {
   id: string;
   offer_name: string;
-  slug?: string;
   published?: boolean;
   status?: 'active' | 'disabled' | 'payment_config_required';
   monthly_amount_minor: number;
@@ -318,6 +317,8 @@ export interface CommunityPage {
   created_at: string;
   updated_at: string;
 }
+
+export type CommunityPage = CommunityPlan;
 
 export interface CommunityChannel {
   id: string;

@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal } from 'lucide-react';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { api } from '@/lib/api';
-import { Community, CommunityOverview, CommunityPage, CommunityChannel, CommunityMember, ActivityItem } from '@/lib/types';
+import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem } from '@/lib/types';
+import { NewPlanModal } from '@/components/dashboard/NewPlanModal';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -38,12 +39,12 @@ function timeAgo(iso: string) {
 
 // ─── sub-components ───────────────────────────────────────────────────────────
 
-type TabName = 'overview' | 'pages' | 'channels' | 'members' | 'settings';
+type TabName = 'overview' | 'plans' | 'channels' | 'members' | 'settings';
 
 function TabBar({ active, onSelect, counts }: { active: TabName; onSelect: (t: TabName) => void; counts: Partial<Record<TabName, number>> }) {
   const tabs: { key: TabName; label: string }[] = [
     { key: 'overview', label: 'Overview' },
-    { key: 'pages', label: 'Pages' },
+    { key: 'plans', label: 'Plans' },
     { key: 'channels', label: 'Channels' },
     { key: 'members', label: 'Members' },
     { key: 'settings', label: 'Settings' },
@@ -90,8 +91,8 @@ function StatCard({ label, value, delta, deltaDown }: { label: string; value: st
   );
 }
 
-function PageStatusChip({ page }: { page: CommunityPage }) {
-  const live = page.published && page.status !== 'disabled';
+function PlanStatusChip({ plan }: { plan: CommunityPlan }) {
+  const live = plan.published && plan.status !== 'disabled';
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px',
@@ -137,9 +138,7 @@ function AvatarCell({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
 
 // ─── tab: Overview ───────────────────────────────────────────────────────────
 
-function OverviewTab({ communityId, overview, pages, activity }: { communityId: string; overview: CommunityOverview | null; pages: CommunityPage[]; activity: ActivityItem[] }) {
-  const router = useRouter();
-
+function OverviewTab({ communityId, overview, plans, activity, onNewPlan }: { communityId: string; overview: CommunityOverview | null; plans: CommunityPlan[]; activity: ActivityItem[]; onNewPlan: () => void }) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '28px' }}>
@@ -150,53 +149,53 @@ function OverviewTab({ communityId, overview, pages, activity }: { communityId: 
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        {/* Pages card */}
+        {/* Plans card */}
         <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
           <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.005em', margin: 0, color: 'var(--text)' }}>Pages</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.005em', margin: 0, color: 'var(--text)' }}>Plans</h3>
               <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Public paywalls for this community.</p>
             </div>
             <button
-              onClick={() => { /* jump to pages tab via parent */ }}
+              onClick={onNewPlan}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              View all
+              New plan
             </button>
           </div>
           <div>
-            {pages.length === 0 ? (
+            {plans.length === 0 ? (
               <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
                   <Plus size={14} />
                 </span>
                 <div>
-                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', margin: '0 0 2px' }}>No pages yet</p>
-                  <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>Create your first access page to start accepting members.</p>
+                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', margin: '0 0 2px' }}>No plans yet</p>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>Create your first plan to start accepting members.</p>
                 </div>
               </div>
-            ) : pages.map((page, idx) => {
-              const color = communityColor(page.offer_name);
-              const initial = (page.offer_name[0] || '?').toUpperCase() + (page.offer_name.split(' ')[1]?.[0] || '');
+            ) : plans.map((plan, idx) => {
+              const color = communityColor(plan.offer_name);
+              const initial = (plan.offer_name[0] || '?').toUpperCase() + (plan.offer_name.split(' ')[1]?.[0] || '');
               return (
-                <div key={page.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < pages.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
+                <div key={plan.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < plans.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
                 >
                   <span style={{ width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0, background: color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '13px' }}>{initial}</span>
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{page.offer_name}</span>
-                      <PageStatusChip page={page} />
+                      <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{plan.offer_name}</span>
+                      <PlanStatusChip plan={plan} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {page.member_counts.active} active · {page.member_counts.trialing} trialing
+                      {plan.member_counts.active} active · {plan.member_counts.trialing} trialing
                     </span>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{fmtAmount(page.monthly_amount_minor, page.currency)}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{fmtAmount(plan.monthly_amount_minor, plan.currency)}</div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>/ month</div>
                   </div>
                 </div>
@@ -232,51 +231,52 @@ function OverviewTab({ communityId, overview, pages, activity }: { communityId: 
   );
 }
 
-// ─── tab: Pages ──────────────────────────────────────────────────────────────
+// ─── tab: Plans ──────────────────────────────────────────────────────────────
 
-function PagesTab({ communityId, pages, onRefresh }: { communityId: string; pages: CommunityPage[]; onRefresh: () => void }) {
+function PlansTab({ communityId, plans, onNewPlan, onRefresh }: { communityId: string; plans: CommunityPlan[]; onNewPlan: () => void; onRefresh: () => void }) {
   return (
     <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
       <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
         <div>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Pages</h3>
-          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Public-facing checkout pages. One page can grant access to multiple channels.</p>
+          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Plans</h3>
+          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Public-facing checkout plans. One plan can grant access to multiple channels.</p>
         </div>
-        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
+        <button
+          onClick={onNewPlan}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
           onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
         >
           <Plus size={13} />
-          New page
+          New plan
         </button>
       </div>
       <div>
-        {pages.length === 0 ? (
-          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No pages yet. Create one to start accepting members.</div>
-        ) : pages.map((page, idx) => {
-          const color = communityColor(page.offer_name);
-          const initial = (page.offer_name[0] || '?').toUpperCase() + (page.offer_name.split(' ')[1]?.[0] || '');
+        {plans.length === 0 ? (
+          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No plans yet. Create one to start accepting members.</div>
+        ) : plans.map((plan, idx) => {
+          const color = communityColor(plan.offer_name);
+          const initial = (plan.offer_name[0] || '?').toUpperCase() + (plan.offer_name.split(' ')[1]?.[0] || '');
           return (
-            <div key={page.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < pages.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
+            <div key={plan.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < plans.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
               onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
             >
               <span style={{ width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0, background: color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '13px' }}>{initial}</span>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{page.offer_name}</span>
-                  <PageStatusChip page={page} />
+                  <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{plan.offer_name}</span>
+                  <PlanStatusChip plan={plan} />
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)', color: 'var(--accent-soft-text)' }}>
-                    {(page.channel_ids?.length ?? 0)} channels
+                    {(plan.channel_ids?.length ?? 0)} channels
                   </span>
                 </div>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {page.member_counts.active} active · {page.member_counts.trialing} trialing
-                  {page.slug && ` · accessgate.io/${page.slug}`}
+                  {plan.member_counts.active} active · {plan.member_counts.trialing} trialing
                 </span>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{fmtAmount(page.monthly_amount_minor, page.currency)}</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{fmtAmount(plan.monthly_amount_minor, plan.currency)}</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>/ month</div>
               </div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
@@ -391,10 +391,9 @@ function MembersTab({ members, total }: { members: CommunityMember[]; total: num
           Export CSV
         </button>
       </div>
-      {/* Table header */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 2fr) 1fr 1fr 90px 32px', alignItems: 'center', gap: '12px', padding: '10px 20px', background: 'var(--bg-alt, #0d0d0d)', borderBottom: '0.5px solid var(--border)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>
         <div>Member</div>
-        <div>Page</div>
+        <div>Plan</div>
         <div>Since</div>
         <div>Status</div>
         <div />
@@ -403,7 +402,7 @@ function MembersTab({ members, total }: { members: CommunityMember[]; total: num
         <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No members yet.</div>
       ) : members.map((m, idx) => {
         const name = m.display_name || m.email || 'Unknown';
-        const page = m.source_page_name || m.page_name || '—';
+        const plan = m.source_page_name || m.page_name || '—';
         return (
           <div key={m.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 2fr) 1fr 1fr 90px 32px', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: idx < members.length - 1 ? '0.5px solid var(--border-soft)' : 'none', fontSize: '13px', transition: 'background 180ms ease' }}
             onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
@@ -416,7 +415,7 @@ function MembersTab({ members, total }: { members: CommunityMember[]; total: num
                 {m.email && m.display_name && <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</span>}
               </div>
             </div>
-            <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{page}</div>
+            <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plan}</div>
             <div style={{ color: 'var(--text-muted)' }}>{timeAgo(m.created_at)}</div>
             <div><PaymentStatusChip status={m.payment_status} /></div>
             <div>
@@ -439,7 +438,6 @@ function MembersTab({ members, total }: { members: CommunityMember[]; total: num
 function SettingsTab({ community, overview }: { community: Community; overview: CommunityOverview | null }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Community details */}
       <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
         <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Community details</h3>
@@ -463,7 +461,6 @@ function SettingsTab({ community, overview }: { community: Community; overview: 
         ))}
       </div>
 
-      {/* Payments */}
       <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
         <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Payments</h3>
@@ -493,7 +490,6 @@ function SettingsTab({ community, overview }: { community: Community; overview: 
         </div>
       </div>
 
-      {/* Danger zone */}
       <div style={{ background: 'var(--surface-1)', border: '0.5px solid rgba(214,69,69,0.22)', borderRadius: '10px' }}>
         <div style={{ padding: '16px 20px', borderBottom: '0.5px solid rgba(214,69,69,0.22)' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: '#e06a6a', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
@@ -524,14 +520,20 @@ export default function CommunityPage() {
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [overview, setOverview] = useState<CommunityOverview | null>(null);
-  const [previewPages, setPreviewPages] = useState<CommunityPage[]>([]);
-  const [allPages, setAllPages] = useState<CommunityPage[]>([]);
+  const [previewPlans, setPreviewPlans] = useState<CommunityPlan[]>([]);
+  const [allPlans, setAllPlans] = useState<CommunityPlan[]>([]);
   const [channels, setChannels] = useState<CommunityChannel[]>([]);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [memberTotal, setMemberTotal] = useState(0);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabName>('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [newPlanOpen, setNewPlanOpen] = useState(false);
+
+  const loadAllPlans = useCallback(() => {
+    if (!communityId) return;
+    api.getCommunityPlans(communityId).then(setAllPlans).catch(() => {});
+  }, [communityId]);
 
   // Load bootstrap data
   useEffect(() => {
@@ -542,21 +544,21 @@ export default function CommunityPage() {
     Promise.allSettled([
       api.getCommunity(communityId),
       api.getCommunityOverview(communityId),
-      api.getCommunityPages(communityId, { mode: 'home', limit: 2 }),
+      api.getCommunityPlans(communityId, { mode: 'home', limit: 2 }),
       api.getCommunityActivity(communityId, { window: '7d', limit: 8 }),
-    ]).then(([comm, ovr, pages, act]) => {
+    ]).then(([comm, ovr, plans, act]) => {
       if (comm.status === 'fulfilled') setCommunity(comm.value);
       if (ovr.status === 'fulfilled') setOverview(ovr.value);
-      if (pages.status === 'fulfilled') setPreviewPages(pages.value);
+      if (plans.status === 'fulfilled') setPreviewPlans(plans.value);
       if (act.status === 'fulfilled') setActivity(act.value);
       setIsLoading(false);
     });
   }, [communityId]);
 
-  // Load full pages on pages tab
+  // Load full plans on plans tab
   useEffect(() => {
-    if (activeTab === 'pages' && communityId && allPages.length === 0) {
-      api.getCommunityPages(communityId).then(setAllPages).catch(() => {});
+    if (activeTab === 'plans' && communityId && allPlans.length === 0) {
+      loadAllPlans();
     }
   }, [activeTab, communityId]);
 
@@ -577,7 +579,16 @@ export default function CommunityPage() {
     }
   }, [activeTab, communityId]);
 
-  // Prefer community from sidebar list for instant paint
+  function handleOpenNewPlan() {
+    setActiveTab('plans');
+    setNewPlanOpen(true);
+  }
+
+  function handlePlanCreated() {
+    setAllPlans([]);
+    loadAllPlans();
+  }
+
   const comm = community ?? communities.find(c => c.id === communityId) ?? null;
 
   if (!comm && isLoading) {
@@ -594,7 +605,7 @@ export default function CommunityPage() {
   const initial = communityInitial(comm.name);
 
   const counts: Partial<Record<TabName, number>> = {
-    pages: allPages.length || previewPages.length || comm.pages_count,
+    plans: allPlans.length || previewPlans.length || comm.pages_count,
     members: memberTotal || comm.members_count,
   };
 
@@ -625,13 +636,13 @@ export default function CommunityPage() {
             Visit page
           </button>
           <button
-            onClick={() => setActiveTab('pages')}
+            onClick={handleOpenNewPlan}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
             onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
             onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
           >
             <Plus size={13} />
-            New page
+            New plan
           </button>
         </div>
       </div>
@@ -641,10 +652,10 @@ export default function CommunityPage() {
 
       {/* Tab panes */}
       {activeTab === 'overview' && (
-        <OverviewTab communityId={communityId} overview={overview} pages={previewPages} activity={activity} />
+        <OverviewTab communityId={communityId} overview={overview} plans={previewPlans} activity={activity} onNewPlan={handleOpenNewPlan} />
       )}
-      {activeTab === 'pages' && (
-        <PagesTab communityId={communityId} pages={allPages.length > 0 ? allPages : previewPages} onRefresh={() => {}} />
+      {activeTab === 'plans' && (
+        <PlansTab communityId={communityId} plans={allPlans.length > 0 ? allPlans : previewPlans} onNewPlan={() => setNewPlanOpen(true)} onRefresh={loadAllPlans} />
       )}
       {activeTab === 'channels' && (
         <ChannelsTab channels={channels} />
@@ -655,6 +666,13 @@ export default function CommunityPage() {
       {activeTab === 'settings' && (
         <SettingsTab community={comm} overview={overview} />
       )}
+
+      <NewPlanModal
+        open={newPlanOpen}
+        communityId={communityId}
+        onClose={() => setNewPlanOpen(false)}
+        onCreated={handlePlanCreated}
+      />
     </div>
   );
 }

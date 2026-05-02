@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -349,24 +349,46 @@ class ApiClient {
     return this.get<CommunityOverview>(`/creator/communities/${communityId}/overview`);
   }
 
-  async getCommunityPages(communityId: string, params?: { mode?: string; limit?: number }): Promise<CommunityPage[]> {
+  async getCommunityPlans(communityId: string, params?: { mode?: string; limit?: number }): Promise<CommunityPlan[]> {
     const q = new URLSearchParams();
     if (params?.mode) q.append('mode', params.mode);
     if (params?.limit) q.append('limit', String(params.limit));
     const qs = q.toString();
-    return this.get<CommunityPage[]>(`/creator/communities/${communityId}/pages${qs ? `?${qs}` : ''}`);
+    return this.get<CommunityPlan[]>(`/creator/communities/${communityId}/plans${qs ? `?${qs}` : ''}`);
   }
 
-  async getCommunityPage(communityId: string, pageId: string): Promise<CommunityPage> {
-    return this.get<CommunityPage>(`/creator/communities/${communityId}/pages/${pageId}`);
+  async getCommunityPlan(communityId: string, planId: string): Promise<CommunityPlan> {
+    return this.get<CommunityPlan>(`/creator/communities/${communityId}/plans/${planId}`);
   }
 
-  async createCommunityPage(communityId: string, data: Partial<CommunityPage>): Promise<CommunityPage> {
-    return this.post<CommunityPage>(`/creator/communities/${communityId}/pages`, data);
+  async createCommunityPlan(communityId: string, data: {
+    offer_name: string;
+    monthly_amount_minor: number;
+    currency?: string;
+    yearly_amount_minor?: number;
+    trial_days?: number;
+    discord_role_id?: string;
+    channel_ids?: string[];
+  }): Promise<CommunityPlan> {
+    return this.post<CommunityPlan>(`/creator/communities/${communityId}/plans`, data);
   }
 
-  async updateCommunityPage(communityId: string, pageId: string, data: Partial<CommunityPage>): Promise<CommunityPage> {
-    return this.put<CommunityPage>(`/creator/communities/${communityId}/pages/${pageId}`, data);
+  async updateCommunityPlan(communityId: string, planId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
+    return this.put<CommunityPlan>(`/creator/communities/${communityId}/plans/${planId}`, data);
+  }
+
+  // Legacy aliases kept for backward compat with old pages/edit form
+  async getCommunityPages(communityId: string, params?: { mode?: string; limit?: number }): Promise<CommunityPlan[]> {
+    return this.getCommunityPlans(communityId, params);
+  }
+  async getCommunityPage(communityId: string, pageId: string): Promise<CommunityPlan> {
+    return this.getCommunityPlan(communityId, pageId);
+  }
+  async createCommunityPage(communityId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
+    return this.createCommunityPlan(communityId, data as any);
+  }
+  async updateCommunityPage(communityId: string, pageId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
+    return this.updateCommunityPlan(communityId, pageId, data);
   }
 
   async getCommunityChannels(communityId: string): Promise<CommunityChannel[]> {
