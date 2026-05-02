@@ -354,12 +354,31 @@ export interface CreatorProfile {
   name?: string;
 }
 
+export interface ChannelProvider {
+  id: string;
+  label: string;
+  status: 'live' | 'coming_soon';
+  has_connection: boolean;
+  connection: Record<string, any> | null;
+  connect_url?: string;
+}
+
+export interface PaymentProvider {
+  id: string;
+  label: string;
+  status: 'live' | 'coming_soon';
+  connected: boolean;
+  connect_url?: string;
+  dashboard_url?: string;
+}
+
 export interface IntegrationProvider {
   id: string;
   label: string;
   status: 'live' | 'coming_soon';
   has_connection: boolean;
   connection: Record<string, any> | null;
+  connect_url?: string;
 }
 
 export interface IntegrationChannel {
@@ -371,6 +390,6 @@ export interface IntegrationChannel {
 }
 
 export interface IntegrationsResponse {
-  providers: IntegrationProvider[];
-  integrations: any[];
+  channel_providers: ChannelProvider[];
+  payments: PaymentProvider[];
 }

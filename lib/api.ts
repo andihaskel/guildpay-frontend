@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel, ChannelProvider } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 

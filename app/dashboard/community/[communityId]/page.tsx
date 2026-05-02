@@ -6,7 +6,7 @@ import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal, Loader 
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem, IntegrationProvider, IntegrationChannel } from '@/lib/types';
+import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem, ChannelProvider, IntegrationChannel } from '@/lib/types';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -341,16 +341,16 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
 }) {
   const router = useRouter();
   const [screen, setScreen] = useState<ModalScreen>('providers');
-  const [providers, setProviders] = useState<IntegrationProvider[]>([]);
+  const [providers, setProviders] = useState<ChannelProvider[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(true);
-  const [selectedProvider, setSelectedProvider] = useState<IntegrationProvider | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ChannelProvider | null>(null);
   const [intChannels, setIntChannels] = useState<IntegrationChannel[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
     api.getIntegrations()
-      .then(res => setProviders(res.providers))
+      .then(res => setProviders(res.channel_providers ?? []))
       .catch(() => {})
       .finally(() => setLoadingProviders(false));
   }, []);
@@ -361,7 +361,7 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  function selectProvider(p: IntegrationProvider) {
+  function selectProvider(p: ChannelProvider) {
     if (p.status === 'coming_soon') return;
     if (!p.has_connection) return;
     setSelectedProvider(p);
