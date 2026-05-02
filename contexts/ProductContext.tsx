@@ -29,11 +29,16 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
       if (productsData.length > 0) {
         const pending = pendingIdRef.current;
-        const target = pending
-          ? productsData.find((p) => p.id === pending) ?? productsData[0]
-          : productsData[0];
-        setCurrentProduct((prev) => prev ?? target);
         pendingIdRef.current = null;
+        if (pending) {
+          const target = productsData.find((p) => p.id === pending) ?? productsData[0];
+          setCurrentProduct(target);
+        } else {
+          setCurrentProduct((prev) => {
+            if (prev && productsData.find((p) => p.id === prev.id)) return prev;
+            return productsData[0];
+          });
+        }
       }
     } catch {
       setProducts([]);
