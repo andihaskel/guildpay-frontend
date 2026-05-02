@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, GripVertical, Loader as Loader2, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { api } from '@/lib/api';
-import { DiscordRole, DiscordChannel } from '@/lib/types';
+import { CommunityChannel } from '@/lib/types';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -27,8 +27,7 @@ interface FormState {
   yearlyPrice: string;
   currency: string;
   perks: Perk[];
-  discordRoleId: string;
-  discordChannelIds: string[];
+  channelIds: string[];
   isActive: boolean;
 }
 
@@ -285,6 +284,145 @@ function Preview({ form, deviceView, communityName }: { form: FormState; deviceV
   );
 }
 
+// ─── channel picker modal ─────────────────────────────────────────────────────
+
+function ChannelIcon({ provider }: { provider: string }) {
+  if (provider === 'discord') {
+    return (
+      <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', color: '#8b92f8', flexShrink: 0 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
+      </span>
+    );
+  }
+  return (
+    <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', color: 'var(--text-muted, #555)', flexShrink: 0 }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    </span>
+  );
+}
+
+function ChannelPickerModal({ channels, selectedIds, onClose, onSave }: {
+  channels: CommunityChannel[];
+  selectedIds: string[];
+  onClose: () => void;
+  onSave: (ids: string[]) => void;
+}) {
+  const [draft, setDraft] = useState<string[]>(selectedIds);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  function toggle(id: string) {
+    setDraft(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  }
+
+  const connectedChannels = channels.filter(c => c.connected !== false);
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,7,0.62)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 200 }}
+    >
+      <div style={{ width: '100%', maxWidth: '460px', background: 'var(--surface-1, #111)', border: '0.5px solid rgba(255,255,255,0.10)', borderRadius: '14px', boxShadow: '0 30px 80px -20px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 48px)', position: 'relative' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* gradient border */}
+        <div style={{ position: 'absolute', inset: '-1px', borderRadius: 'inherit', background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.01))', WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', WebkitMaskComposite: 'xor', mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', maskComposite: 'exclude', padding: '1px', pointerEvents: 'none' }} />
+
+        {/* head */}
+        <div style={{ padding: '20px 22px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px', flexShrink: 0 }}>
+          <div>
+            <h2 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text, #f0f0f0)', margin: 0 }}>Add channel</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary, #888)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              Select which channels members unlock when they subscribe to this plan.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ width: '28px', height: '28px', borderRadius: '6px', color: 'var(--text-muted, #555)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text, #f0f0f0)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted, #555)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        {/* body */}
+        <div style={{ padding: '16px 22px 4px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+          {channels.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted, #555)', fontSize: '13.5px' }}>
+              No channels connected to this community yet. Add channels in the Channels tab first.
+            </div>
+          ) : (
+            channels.map(ch => {
+              const selected = draft.includes(ch.id);
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => toggle(ch.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '10px', background: selected ? 'rgba(88,101,242,0.06)' : 'var(--surface-2, #161616)', border: `0.5px solid ${selected ? 'rgba(88,101,242,0.3)' : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer', textAlign: 'left', transition: 'background 180ms ease, border-color 180ms ease', width: '100%' }}
+                  onMouseEnter={e => { if (!selected) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; } }}
+                  onMouseLeave={e => { if (!selected) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2, #161616)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; } }}
+                >
+                  <ChannelIcon provider={ch.provider} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text, #f0f0f0)', margin: '0 0 2px', letterSpacing: '-0.005em' }}>{ch.name}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted, #555)', margin: 0, textTransform: 'capitalize' }}>
+                      {ch.provider}
+                      {ch.members_synced != null && ` · ${ch.members_synced} members`}
+                    </p>
+                  </div>
+                  {ch.connected && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 7px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: 'rgba(47,157,107,0.10)', border: '0.5px solid rgba(47,157,107,0.22)', color: '#4ab585', flexShrink: 0 }}>
+                      <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                      Connected
+                    </span>
+                  )}
+                  {/* checkbox */}
+                  <span style={{ width: '18px', height: '18px', borderRadius: '5px', border: `1.5px solid ${selected ? 'rgba(88,101,242,0.6)' : 'rgba(255,255,255,0.15)'}`, background: selected ? 'rgba(88,101,242,0.15)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 180ms ease' }}>
+                    {selected && <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#8b92f8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </span>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* foot */}
+        <div style={{ padding: '14px 22px 18px', borderTop: '0.5px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexShrink: 0 }}>
+          <span style={{ fontSize: '12.5px', color: 'var(--text-muted, #555)' }}>
+            {draft.length === 0 ? 'No channels selected' : `${draft.length} channel${draft.length !== 1 ? 's' : ''} selected`}
+          </span>
+          <div style={{ display: 'inline-flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ padding: '7px 13px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: 'transparent', color: 'var(--text, #f0f0f0)', border: '0.5px solid rgba(255,255,255,0.12)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(draft)}
+              style={{ padding: '7px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function NewPlanPage() {
@@ -297,8 +435,9 @@ export default function NewPlanPage() {
   const [deviceView, setDeviceView] = useState<DeviceView>('tablet');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
-  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [channels, setChannels] = useState<CommunityChannel[]>([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [channelModalOpen, setChannelModalOpen] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     planName: '',
@@ -312,8 +451,7 @@ export default function NewPlanPage() {
     yearlyPrice: '',
     currency: 'USD',
     perks: DEFAULT_PERKS,
-    discordRoleId: '',
-    discordChannelIds: [],
+    channelIds: [],
     isActive: true,
   });
 
@@ -321,20 +459,14 @@ export default function NewPlanPage() {
     setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  // Load discord roles
+  // Load community channels
   useEffect(() => {
     if (!communityId) return;
-    setLoadingRoles(true);
-    api.getCommunity(communityId).then(comm => {
-      if (comm.discord_guild_id) {
-        api.getDiscordGuildRoles(comm.discord_guild_id).then(roles => {
-          setDiscordRoles(roles);
-          if (roles.length > 0) update('discordRoleId', roles[0].id);
-        }).catch(() => {}).finally(() => setLoadingRoles(false));
-      } else {
-        setLoadingRoles(false);
-      }
-    }).catch(() => setLoadingRoles(false));
+    setLoadingChannels(true);
+    api.getCommunityChannels(communityId)
+      .then(setChannels)
+      .catch(() => {})
+      .finally(() => setLoadingChannels(false));
   }, [communityId]);
 
   const sections: { key: Section; label: string }[] = [
@@ -371,7 +503,7 @@ export default function NewPlanPage() {
         currency: form.currency.toLowerCase(),
         yearly_amount_minor: form.yearlyEnabled && yearlyPriceMinor > 0 ? yearlyPriceMinor : undefined,
         trial_days: form.trialEnabled && form.trialDays > 0 ? form.trialDays : undefined,
-        discord_role_id: form.discordRoleId || undefined,
+        channel_ids: form.channelIds.length > 0 ? form.channelIds : undefined,
       });
       router.push(`/dashboard/community/${communityId}?tab=plans`);
     } catch (err: any) {
@@ -509,29 +641,105 @@ export default function NewPlanPage() {
                 </div>
               </CardGroup>
 
-              {/* Discord role */}
+              {/* Discord channels */}
               <CardGroup>
-                <CardHead title="Discord access" subtitle="Members automatically get this role when they subscribe." />
-                <div style={{ padding: '22px 20px' }}>
-                  <FieldLabel>Role to assign</FieldLabel>
-                  {loadingRoles ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 12px', background: 'var(--input-bg, #0d0d0d)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: 'var(--text-muted, #555)', fontSize: '13px' }}>
+                <CardHead
+                  title="Discord access"
+                  subtitle="Members get access to these channels when they subscribe."
+                  right={
+                    <button
+                      type="button"
+                      onClick={() => setChannelModalOpen(true)}
+                      disabled={loadingChannels}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text, #f0f0f0)', cursor: loadingChannels ? 'not-allowed' : 'pointer', opacity: loadingChannels ? 0.5 : 1, transition: 'border-color 180ms ease, background 180ms ease, opacity 180ms ease', whiteSpace: 'nowrap' }}
+                      onMouseEnter={e => { if (!loadingChannels) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; } }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                    >
+                      <Plus size={12} />
+                      Add channel
+                    </button>
+                  }
+                />
+                <div style={{ padding: form.channelIds.length > 0 ? '0' : '20px' }}>
+                  {loadingChannels ? (
+                    <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted, #555)', fontSize: '13px' }}>
                       <Loader2 size={12} style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                      Loading roles...
+                      Loading channels...
                     </div>
-                  ) : discordRoles.length === 0 ? (
-                    <div style={{ padding: '9px 12px', background: 'var(--input-bg, #0d0d0d)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: 'var(--text-muted, #555)', fontSize: '13px' }}>
-                      No Discord server connected to this community.
+                  ) : form.channelIds.length === 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted, #555)', flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
+                      </span>
+                      <div>
+                        <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text, #f0f0f0)', margin: '0 0 2px' }}>No channels selected</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted, #555)', margin: 0 }}>
+                          {channels.length === 0 ? 'No channels available. Add channels to this community first.' : 'Click "Add channel" to grant access to Discord channels.'}
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <Select value={form.discordRoleId} onChange={v => update('discordRoleId', v)}>
-                      <option value="">No role</option>
-                      {discordRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </Select>
+                    <div>
+                      {form.channelIds.map(id => {
+                        const ch = channels.find(c => c.id === id);
+                        if (!ch) return null;
+                        return (
+                          <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: '0.5px solid rgba(255,255,255,0.06)', transition: 'background 180ms ease' }}
+                            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
+                            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+                          >
+                            <span style={{ width: '32px', height: '32px', borderRadius: '7px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(88,101,242,0.12)', border: '0.5px solid rgba(88,101,242,0.25)', color: '#8b92f8', flexShrink: 0, fontSize: '14px' }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text, #f0f0f0)', margin: 0, letterSpacing: '-0.005em' }}>{ch.name}</p>
+                              {ch.members_synced != null && <p style={{ fontSize: '11.5px', color: 'var(--text-muted, #555)', margin: '1px 0 0' }}>{ch.members_synced} members synced</p>}
+                            </div>
+                            {ch.connected && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: 'rgba(47,157,107,0.10)', border: '0.5px solid rgba(47,157,107,0.22)', color: '#4ab585', flexShrink: 0 }}>
+                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                                Connected
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => update('channelIds', form.channelIds.filter(i => i !== id))}
+                              aria-label="Remove channel"
+                              style={{ width: '26px', height: '26px', borderRadius: '6px', color: 'var(--text-muted, #555)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#e06a6a'; (e.currentTarget as HTMLElement).style.background = 'rgba(214,69,69,0.06)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted, #555)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <div style={{ padding: '10px 20px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setChannelModalOpen(true)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, color: 'var(--text-muted, #555)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 180ms ease' }}
+                          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text, #f0f0f0)')}
+                          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted, #555)')}
+                        >
+                          <Plus size={12} />
+                          Add another channel
+                        </button>
+                      </div>
+                    </div>
                   )}
-                  <FieldHint>You can manage channels and roles in the Channels tab of your community.</FieldHint>
                 </div>
               </CardGroup>
+
+              {/* Channel picker modal */}
+              {channelModalOpen && (
+                <ChannelPickerModal
+                  channels={channels}
+                  selectedIds={form.channelIds}
+                  onClose={() => setChannelModalOpen(false)}
+                  onSave={ids => { update('channelIds', ids); setChannelModalOpen(false); }}
+                />
+              )}
             </>
           )}
 
@@ -685,7 +893,7 @@ export default function NewPlanPage() {
                   { label: 'Free trial', value: form.trialEnabled ? `${form.trialDays} days` : 'None' },
                   { label: 'Yearly option', value: form.yearlyEnabled && form.yearlyPrice ? `$${form.yearlyPrice} / year` : 'No' },
                   { label: 'Perks', value: `${form.perks.length} defined` },
-                  { label: 'Discord role', value: discordRoles.find(r => r.id === form.discordRoleId)?.name || (form.discordRoleId ? form.discordRoleId : 'None') },
+                  { label: 'Discord channels', value: form.channelIds.length > 0 ? `${form.channelIds.length} selected` : 'None' },
                 ].map(row => (
                   <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 0', borderBottom: '0.5px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary, #888)' }}>{row.label}</span>
