@@ -275,6 +275,7 @@ export function NewCommunityModal({ open, onClose }: Props) {
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Trading Mastermind"
               autoFocus
+              className="ag-modal-input"
               style={{
                 width: '100%', padding: '9px 12px', borderRadius: '7px',
                 background: 'var(--surface-2)', border: '0.5px solid var(--border)',
@@ -299,6 +300,7 @@ export function NewCommunityModal({ open, onClose }: Props) {
               onChange={e => setDescription(e.target.value)}
               placeholder="Short description of your community"
               rows={2}
+              className="ag-modal-input"
               style={{
                 width: '100%', padding: '9px 12px', borderRadius: '7px',
                 background: 'var(--surface-2)', border: '0.5px solid var(--border)',
@@ -331,6 +333,7 @@ export function NewCommunityModal({ open, onClose }: Props) {
                 value={slug}
                 onChange={e => handleSlugChange(e.target.value)}
                 placeholder="your-slug"
+                className="ag-modal-input"
                 style={{
                   flex: 1, padding: '9px 12px 9px 2px',
                   background: 'transparent', border: 'none', outline: 'none',
@@ -362,10 +365,11 @@ export function NewCommunityModal({ open, onClose }: Props) {
               disabled={!canSubmit}
               style={{
                 padding: '8px 18px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
-                background: canSubmit ? '#fff' : 'rgba(255,255,255,0.12)',
-                color: canSubmit ? '#0a0a0a' : 'rgba(255,255,255,0.3)',
+                background: '#fff',
+                color: '#0a0a0a',
                 border: 'none', cursor: canSubmit ? 'pointer' : 'not-allowed',
-                transition: 'background 160ms ease, color 160ms ease, opacity 160ms ease',
+                opacity: canSubmit ? 1 : 0.35,
+                transition: 'opacity 160ms ease',
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
               }}
             >
@@ -376,7 +380,10 @@ export function NewCommunityModal({ open, onClose }: Props) {
         </form>
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ag-modal-input::placeholder { color: rgba(255,255,255,0.2); }
+      `}</style>
     </div>
   );
 }

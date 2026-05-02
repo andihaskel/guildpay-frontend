@@ -330,7 +330,7 @@ class ApiClient {
   }
 
   async createCommunity(data: { name: string; description?: string; logo_url?: string }): Promise<Community> {
-    return this.post<Community>('/creator', data);
+    return this.post<Community>('/creator/communities', data);
   }
 
   async getCommunities(): Promise<Community[]> {
