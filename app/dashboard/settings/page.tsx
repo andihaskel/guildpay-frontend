@@ -136,12 +136,13 @@ function IntegrationRow({ id, label, connected, isComingSoon, connectUrl, dashbo
   );
 }
 
-function AddChannelRow({ discordConnectUrl }: { discordConnectUrl?: string }) {
+function AddChannelRow({ href }: { href?: string }) {
   const [hovered, setHovered] = useState(false);
-  const href = discordConnectUrl ?? '/select-server';
   return (
     <a
-      href={href}
+      href={href ?? '/select-server'}
+      target="_blank"
+      rel="noopener noreferrer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -253,7 +254,7 @@ export default function SettingsPage() {
                 />
               ))}
               {channelProviders.some(p => p.id === 'discord' && p.has_connection) && (
-                <AddChannelRow discordConnectUrl={channelProviders.find(p => p.id === 'discord')?.connect_url} />
+                <AddChannelRow href={channelProviders.find(p => p.id === 'discord')?.bot_install_url} />
               )}
             </>
           )}

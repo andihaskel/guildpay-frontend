@@ -361,6 +361,8 @@ export interface ChannelProvider {
   has_connection: boolean;
   connection: Record<string, any> | null;
   connect_url?: string;
+  bot_install_url?: string;
+  workspaces?: any[];
 }
 
 export interface PaymentProvider {
