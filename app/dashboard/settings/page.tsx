@@ -136,6 +136,42 @@ function IntegrationRow({ id, label, connected, isComingSoon, connectUrl, dashbo
   );
 }
 
+function AddChannelRow({ discordConnectUrl }: { discordConnectUrl?: string }) {
+  const [hovered, setHovered] = useState(false);
+  const href = discordConnectUrl ?? '/select-server';
+  return (
+    <a
+      href={href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '14px 20px',
+        background: hovered ? 'rgba(255,255,255,0.015)' : 'transparent',
+        transition: 'background 180ms ease',
+        textDecoration: 'none',
+        cursor: 'pointer',
+      }}
+    >
+      <span style={{
+        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(255,255,255,0.03)',
+        border: '0.5px solid var(--border-strong)',
+        color: 'var(--text-muted)',
+      }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em' }}>Add another channel</div>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Connect a new Discord server to your account</span>
+      </div>
+    </a>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const [channelProviders, setChannelProviders] = useState<ChannelProvider[]>([]);
@@ -204,16 +240,23 @@ export default function SettingsPage() {
       <div style={card}>
         <CardHead title="Channels" sub="Connect the platforms you use to deliver access to members." />
         <div>
-          {loading ? <Spinner /> : channelProviders.map(p => (
-            <IntegrationRow
-              key={p.id}
-              id={p.id}
-              label={p.label}
-              connected={p.has_connection}
-              isComingSoon={p.status === 'coming_soon'}
-              connectUrl={p.connect_url}
-            />
-          ))}
+          {loading ? <Spinner /> : (
+            <>
+              {channelProviders.map(p => (
+                <IntegrationRow
+                  key={p.id}
+                  id={p.id}
+                  label={p.label}
+                  connected={p.has_connection}
+                  isComingSoon={p.status === 'coming_soon'}
+                  connectUrl={p.connect_url}
+                />
+              ))}
+              {channelProviders.some(p => p.id === 'discord' && p.has_connection) && (
+                <AddChannelRow discordConnectUrl={channelProviders.find(p => p.id === 'discord')?.connect_url} />
+              )}
+            </>
+          )}
         </div>
       </div>
 
