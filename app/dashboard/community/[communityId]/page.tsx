@@ -512,22 +512,7 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
                       </button>
                     )}
                     {clickable && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                        {p.bot_install_url && (
-                          <a
-                            href={p.bot_install_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', textDecoration: 'none' }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                          >
-                            <Plus size={11} /> Add server
-                          </a>
-                        )}
-                        <ChevronRight size={15} style={{ color: 'var(--text-muted)' }} />
-                      </div>
+                      <ChevronRight size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                     )}
                   </div>
                 );
@@ -602,6 +587,33 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
                   </button>
                 );
               })}
+              {!loadingChannels && selectedProvider.bot_install_url && (
+                <a
+                  href={selectedProvider.bot_install_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    padding: '13px 16px',
+                    borderRadius: '10px',
+                    border: '1px dashed rgba(255,255,255,0.10)',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    marginTop: intChannels.length > 0 ? '4px' : undefined,
+                    transition: 'border-color 180ms ease, background 180ms ease',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.22)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.10)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.10)', color: 'var(--text-muted)', flexShrink: 0 }}>
+                    <Plus size={15} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)', margin: '0 0 1px', letterSpacing: '-0.005em' }}>Add another server</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Install the bot on a new Discord server</p>
+                  </div>
+                </a>
+              )}
             </div>
           </>
         )}
