@@ -489,7 +489,18 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
                         </p>
                       )}
                     </div>
-                    {noConnection && (
+                    {noConnection && p.connect_url && (
+                      <a
+                        href={p.connect_url}
+                        onClick={e => e.stopPropagation()}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', flexShrink: 0, textDecoration: 'none' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                      >
+                        Connect
+                      </a>
+                    )}
+                    {noConnection && !p.connect_url && (
                       <button
                         onClick={e => { e.stopPropagation(); router.push('/dashboard/settings'); }}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', flexShrink: 0 }}
@@ -501,7 +512,22 @@ function AddChannelModal({ communityId, onClose, onAdded }: {
                       </button>
                     )}
                     {clickable && (
-                      <ChevronRight size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        {p.bot_install_url && (
+                          <a
+                            href={p.bot_install_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', textDecoration: 'none' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                          >
+                            <Plus size={11} /> Add server
+                          </a>
+                        )}
+                        <ChevronRight size={15} style={{ color: 'var(--text-muted)' }} />
+                      </div>
                     )}
                   </div>
                 );
