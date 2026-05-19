@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import { ExternalLink, Plus, Download, MoveHorizontal as MoreHorizontal, Loader as Loader2, Settings, ArrowLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCommunity } from '@/contexts/CommunityContext';
-import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Community, CommunityOverview, CommunityPlan, CommunityChannel, CommunityMember, ActivityItem, ChannelProvider, IntegrationChannel } from '@/lib/types';
+import { Community, CommunityOverview, CommunityPlan, CommunityMember, ActivityItem } from '@/lib/types';
+import { CommunityWorkspaceChrome } from '@/components/community/CommunityWorkspaceChrome';
+import { AnalyticsPane } from '@/components/community/AnalyticsPane';
+import { MembersPane } from '@/components/community/MembersPane';
+import { StatCard, fmtAmount, timeAgo } from '@/components/community/workspace-ui';
+import './community-workspace.css';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,165 +23,80 @@ function communityColor(name: string) {
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return SERVER_COLORS[Math.abs(h) % SERVER_COLORS.length];
 }
-function communityInitial(name: string) { return (name.trim()[0] || '?').toUpperCase(); }
+// ─── types ────────────────────────────────────────────────────────────────────
 
-function fmtAmount(minor: number, currency = 'usd') {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase(), minimumFractionDigits: 0 }).format(minor / 100);
-}
+type ModeName = 'overview' | 'analytics' | 'members';
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m || 1}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 30) return `${d}d`;
-  return `${Math.floor(d / 30)}mo`;
-}
+// ─── OverviewPane ─────────────────────────────────────────────────────────────
 
-// ─── sub-components ───────────────────────────────────────────────────────────
-
-type TabName = 'overview' | 'plans' | 'channels' | 'members' | 'settings';
-
-function TabBar({ active, onSelect, counts }: { active: TabName; onSelect: (t: TabName) => void; counts: Partial<Record<TabName, number>> }) {
-  const tabs: { key: TabName; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'plans', label: 'Plans' },
-    { key: 'channels', label: 'Channels' },
-    { key: 'members', label: 'Members' },
-    { key: 'settings', label: 'Settings' },
-  ];
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', borderBottom: '0.5px solid var(--border)', marginBottom: '28px', overflowX: 'auto' }}>
-      {tabs.map(t => (
-        <button
-          key={t.key}
-          onClick={() => onSelect(t.key)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '12px 14px', fontSize: '13.5px', fontWeight: 500,
-            color: active === t.key ? 'var(--text)' : 'var(--text-secondary)',
-            background: 'none', border: 'none', cursor: 'pointer',
-            position: 'relative', whiteSpace: 'nowrap',
-            transition: 'color 180ms ease',
-          }}
-          onMouseEnter={e => { if (active !== t.key) (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
-          onMouseLeave={e => { if (active !== t.key) (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
-        >
-          {active === t.key && (
-            <div style={{ position: 'absolute', left: '8px', right: '8px', bottom: '-0.5px', height: '2px', background: 'var(--text)', borderRadius: '2px 2px 0 0' }} />
-          )}
-          {t.label}
-          {counts[t.key] != null && (
-            <span style={{ fontSize: '11px', color: active === t.key ? 'var(--text)' : 'var(--text-muted)', background: active === t.key ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: '10px', fontVariantNumeric: 'tabular-nums' }}>
-              {counts[t.key]}
-            </span>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function StatCard({ label, value, delta, deltaDown }: { label: string; value: string | number; delta?: string; deltaDown?: boolean }) {
-  return (
-    <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '16px 18px' }}>
-      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{label}</div>
-      <div style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--text)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-      {delta && <div style={{ fontSize: '12px', color: deltaDown ? '#e06a6a' : '#4ab585', marginTop: '4px' }}>{delta}</div>}
-    </div>
-  );
-}
-
-function PlanStatusChip({ plan }: { plan: CommunityPlan }) {
-  const live = plan.published && plan.status !== 'disabled';
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px',
-      borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, border: '0.5px solid',
-      background: live ? 'var(--success-soft-bg)' : 'rgba(255,255,255,0.04)',
-      borderColor: live ? 'var(--success-soft-border)' : 'var(--border)',
-      color: live ? 'var(--success-soft-text)' : 'var(--text-secondary)',
-    }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-      {live ? 'Live' : 'Disabled'}
-    </span>
-  );
-}
-
-function PaymentStatusChip({ status }: { status: string }) {
-  const map: Record<string, { bg: string; border: string; color: string; label: string }> = {
-    active:    { bg: 'var(--success-soft-bg)', border: 'var(--success-soft-border)', color: 'var(--success-soft-text)', label: 'Active' },
-    trialing:  { bg: 'var(--accent-soft-bg)',  border: 'var(--accent-soft-border)',  color: 'var(--accent-soft-text)',  label: 'Trialing' },
-    canceling: { bg: 'var(--warning-soft-bg)', border: 'var(--warning-soft-border)', color: 'var(--warning-soft-text)', label: 'Canceling' },
-    free:      { bg: 'rgba(255,255,255,0.04)', border: 'var(--border)', color: 'var(--text-secondary)', label: 'Free' },
+function riskIconStyle(message: string) {
+  const msg = message.toLowerCase();
+  if (msg.includes('fail') || msg.includes('cancel') || msg.includes('remov')) {
+    return {
+      bg: 'var(--danger-soft-bg)', border: 'var(--danger-soft-border)', color: 'var(--danger-soft-text)',
+      svg: <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>,
+    };
+  }
+  return {
+    bg: 'var(--warning-soft-bg)', border: 'var(--warning-soft-border)', color: 'var(--warning-soft-text)',
+    svg: <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/><path d="M12 8v5M12 16.5v.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
   };
-  const s = map[status] ?? map.free;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, border: `0.5px solid ${s.border}`, background: s.bg, color: s.color }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-      {s.label}
-    </span>
-  );
 }
 
-function AvatarCell({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
-  const initials = name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
-  const colors = ['#5865f2','#2b7a4b','#b84a3a','#6b3fb2','#c4963a','#14b8a6'];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  const bg = colors[Math.abs(h) % colors.length];
-  return (
-    <span style={{ width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#fff', background: avatarUrl ? 'transparent' : bg, overflow: 'hidden' }}>
-      {avatarUrl ? <img src={avatarUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-    </span>
-  );
-}
-
-// ─── tab: Overview ───────────────────────────────────────────────────────────
-
-function OverviewTab({ communityId, overview, plans, activity, onNewPlan }: { communityId: string; overview: CommunityOverview | null; plans: CommunityPlan[]; activity: ActivityItem[]; onNewPlan: () => void }) {
+function OverviewPane({
+  overview,
+  plans,
+  activity,
+  onViewSetup,
+  onViewMembers,
+}: {
+  overview: CommunityOverview | null;
+  plans: CommunityPlan[];
+  activity: ActivityItem[];
+  onViewSetup: () => void;
+  onViewMembers: () => void;
+}) {
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '28px' }}>
+      <div className="stat-grid">
         <StatCard label="Active members" value={overview?.paying_members ?? '—'} />
-        <StatCard label="MRR" value={overview?.monthly_revenue != null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(overview.monthly_revenue / 100) : '—'} />
+        <StatCard label="MRR" value={overview?.monthly_revenue != null ? fmtAmount(overview.monthly_revenue) : '—'} />
         <StatCard label="Trialing" value={overview?.trialing ?? '—'} />
         <StatCard label="Canceling" value={overview?.canceling ?? '—'} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="grid-2">
         {/* Plans card */}
         <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.005em', margin: 0, color: 'var(--text)' }}>Plans</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)', letterSpacing: '-0.005em' }}>Plans</h3>
               <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Public paywalls for this community.</p>
             </div>
             <button
-              onClick={onNewPlan}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease' }}
+              onClick={onViewSetup}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease', whiteSpace: 'nowrap' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              New plan
+              View all
             </button>
           </div>
           <div>
             {plans.length === 0 ? (
               <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
-                  <Plus size={14} />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
                 </span>
                 <div>
                   <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', margin: '0 0 2px' }}>No plans yet</p>
-                  <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>Create your first plan to start accepting members.</p>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>Go to Setup to create your first plan.</p>
                 </div>
               </div>
             ) : plans.map((plan, idx) => {
               const color = communityColor(plan.offer_name);
               const initial = (plan.offer_name[0] || '?').toUpperCase() + (plan.offer_name.split(' ')[1]?.[0] || '');
+              const live = plan.published && plan.status !== 'disabled';
               return (
                 <div key={plan.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < plans.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
@@ -188,7 +106,10 @@ function OverviewTab({ communityId, overview, plans, activity, onNewPlan }: { co
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{plan.offer_name}</span>
-                      <PlanStatusChip plan={plan} />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, border: '0.5px solid', background: live ? 'var(--success-soft-bg)' : 'rgba(255,255,255,0.04)', borderColor: live ? 'var(--success-soft-border)' : 'var(--border)', color: live ? 'var(--success-soft-text)' : 'var(--text-secondary)' }}>
+                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
+                        {live ? 'Live' : 'Disabled'}
+                      </span>
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {plan.member_counts.active} active · {plan.member_counts.trialing} trialing
@@ -204,617 +125,33 @@ function OverviewTab({ communityId, overview, plans, activity, onNewPlan }: { co
           </div>
         </div>
 
-        {/* Activity card */}
+        {/* Risk members card */}
         <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.005em', margin: 0, color: 'var(--text)' }}>Recent activity</h3>
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Last 7 days.</p>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)', letterSpacing: '-0.005em' }}>Risk members</h3>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Canceling, failed payments, or about to lapse.</p>
             </div>
+            <button type="button" onClick={onViewMembers} className="btn-secondary" style={{ fontSize: '12.5px', padding: '6px 12px' }}>
+              View all
+            </button>
           </div>
           <div>
             {activity.length === 0 ? (
-              <div style={{ padding: '20px', color: 'var(--text-muted)', fontSize: '13px' }}>No recent activity.</div>
-            ) : activity.map((item, idx) => (
-              <div key={item.id ?? idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: idx < activity.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
-                <span style={{ width: '28px', height: '28px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--success-soft-bg)', border: '0.5px solid var(--success-soft-border)', color: 'var(--success-soft-text)' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                <div style={{ flex: 1, fontSize: '13px', color: 'var(--text)' }}>{item.message}</div>
-                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{timeAgo(item.created_at)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── tab: Plans ──────────────────────────────────────────────────────────────
-
-function PlansTab({ communityId, plans, onNewPlan, onRefresh }: { communityId: string; plans: CommunityPlan[]; onNewPlan: () => void; onRefresh: () => void }) {
-  return (
-    <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-        <div>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Plans</h3>
-          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Public-facing checkout plans. One plan can grant access to multiple channels.</p>
-        </div>
-        <button
-          onClick={onNewPlan}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-        >
-          <Plus size={13} />
-          New plan
-        </button>
-      </div>
-      <div>
-        {plans.length === 0 ? (
-          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No plans yet. Create one to start accepting members.</div>
-        ) : plans.map((plan, idx) => {
-          const color = communityColor(plan.offer_name);
-          const initial = (plan.offer_name[0] || '?').toUpperCase() + (plan.offer_name.split(' ')[1]?.[0] || '');
-          return (
-            <div key={plan.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: idx < plans.length - 1 ? '0.5px solid var(--border-soft)' : 'none', transition: 'background 180ms ease' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-            >
-              <span style={{ width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0, background: color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '13px' }}>{initial}</span>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{plan.offer_name}</span>
-                  <PlanStatusChip plan={plan} />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, background: 'var(--accent-soft-bg)', border: '0.5px solid var(--accent-soft-border)', color: 'var(--accent-soft-text)' }}>
-                    {(plan.channel_ids?.length ?? 0)} channels
+              <div style={{ padding: '20px', color: 'var(--text-muted)', fontSize: '13px' }}>No risk members at the moment.</div>
+            ) : activity.slice(0, 5).map((item, idx) => {
+              const risk = riskIconStyle(item.message);
+              return (
+                <div key={item.id ?? idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: idx < Math.min(activity.length, 5) - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
+                  <span style={{ width: '28px', height: '28px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: risk.bg, border: `0.5px solid ${risk.border}`, color: risk.color }}>
+                    {risk.svg}
                   </span>
+                  <div style={{ flex: 1, fontSize: '13px', color: 'var(--text)' }}>{item.message}</div>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{timeAgo(item.created_at)}</div>
                 </div>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {plan.member_counts.active} active · {plan.member_counts.trialing} trialing
-                </span>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{fmtAmount(plan.monthly_amount_minor, plan.currency)}</div>
-                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>/ month</div>
-              </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                <button style={{ width: '30px', height: '30px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 180ms ease, background 180ms ease' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-                  aria-label="View">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" strokeWidth="1.6"/><circle cx="12" cy="12" r="2.8" stroke="currentColor" strokeWidth="1.6"/></svg>
-                </button>
-                <button style={{ width: '30px', height: '30px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 180ms ease, background 180ms ease' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-                  aria-label="Edit">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-3-3L5 17v3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── tab: Channels ────────────────────────────────────────────────────────────
-
-function ProviderIcon({ id, size = 18 }: { id: string; size?: number }) {
-  if (id === 'discord') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 4.4a16.5 16.5 0 0 0-4-1.3l-.2.4a15 15 0 0 1 3.7 1.2 14 14 0 0 0-14 0 15 15 0 0 1 3.7-1.2l-.2-.4a16.5 16.5 0 0 0-4 1.3C1.7 9 .9 13.4 1.3 17.8c1.6 1.2 3.2 1.9 4.8 2.4.4-.5.7-1.1 1-1.7a10 10 0 0 1-1.6-.8l.4-.3a10 10 0 0 0 12.2 0l.4.3a10 10 0 0 1-1.6.8c.3.6.6 1.2 1 1.7 1.6-.5 3.2-1.2 4.8-2.4.5-5-1-9.4-3.2-13.4zM8.5 15.2c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1zm7 0c-1 0-1.8-1-1.8-2.1 0-1.2.8-2.2 1.8-2.2s1.8 1 1.8 2.2c0 1.2-.8 2.1-1.8 2.1z"/></svg>
-  );
-  if (id === 'telegram') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M21.7 3.3 2.6 10.7c-1.3.5-1.3 1.3-.2 1.6l4.9 1.5 1.9 5.8c.2.7.4.9.8.9.5 0 .7-.2 1-.5l2.4-2.3 5 3.7c.9.5 1.5.2 1.7-.8L22.7 5c.3-1.3-.5-1.9-1-1.7zM18 7l-8 7.3-.4 4.3-1.3-4.2 9.7-7.4z"/></svg>
-  );
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-  );
-}
-
-function providerColors(id: string): { bg: string; border: string; color: string } {
-  if (id === 'discord') return { bg: 'rgba(88,101,242,0.12)', border: 'rgba(88,101,242,0.25)', color: '#8b92f8' };
-  if (id === 'telegram') return { bg: 'rgba(34,158,217,0.12)', border: 'rgba(34,158,217,0.25)', color: '#5cb8e6' };
-  return { bg: 'rgba(74,181,133,0.12)', border: 'rgba(74,181,133,0.25)', color: '#4ab585' };
-}
-
-function ChannelProviderIcon({ provider, size = 36 }: { provider: string; size?: number }) {
-  const c = providerColors(provider);
-  return (
-    <span style={{ width: `${size}px`, height: `${size}px`, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: c.bg, border: `0.5px solid ${c.border}`, color: c.color, flexShrink: 0 }}>
-      <ProviderIcon id={provider} size={Math.round(size * 0.5)} />
-    </span>
-  );
-}
-
-// ─── Add Channel Modal ────────────────────────────────────────────────────────
-
-type ModalScreen = 'providers' | 'channels';
-
-function AddChannelModal({ communityId, onClose, onAdded }: {
-  communityId: string;
-  onClose: () => void;
-  onAdded: () => void;
-}) {
-  const router = useRouter();
-  const [screen, setScreen] = useState<ModalScreen>('providers');
-  const [providers, setProviders] = useState<ChannelProvider[]>([]);
-  const [loadingProviders, setLoadingProviders] = useState(true);
-  const [selectedProvider, setSelectedProvider] = useState<ChannelProvider | null>(null);
-  const [intChannels, setIntChannels] = useState<IntegrationChannel[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getIntegrations()
-      .then(res => setProviders(res.channel_providers ?? []))
-      .catch(() => {})
-      .finally(() => setLoadingProviders(false));
-  }, []);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  function selectProvider(p: ChannelProvider) {
-    if (p.status === 'coming_soon') return;
-    if (!p.has_connection) return;
-    setSelectedProvider(p);
-    setScreen('channels');
-    setLoadingChannels(true);
-    api.getIntegrationChannels(p.id)
-      .then(setIntChannels)
-      .catch(() => setIntChannels([]))
-      .finally(() => setLoadingChannels(false));
-  }
-
-  async function addChannel(ch: IntegrationChannel) {
-    if (!selectedProvider || addingId) return;
-    setAddingId(ch.id);
-    try {
-      await api.addCommunityChannel(communityId, {
-        provider: selectedProvider.id,
-        channel_id: ch.id,
-        channel_name: ch.name,
-      });
-      onAdded();
-      onClose();
-    } catch {
-      setAddingId(null);
-    }
-  }
-
-  const modalStyle: React.CSSProperties = {
-    width: '100%', maxWidth: '480px',
-    background: 'var(--surface-1)',
-    border: '0.5px solid rgba(255,255,255,0.10)',
-    borderRadius: '14px',
-    boxShadow: '0 30px 80px -20px rgba(0,0,0,0.7)',
-    display: 'flex', flexDirection: 'column',
-    maxHeight: 'calc(100vh - 48px)',
-    position: 'relative',
-    transform: 'translateY(0) scale(1)',
-    overflow: 'hidden',
-  };
-
-  const closeBtn = (
-    <button
-      onClick={onClose}
-      style={{ width: '28px', height: '28px', borderRadius: '6px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-    </button>
-  );
-
-  return (
-    <div
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,7,0.62)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 100 }}
-    >
-      <div style={modalStyle} onClick={e => e.stopPropagation()}>
-        {/* gradient border shimmer */}
-        <div style={{ position: 'absolute', inset: '-1px', borderRadius: 'inherit', background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.01))', WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', WebkitMaskComposite: 'xor', mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)', maskComposite: 'exclude', padding: '1px', pointerEvents: 'none' }} />
-
-        {/* ─── Screen: Provider list ─── */}
-        {screen === 'providers' && (
-          <>
-            <div style={{ padding: '20px 22px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px', flexShrink: 0 }}>
-              <div>
-                <h2 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text)', margin: 0 }}>Add a channel</h2>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
-                  Choose a platform to connect. Members get access when they subscribe.
-                </p>
-              </div>
-              {closeBtn}
-            </div>
-
-            <div style={{ padding: '16px 22px 20px', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1 }}>
-              {loadingProviders ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
-                  <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', flexShrink: 0 }} />
-                  Loading integrations...
-                </div>
-              ) : providers.map(p => {
-                const c = providerColors(p.id);
-                const isComingSoon = p.status === 'coming_soon';
-                const noConnection = p.status === 'live' && !p.has_connection;
-                const clickable = p.status === 'live' && p.has_connection;
-
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => clickable && selectProvider(p)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '14px',
-                      padding: '16px 18px',
-                      borderRadius: '10px',
-                      background: 'var(--surface-2)',
-                      border: `0.5px solid rgba(255,255,255,0.08)`,
-                      cursor: clickable ? 'pointer' : 'default',
-                      opacity: isComingSoon ? 0.55 : 1,
-                      transition: 'background 180ms ease, border-color 180ms ease',
-                      position: 'relative',
-                    }}
-                    onMouseEnter={e => { if (clickable) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; } }}
-                    onMouseLeave={e => { if (clickable) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; } }}
-                  >
-                    <span style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: c.bg, border: `0.5px solid ${c.border}`, color: c.color, flexShrink: 0 }}>
-                      <ProviderIcon id={p.id} size={20} />
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em' }}>{p.label}</span>
-                        {isComingSoon && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 7px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 500, background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.10)', color: 'var(--text-muted)' }}>
-                            Coming soon
-                          </span>
-                        )}
-                        {p.has_connection && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '1px 7px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 500, background: 'rgba(47,157,107,0.10)', border: '0.5px solid rgba(47,157,107,0.22)', color: '#4ab585' }}>
-                            <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
-                            Connected
-                          </span>
-                        )}
-                      </div>
-                      {noConnection && (
-                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.4 }}>
-                          Connect your {p.label} account in Settings first.
-                        </p>
-                      )}
-                    </div>
-                    {noConnection && p.connect_url && (
-                      <a
-                        href={p.connect_url}
-                        onClick={e => e.stopPropagation()}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', flexShrink: 0, textDecoration: 'none' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                      >
-                        Connect
-                      </a>
-                    )}
-                    {noConnection && !p.connect_url && (
-                      <button
-                        onClick={e => { e.stopPropagation(); router.push('/dashboard/settings'); }}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', flexShrink: 0 }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                      >
-                        <Settings size={11} />
-                        Go to Settings
-                      </button>
-                    )}
-                    {clickable && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                        {p.bot_install_url && (
-                          <a
-                            href={p.bot_install_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'border-color 180ms ease, background 180ms ease', textDecoration: 'none' }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                          >
-                            <Plus size={11} /> Add server
-                          </a>
-                        )}
-                        <ChevronRight size={15} style={{ color: 'var(--text-muted)' }} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* ─── Screen: Channel list ─── */}
-        {screen === 'channels' && selectedProvider && (
-          <>
-            <div style={{ padding: '20px 22px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                <button
-                  onClick={() => { setScreen('providers'); setSelectedProvider(null); setIntChannels([]); }}
-                  style={{ width: '28px', height: '28px', borderRadius: '6px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'color 180ms ease, background 180ms ease' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-                >
-                  <ArrowLeft size={14} />
-                </button>
-                <div style={{ minWidth: 0 }}>
-                  <h2 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text)', margin: 0 }}>Select a channel</h2>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>{selectedProvider.label}</p>
-                </div>
-              </div>
-              {closeBtn}
-            </div>
-
-            <div style={{ padding: '16px 22px 20px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
-              {loadingChannels ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
-                  <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', flexShrink: 0 }} />
-                  Loading channels...
-                </div>
-              ) : intChannels.length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                  No channels found for this {selectedProvider.label} account.
-                </div>
-              ) : intChannels.map(ch => {
-                const isAdding = addingId === ch.id;
-                return (
-                  <button
-                    key={ch.id}
-                    onClick={() => addChannel(ch)}
-                    disabled={!!addingId}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '14px',
-                      padding: '13px 16px',
-                      borderRadius: '10px',
-                      background: 'var(--surface-2)',
-                      border: '0.5px solid rgba(255,255,255,0.08)',
-                      cursor: addingId ? 'not-allowed' : 'pointer',
-                      textAlign: 'left',
-                      opacity: addingId && !isAdding ? 0.4 : 1,
-                      transition: 'background 180ms ease, border-color 180ms ease, opacity 180ms ease',
-                      width: '100%',
-                    }}
-                    onMouseEnter={e => { if (!addingId) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; } }}
-                    onMouseLeave={e => { if (!addingId) { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; } }}
-                  >
-                    <ChannelProviderIcon provider={selectedProvider.id} size={36} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)', margin: '0 0 1px', letterSpacing: '-0.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.name}</p>
-                      {ch.type && <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, textTransform: 'capitalize' }}>{ch.type}</p>}
-                    </div>
-                    {isAdding ? (
-                      <Loader2 size={14} style={{ animation: 'ag-spin 0.8s linear infinite', color: 'var(--text-muted)', flexShrink: 0 }} />
-                    ) : (
-                      <Plus size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
-      <style>{`@keyframes ag-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
-function ChannelsTab({ communityId, channels, onChannelAdded }: { communityId: string; channels: CommunityChannel[]; onChannelAdded: () => void }) {
-  const [addOpen, setAddOpen] = useState(false);
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h2 style={{ fontSize: '15px', fontWeight: 500, margin: 0, letterSpacing: '-0.01em', color: 'var(--text)' }}>Channels</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0' }}>The places paying members get access to when they subscribe.</p>
-        </div>
-        <button
-          onClick={() => setAddOpen(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 14px', borderRadius: '6px', background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-        >
-          <Plus size={13} />
-          Add channel
-        </button>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-        {channels.map(ch => (
-          <div key={ch.id} style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <ChannelProviderIcon provider={ch.provider} />
-              <div>
-                <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', margin: 0 }}>{ch.name}</h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: '1px 0 0', textTransform: 'capitalize' }}>{ch.provider}</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '12px', borderTop: '0.5px solid var(--border-soft)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, background: ch.connected ? 'var(--success-soft-bg)' : 'rgba(255,255,255,0.04)', border: `0.5px solid ${ch.connected ? 'var(--success-soft-border)' : 'var(--border)'}`, color: ch.connected ? 'var(--success-soft-text)' : 'var(--text-secondary)' }}>
-                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-                {ch.connected ? 'Connected' : 'Not connected'}
-              </span>
-              {ch.members_synced != null && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{ch.members_synced} members synced</span>}
-            </div>
+              );
+            })}
           </div>
-        ))}
-        {channels.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: '32px', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-            No channels connected yet.
-          </div>
-        )}
-        <button
-          onClick={() => setAddOpen(true)}
-          style={{ background: 'transparent', border: '1px dashed var(--border-strong)', borderRadius: '10px', padding: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text-secondary)', minHeight: '100px', transition: 'background 180ms ease, border-color 180ms ease', flexDirection: 'column' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--text-muted)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)'; }}
-        >
-          <span style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--border)', color: 'var(--text-muted)' }}>
-            <Plus size={16} />
-          </span>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>Add another channel</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Discord, Telegram, or email list</div>
-          </div>
-        </button>
-      </div>
-
-      {addOpen && (
-        <AddChannelModal
-          communityId={communityId}
-          onClose={() => setAddOpen(false)}
-          onAdded={() => { onChannelAdded(); setAddOpen(false); }}
-        />
-      )}
-    </div>
-  );
-}
-
-// ─── tab: Members ─────────────────────────────────────────────────────────────
-
-function MembersTab({ members, total }: { members: CommunityMember[]; total: number }) {
-  return (
-    <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-        <div>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Members</h3>
-          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Everyone with active access to this community.</p>
-        </div>
-        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-        >
-          <Download size={13} />
-          Export CSV
-        </button>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 2fr) 1fr 1fr 90px 32px', alignItems: 'center', gap: '12px', padding: '10px 20px', background: 'var(--bg-alt, #0d0d0d)', borderBottom: '0.5px solid var(--border)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 500 }}>
-        <div>Member</div>
-        <div>Plan</div>
-        <div>Since</div>
-        <div>Status</div>
-        <div />
-      </div>
-      {members.length === 0 ? (
-        <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No members yet.</div>
-      ) : members.map((m, idx) => {
-        const name = m.display_name || m.email || 'Unknown';
-        const plan = m.source_page_name || m.page_name || '—';
-        return (
-          <div key={m.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 2fr) 1fr 1fr 90px 32px', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: idx < members.length - 1 ? '0.5px solid var(--border-soft)' : 'none', fontSize: '13px', transition: 'background 180ms ease' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-              <AvatarCell name={name} avatarUrl={m.avatar_url} />
-              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-                {m.email && m.display_name && <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</span>}
-              </div>
-            </div>
-            <div style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plan}</div>
-            <div style={{ color: 'var(--text-muted)' }}>{timeAgo(m.created_at)}</div>
-            <div><PaymentStatusChip status={m.payment_status} /></div>
-            <div>
-              <button style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 180ms ease, background 180ms ease' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; (e.currentTarget as HTMLElement).style.background = 'none'; }}
-                aria-label="More">
-                <MoreHorizontal size={14} />
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── tab: Settings ────────────────────────────────────────────────────────────
-
-function SettingsTab({ community, overview }: { community: Community; overview: CommunityOverview | null }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Community details</h3>
-          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Name, slug, and branding.</p>
-        </div>
-        {[
-          { title: 'Name', value: community.name },
-          { title: 'Slug', value: community.slug || '—', mono: true },
-          { title: 'Tagline', value: community.tagline || 'Not set' },
-        ].map(row => (
-          <div key={row.title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', padding: '14px 20px', borderBottom: '0.5px solid var(--border-soft)' }}>
-            <div>
-              <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{row.title}</div>
-              <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px', fontFamily: row.mono ? 'var(--font-mono)' : undefined }}>{row.value}</div>
-            </div>
-            <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(255,255,255,0.12)', color: 'var(--text)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease', whiteSpace: 'nowrap' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-            >Edit</button>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--border-soft)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: 'var(--text)' }}>Payments</h3>
-          <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>Stripe account that receives money for this community.</p>
-        </div>
-        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
-          <div>
-            <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>Stripe</div>
-            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>
-              {overview?.onboarding.stripe_connected ? 'Connected' : 'Not connected'}
-            </div>
-          </div>
-          {overview?.onboarding.stripe_connected ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 500, background: 'var(--success-soft-bg)', border: '0.5px solid var(--success-soft-border)', color: 'var(--success-soft-text)' }}>
-              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
-              Connected
-            </span>
-          ) : overview?.stripe_connect_url ? (
-            <a href={overview.stripe_connect_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '6px 12px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#fbbf24', textDecoration: 'none', transition: 'background 180ms ease' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(245,158,11,0.08)')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-            >
-              <ExternalLink size={12} />
-              Connect Stripe
-            </a>
-          ) : null}
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--surface-1)', border: '0.5px solid rgba(214,69,69,0.22)', borderRadius: '10px' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid rgba(214,69,69,0.22)' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, margin: 0, color: '#e06a6a', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L2 21h20L12 3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M12 10v5M12 18h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-            Danger zone
-          </h3>
-        </div>
-        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>Delete this community</div>
-            <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0', maxWidth: '440px' }}>Members lose access immediately. Revenue history is preserved.</p>
-          </div>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 500, padding: '7px 13px', borderRadius: '6px', background: 'transparent', border: '0.5px solid rgba(214,69,69,0.22)', color: '#e06a6a', cursor: 'pointer', transition: 'background 180ms ease, border-color 180ms ease', whiteSpace: 'nowrap' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(214,69,69,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = '#e06a6a'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(214,69,69,0.22)'; }}
-          >Delete</button>
         </div>
       </div>
     </div>
@@ -823,28 +160,27 @@ function SettingsTab({ community, overview }: { community: Community; overview: 
 
 // ─── main page ────────────────────────────────────────────────────────────────
 
+function parseMode(value: string | null): ModeName {
+  if (value === 'analytics' || value === 'members') return value;
+  return 'overview';
+}
+
 export default function CommunityPage() {
   const { communityId } = useParams<{ communityId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeMode = parseMode(searchParams.get('mode'));
   const { communities, setCurrentCommunityId } = useCommunity();
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [overview, setOverview] = useState<CommunityOverview | null>(null);
   const [previewPlans, setPreviewPlans] = useState<CommunityPlan[]>([]);
   const [allPlans, setAllPlans] = useState<CommunityPlan[]>([]);
-  const [channels, setChannels] = useState<CommunityChannel[]>([]);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [memberTotal, setMemberTotal] = useState(0);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
-  const [activeTab, setActiveTab] = useState<TabName>('overview');
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadAllPlans = useCallback(() => {
-    if (!communityId) return;
-    api.getCommunityPlans(communityId).then(setAllPlans).catch(() => {});
-  }, [communityId]);
-
-  // Load bootstrap data
   useEffect(() => {
     if (!communityId) return;
     setCurrentCommunityId(communityId);
@@ -864,119 +200,74 @@ export default function CommunityPage() {
     });
   }, [communityId]);
 
-  // Load full plans on plans tab
   useEffect(() => {
-    if (activeTab === 'plans' && communityId && allPlans.length === 0) {
-      loadAllPlans();
+    if (activeMode === 'analytics' && communityId && allPlans.length === 0) {
+      api.getCommunityPlans(communityId).then(setAllPlans).catch(() => {});
     }
-  }, [activeTab, communityId]);
+  }, [activeMode, communityId]);
 
-  // Load channels on channels tab
   useEffect(() => {
-    if (activeTab === 'channels' && communityId && channels.length === 0) {
-      api.getCommunityChannels(communityId).then(setChannels).catch(() => {});
+    if (activeMode === 'members' && communityId) {
+      if (members.length === 0) {
+        api.getCommunityMembers(communityId, { page: 1, limit: 50 }).then(res => {
+          setMembers(res.members);
+          setMemberTotal(res.total);
+        }).catch(() => {});
+      }
+      if (activity.length === 0) {
+        api.getCommunityActivity(communityId, { window: '30d', limit: 20 }).then(setActivity).catch(() => {});
+      }
     }
-  }, [activeTab, communityId]);
-
-  // Load members on members tab
-  useEffect(() => {
-    if (activeTab === 'members' && communityId && members.length === 0) {
-      api.getCommunityMembers(communityId, { page: 1, limit: 50 }).then(res => {
-        setMembers(res.members);
-        setMemberTotal(res.total);
-      }).catch(() => {});
-    }
-  }, [activeTab, communityId]);
+  }, [activeMode, communityId]);
 
   const comm = community ?? communities.find(c => c.id === communityId) ?? null;
 
-  function handleOpenNewPlan() {
-    router.push(`/dashboard/plans/new?community_id=${communityId}&community_name=${encodeURIComponent(comm?.name || '')}`);
+  function handleSetup() {
+    router.push(`/dashboard/community/${communityId}/setup`);
+  }
+
+  function handleViewMembers() {
+    router.push(`/dashboard/community/${communityId}?mode=members`);
   }
 
   if (!comm && isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {[1,2,3].map(i => <div key={i} style={{ height: '56px', borderRadius: '10px', background: 'var(--surface-1)', border: '0.5px solid var(--border)' }} />)}
+        {[1, 2, 3].map(i => <div key={i} style={{ height: '56px', borderRadius: '10px', background: 'var(--surface-1)', border: '0.5px solid var(--border)' }} />)}
       </div>
     );
   }
 
   if (!comm) return <div style={{ color: 'var(--text-muted)', padding: '32px' }}>Community not found.</div>;
 
-  const color = communityColor(comm.name);
-  const initial = communityInitial(comm.name);
-
-  const counts: Partial<Record<TabName, number>> = {
-    plans: allPlans.length || previewPlans.length || comm.pages_count,
-    members: memberTotal || comm.members_count,
-  };
-
   return (
     <div>
-      {/* Header */}
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <span style={{ width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0, background: color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '18px' }}>
-            {initial}
-          </span>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 500, color: 'var(--text)', margin: '0 0 2px', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {comm.name}
-            </h1>
-            <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0 }}>
-              {comm.tagline || ''}
-              {comm.members_count != null && `${comm.tagline ? ' · ' : ''}${comm.members_count} members`}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'inline-flex', gap: '8px' }}>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: 'transparent', color: 'var(--text)', border: '0.5px solid rgba(255,255,255,0.15)', cursor: 'pointer', transition: 'border-color 180ms ease, background 180ms ease' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.3)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-          >
-            <ExternalLink size={13} />
-            Visit page
-          </button>
-          <button
-            onClick={handleOpenNewPlan}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, background: '#fff', color: '#0a0a0a', border: '0.5px solid #fff', cursor: 'pointer', transition: 'opacity 180ms ease' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.92')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-          >
-            <Plus size={13} />
-            New plan
-          </button>
-        </div>
-      </div>
+      <CommunityWorkspaceChrome community={comm} activeMode={activeMode} communityId={communityId} />
 
-      {/* Tabs */}
-      <TabBar active={activeTab} onSelect={setActiveTab} counts={counts} />
-
-      {/* Tab panes */}
-      {activeTab === 'overview' && (
-        <OverviewTab communityId={communityId} overview={overview} plans={previewPlans} activity={activity} onNewPlan={handleOpenNewPlan} />
-      )}
-      {activeTab === 'plans' && (
-        <PlansTab communityId={communityId} plans={allPlans.length > 0 ? allPlans : previewPlans} onNewPlan={handleOpenNewPlan} onRefresh={loadAllPlans} />
-      )}
-      {activeTab === 'channels' && (
-        <ChannelsTab
-          communityId={communityId}
-          channels={channels}
-          onChannelAdded={() => {
-            setChannels([]);
-            api.getCommunityChannels(communityId).then(setChannels).catch(() => {});
-          }}
+      {/* Mode panes */}
+      {activeMode === 'overview' && (
+        <OverviewPane
+          overview={overview}
+          plans={previewPlans}
+          activity={activity}
+          onViewSetup={handleSetup}
+          onViewMembers={handleViewMembers}
         />
       )}
-      {activeTab === 'members' && (
-        <MembersTab members={members} total={memberTotal} />
+      {activeMode === 'analytics' && (
+        <AnalyticsPane
+          overview={overview}
+          plans={allPlans.length > 0 ? allPlans : previewPlans}
+        />
       )}
-      {activeTab === 'settings' && (
-        <SettingsTab community={comm} overview={overview} />
+      {activeMode === 'members' && (
+        <MembersPane
+          members={members}
+          memberTotal={memberTotal}
+          overview={overview}
+          activity={activity}
+        />
       )}
-
     </div>
   );
 }
