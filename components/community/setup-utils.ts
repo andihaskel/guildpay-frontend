@@ -23,3 +23,16 @@ export function fmtAmount(minor: number, currency = 'usd') {
     minimumFractionDigits: minor % 100 === 0 ? 0 : 2,
   }).format(minor / 100);
 }
+
+export function mergePlanOrderIds(planOrderIds: string[] | undefined, planIds: string[]) {
+  const base = (planOrderIds ?? []).filter(id => planIds.includes(id));
+  const missing = planIds.filter(id => !base.includes(id));
+  return [...base, ...missing];
+}
+
+export function reorderByIndex<T>(items: T[], from: number, to: number) {
+  const next = [...items];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}

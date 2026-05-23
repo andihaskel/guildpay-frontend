@@ -1,15 +1,24 @@
 'use client';
 
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { CommunityOverview, CommunityPlan, CommunityChannel } from '@/lib/types';
 import {
   DEFAULT_COMMUNITY_FAQ,
-  DEFAULT_COMMUNITY_SELLING_POINTS,
   DEFAULT_COMMUNITY_TESTIMONIALS,
 } from '@/components/community/community-preview';
 import { useSetupWorkspace } from '@/components/community/SetupWorkspaceContext';
-import { SetupPageDraft } from '@/components/community/setup-preview-types';
-import { fmtAmount, planColor, planInitials } from '@/components/community/setup-utils';
+import { SetupPageDraft, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import { SetupMediaGallery } from '@/components/community/SetupMediaGallery';
+import { PlanSellingPointsSection } from '@/components/community/PlanSellingPointsEditor';
+import { fmtAmount, mergePlanOrderIds, planInitials, reorderByIndex } from '@/components/community/setup-utils';
+import {
+  planAccentColor,
+  planDisplayPriceMinor,
+  planFrequencyValue,
+  planPickSubline,
+  planPriceLabel,
+  sellingPointsForPlan,
+} from '@/components/community/plan-model';
 
 // ─── types & props ───────────────────────────────────────────────────────────
 
@@ -19,25 +28,20 @@ export type SetupTab = 'page' | 'plans' | 'checkout';
 
 const ACCENT_SWATCHES = ['#5865f2', '#7c3aed', '#2f9d6b', '#d97706', '#dc2626', '#0891b2'];
 
-const STATIC_SELLING_POINTS = DEFAULT_COMMUNITY_SELLING_POINTS;
 const DEFAULT_TESTIMONIALS = DEFAULT_COMMUNITY_TESTIMONIALS;
 const DEFAULT_FAQ = DEFAULT_COMMUNITY_FAQ;
 
 export { fmtAmount, planColor, planInitials } from '@/components/community/setup-utils';
+export { planAccentColor, planPriceLabel } from '@/components/community/plan-model';
 
 function planIsLive(plan: CommunityPlan) {
   return !!plan.published && plan.status !== 'disabled';
 }
 
-function planPriceLabel(plan: CommunityPlan) {
-  if (plan.yearly_amount_minor) return `${fmtAmount(plan.yearly_amount_minor, plan.currency)} / yr`;
-  return `${fmtAmount(plan.monthly_amount_minor, plan.currency)} / mo`;
-}
-
-function planHintLine(plan: CommunityPlan, planChannels: CommunityChannel[]) {
+function planHintLine(plan: CommunityPlan, planChannels: CommunityChannel[], benefitCount: number) {
   const providers = Array.from(new Set(planChannels.map(c => c.provider)));
   const provLabel = providers.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' + ') || 'No channels';
-  return `${planPriceLabel(plan)} · ${plan.member_counts.active} active · ${provLabel} · 3 benefits`;
+  return `${planPriceLabel(plan)} · ${plan.member_counts.active} active · ${provLabel} · ${benefitCount} benefit${benefitCount === 1 ? '' : 's'}`;
 }
 
 function channelsForPlan(plan: CommunityPlan, channels: CommunityChannel[]) {
@@ -136,24 +140,199 @@ function providerStyle(id: string) {
   return { bg: 'rgba(74,181,133,0.14)', color: '#4ab585' };
 }
 
+function PlanPickCheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlanPickDragIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <circle cx="9" cy="6" r="1.4" />
+      <circle cx="15" cy="6" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="9" cy="18" r="1.4" />
+      <circle cx="15" cy="18" r="1.4" />
+    </svg>
+  );
+}
+
+function PagePlansPicker({
+  plans,
+  visiblePlanIds,
+  planOrderIds,
+  onVisiblePlanIdsChange,
+  onPlanOrderIdsChange,
+  onGoToPlans,
+}: {
+  plans: CommunityPlan[];
+  visiblePlanIds: string[];
+  planOrderIds: string[];
+  onVisiblePlanIdsChange: (ids: string[]) => void;
+  onPlanOrderIdsChange: (ids: string[]) => void;
+  onGoToPlans: () => void;
+}) {
+  const dragIndexRef = useRef<number | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const visibleSet = useMemo(() => new Set(visiblePlanIds), [visiblePlanIds]);
+
+  const orderedPlans = useMemo(() => {
+    const order = mergePlanOrderIds(planOrderIds, plans.map(plan => plan.id));
+    return order
+      .map(id => plans.find(plan => plan.id === id))
+      .filter((plan): plan is CommunityPlan => !!plan);
+  }, [plans, planOrderIds]);
+
+  const syncOrder = (nextOrderIds: string[]) => {
+    onPlanOrderIdsChange(nextOrderIds);
+    onVisiblePlanIdsChange(nextOrderIds.filter(id => visibleSet.has(id)));
+  };
+
+  const togglePlan = (planId: string) => {
+    const order = mergePlanOrderIds(planOrderIds, plans.map(plan => plan.id));
+    if (visibleSet.has(planId)) {
+      onVisiblePlanIdsChange(visiblePlanIds.filter(id => id !== planId));
+      return;
+    }
+    onVisiblePlanIdsChange(order.filter(id => visibleSet.has(id) || id === planId));
+  };
+
+  const handleDragStart = (index: number, planId: string) => {
+    dragIndexRef.current = index;
+    setDraggingId(planId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const from = dragIndexRef.current;
+    if (from == null || from === index) return;
+    const currentOrder = orderedPlans.map(plan => plan.id);
+    const nextOrder = reorderByIndex(currentOrder, from, index);
+    dragIndexRef.current = index;
+    syncOrder(nextOrder);
+  };
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null;
+    setDraggingId(null);
+  };
+
+  return (
+    <>
+      {orderedPlans.map((plan, index) => {
+        const isOn = visibleSet.has(plan.id);
+        const color = planAccentColor(plan);
+        const initials = planInitials(plan.offer_name);
+        return (
+          <div
+            key={plan.id}
+            className={`setup-plan-pick${isOn ? ' is-on' : ' is-off'}${draggingId === plan.id ? ' is-dragging' : ''}`}
+            draggable
+            role="button"
+            tabIndex={0}
+            onDragStart={() => handleDragStart(index, plan.id)}
+            onDragOver={e => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
+            onDrop={e => e.preventDefault()}
+            onClick={e => {
+              if ((e.target as HTMLElement).closest('.setup-plan-pick-drag')) return;
+              togglePlan(plan.id);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                togglePlan(plan.id);
+              }
+            }}
+          >
+            <span className="setup-plan-pick-check" aria-pressed={isOn}>
+              <PlanPickCheckIcon />
+            </span>
+            <span className="setup-plan-pick-thumb" style={{ background: color }}>
+              {initials}
+            </span>
+            <div className="setup-plan-pick-meta">
+              <span className="setup-plan-pick-name">
+                {plan.offer_name}
+                {planIsLive(plan) ? <ChipLive /> : <ChipDraft />}
+              </span>
+              <span className="setup-plan-pick-sub">{planPickSubline(plan)}</span>
+            </div>
+            <span
+              className="setup-plan-pick-drag"
+              aria-label="Drag to reorder"
+              onMouseDown={e => e.stopPropagation()}
+            >
+              <PlanPickDragIcon />
+            </span>
+          </div>
+        );
+      })}
+
+      <button type="button" className="setup-plan-pick-create" onClick={onGoToPlans}>
+        <span className="setup-plan-pick-thumb">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <div className="setup-plan-pick-meta">
+          <span className="setup-plan-pick-name">Create new plan</span>
+          <span className="setup-plan-pick-sub">
+            Add another pricing option, then come back to choose where it shows.
+          </span>
+        </div>
+        <svg className="setup-plan-pick-create-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </>
+  );
+}
+
 
 // ─── PagePane ──────────────────────────────────────────────────────────────────
 
 function PagePane({
-  plans,
-  channels,
   pageDraft,
   onPageDraftChange,
-  onJumpToPlans,
+  plans,
+  onGoToPlans,
 }: {
-  plans: CommunityPlan[];
-  channels: CommunityChannel[];
   pageDraft: SetupPageDraft;
   onPageDraftChange: (patch: Partial<SetupPageDraft>) => void;
-  onJumpToPlans: () => void;
+  plans: CommunityPlan[];
+  onGoToPlans: () => void;
 }) {
   const accRef = useRef<HTMLDivElement>(null);
-  const { communityName, tagline, headline, subHeadline, accentColor } = pageDraft;
+  const {
+    communityName,
+    tagline,
+    headline,
+    subHeadline,
+    accentColor,
+    mediaItems,
+    autoplayVideoInHero,
+    showMemberStats = true,
+  } = pageDraft;
+  const videoCount = mediaItems.filter(m => m.type === 'video').length;
+  const visiblePlanIds = pageDraft.visiblePlanIds ?? plans.map(p => p.id);
+  const planOrderIds = mergePlanOrderIds(
+    pageDraft.planOrderIds,
+    plans.map(plan => plan.id),
+  );
+  const visiblePlans = visiblePlanIds
+    .map(id => plans.find(plan => plan.id === id))
+    .filter((plan): plan is CommunityPlan => !!plan);
+  const visiblePlanNames = visiblePlans.map(p => p.offer_name).join(' · ') || '—';
+  const previewMemberCount = Math.max(
+    plans[0]?.member_counts?.active ?? 0,
+    28,
+  );
+  const previewOnlineCount = Math.max(3, Math.round(previewMemberCount * 0.15));
 
   const expandAll = () => {
     accRef.current?.querySelectorAll('details.setup-acc').forEach(el => { (el as HTMLDetailsElement).open = true; });
@@ -162,16 +341,11 @@ function PagePane({
     accRef.current?.querySelectorAll('details.setup-acc').forEach(el => { (el as HTMLDetailsElement).open = false; });
   };
 
-  const planOrderSummary = plans.map(p => p.offer_name).join(' · ') || 'No plans yet';
   const initial = (communityName.trim()[0] || '?').toUpperCase();
 
   return (
-    <div ref={accRef}>
+    <div ref={accRef} className="setup-form-stack">
       <div className="setup-progress">
-        <div className="setup-progress-left">
-          <div className="setup-progress-bar"><span style={{ width: '100%' }} /></div>
-          <span className="setup-progress-label"><b>6 of 6</b> sections complete</span>
-        </div>
         <div className="setup-progress-right">
           <button type="button" onClick={expandAll}>Expand all</button>
           <button type="button" onClick={collapseAll}>Collapse all</button>
@@ -182,13 +356,10 @@ function PagePane({
         <summary className="setup-acc-head">
           <span className="setup-acc-num done">1</span>
           <div className="setup-acc-titles">
-            <span className="setup-acc-title">Branding</span>
-            <span className="setup-acc-hint">Cover, logo, and accent color.</span>
+            <span className="setup-acc-title">Hero</span>
+            <span className="setup-acc-hint">Name, headline, cover, logo, and accent color.</span>
           </div>
-          <span className="setup-acc-summary">
-            <span>{communityName}</span>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: accentColor, border: '0.5px solid transparent', flexShrink: 0 }} />
-          </span>
+          <span className="setup-acc-summary">“{headline}”</span>
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
@@ -208,14 +379,6 @@ function PagePane({
               </div>
             </div>
             <div>
-              <label className="setup-field-label">Community name</label>
-              <input className="setup-field-input" value={communityName} onChange={e => onPageDraftChange({ communityName: e.target.value })} />
-            </div>
-            <div>
-              <label className="setup-field-label">Tagline</label>
-              <input className="setup-field-input" value={tagline} onChange={e => onPageDraftChange({ tagline: e.target.value })} />
-            </div>
-            <div>
               <label className="setup-field-label">Accent color</label>
               <div className="setup-swatch-row">
                 {ACCENT_SWATCHES.map(c => (
@@ -223,22 +386,14 @@ function PagePane({
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </details>
-
-      <details className="setup-acc">
-        <summary className="setup-acc-head">
-          <span className="setup-acc-num done">2</span>
-          <div className="setup-acc-titles">
-            <span className="setup-acc-title">Headline</span>
-            <span className="setup-acc-hint">The promise visitors read first.</span>
-          </div>
-          <span className="setup-acc-summary">“{headline}”</span>
-          <AccChevron />
-        </summary>
-        <div className="setup-acc-body">
-          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label className="setup-field-label">Community name</label>
+              <input className="setup-field-input" value={communityName} onChange={e => onPageDraftChange({ communityName: e.target.value })} />
+            </div>
+            <div>
+              <label className="setup-field-label">Tagline</label>
+              <input className="setup-field-input" value={tagline} onChange={e => onPageDraftChange({ tagline: e.target.value })} />
+            </div>
             <div>
               <label className="setup-field-label">Headline</label>
               <input className="setup-field-input" value={headline} onChange={e => onPageDraftChange({ headline: e.target.value })} />
@@ -248,6 +403,52 @@ function PagePane({
               <textarea className="setup-field-textarea" rows={2} value={subHeadline} onChange={e => onPageDraftChange({ subHeadline: e.target.value })} />
             </div>
           </div>
+          <div className="setup-settings-row">
+            <div>
+              <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>Member stats</div>
+              <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>
+                Show “{previewOnlineCount} online now · {previewMemberCount.toLocaleString()} members” in the hero.
+              </div>
+            </div>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', cursor: 'pointer', flexShrink: 0 }}>
+              <input
+                type="checkbox"
+                checked={showMemberStats}
+                onChange={e => onPageDraftChange({ showMemberStats: e.target.checked })}
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              {showMemberStats ? 'On' : 'Off'}
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <details className="setup-acc">
+        <summary className="setup-acc-head">
+          <span className="setup-acc-num done">2</span>
+          <div className="setup-acc-titles">
+            <span className="setup-acc-title">Photos &amp; video</span>
+            <span className="setup-acc-hint">Gallery shown on the public page. First item is the cover.</span>
+          </div>
+          <span className="setup-acc-summary">
+            <span>{mediaItems.length}</span>
+            <span>items</span>
+            {videoCount > 0 ? (
+              <>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)', display: 'inline-block' }} />
+                <span>{videoCount} video{videoCount !== 1 ? 's' : ''}</span>
+              </>
+            ) : null}
+          </span>
+          <AccChevron />
+        </summary>
+        <div className="setup-acc-body">
+          <SetupMediaGallery
+            items={mediaItems}
+            autoplayVideoInHero={autoplayVideoInHero}
+            onItemsChange={items => onPageDraftChange({ mediaItems: items })}
+            onAutoplayChange={value => onPageDraftChange({ autoplayVideoInHero: value })}
+          />
         </div>
       </details>
 
@@ -255,49 +456,30 @@ function PagePane({
         <summary className="setup-acc-head">
           <span className="setup-acc-num done">3</span>
           <div className="setup-acc-titles">
-            <span className="setup-acc-title">What&apos;s included</span>
-            <span className="setup-acc-hint">Benefits and channels live on each plan.</span>
+            <span className="setup-acc-title">Plans</span>
+            <span className="setup-acc-hint">Choose which plans appear on this page and in what order.</span>
           </div>
-          <span className="setup-acc-summary">Configured per plan</span>
+          <span className="setup-acc-summary">
+            <span>{visiblePlans.length}</span>
+            <span>of {plans.length} shown</span>
+            {visiblePlans.length > 0 ? (
+              <>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)', display: 'inline-block' }} />
+                <span>{visiblePlanNames}</span>
+              </>
+            ) : null}
+          </span>
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
-          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="setup-callout">
-              <span style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--accent)', color: '#fff', flexShrink: 0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7l-9-5z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </span>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>Benefits &amp; channels are owned by the plan</span>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>Each plan defines its own selling points and the channels it unlocks. The public page renders them directly under whichever plan the visitor selects.</span>
-              </div>
-              <button type="button" onClick={onJumpToPlans} style={{ alignSelf: 'center', fontSize: '12.5px', fontWeight: 500, color: 'var(--accent)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                Edit in Plans
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            </div>
-            <div style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginTop: '4px' }}>Plan-specific previews</div>
-            {plans.map(plan => {
-              const pc = channelsForPlan(plan, channels);
-              const color = planColor(plan.offer_name);
-              const prov = Array.from(new Set(pc.map(c => c.provider))).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' + ') || 'No channels';
-              return (
-                <div key={plan.id} className="setup-settings-row" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="setup-acc-num done" style={{ width: '18px', height: '18px', fontSize: '9px', background: color, borderColor: color, color: '#fff' }}>{planInitials(plan.offer_name)}</span>
-                      {plan.offer_name}
-                    </div>
-                    <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>3 selling points · {prov}</div>
-                  </div>
-                  <button type="button" style={btnSecondary} onClick={onJumpToPlans}>Edit</button>
-                </div>
-              );
-            })}
-            {plans.length === 0 && (
-              <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', padding: '8px 0' }}>No plans yet — create one in the Plans tab.</div>
-            )}
-          </div>
+          <PagePlansPicker
+            plans={plans}
+            visiblePlanIds={visiblePlanIds}
+            planOrderIds={planOrderIds}
+            onVisiblePlanIdsChange={ids => onPageDraftChange({ visiblePlanIds: ids })}
+            onPlanOrderIdsChange={ids => onPageDraftChange({ planOrderIds: ids })}
+            onGoToPlans={onGoToPlans}
+          />
         </div>
       </details>
 
@@ -348,42 +530,28 @@ function PagePane({
           <div style={{ padding: '10px 20px 16px' }}><button type="button" style={btnSecondary}>Add question</button></div>
         </div>
       </details>
-
-      <details className="setup-acc">
-        <summary className="setup-acc-head">
-          <span className="setup-acc-num done">6</span>
-          <div className="setup-acc-titles">
-            <span className="setup-acc-title">Plan order on page</span>
-            <span className="setup-acc-hint">Drag to reorder. First plan is highlighted.</span>
-          </div>
-          <span className="setup-acc-summary">{planOrderSummary}</span>
-          <AccChevron />
-        </summary>
-        <div className="setup-acc-body">
-          {plans.map((plan, idx) => (
-            <div key={plan.id} className="setup-settings-row" style={idx === plans.length - 1 ? { borderBottom: 0 } : undefined}>
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{plan.offer_name} — {planPriceLabel(plan)}</div>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>{idx === 0 ? 'Featured' : ''}</div>
-              </div>
-              <button type="button" className="btn-icon" aria-label="Reorder">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
-              </button>
-            </div>
-          ))}
-          {plans.length === 0 && <div className="setup-settings-row" style={{ color: 'var(--text-muted)', fontSize: '12.5px' }}>Add plans to set display order.</div>}
-        </div>
-      </details>
     </div>
   );
 }
 
 // ─── PlansPane ─────────────────────────────────────────────────────────────────
 
-function PlanDetailBody({ plan, channels }: { plan: CommunityPlan; channels: CommunityChannel[] }) {
+function PlanDetailBody({
+  plan,
+  channels,
+  sellingPoints,
+  onSellingPointsChange,
+}: {
+  plan: CommunityPlan;
+  channels: CommunityChannel[];
+  sellingPoints: PlanSellingPoint[];
+  onSellingPointsChange: (points: PlanSellingPoint[]) => void;
+}) {
   const planChannels = channelsForPlan(plan, channels);
-  const priceUsd = (plan.monthly_amount_minor / 100).toFixed(2);
+  const displayPrice = (planDisplayPriceMinor(plan) / 100).toFixed(2);
   const trial = plan.trial_days ?? 0;
+  const frequency = planFrequencyValue(plan);
+  const seatCapValue = plan.seat_cap ? String(plan.seat_cap) : '';
 
   return (
     <>
@@ -398,13 +566,16 @@ function PlanDetailBody({ plan, channels }: { plan: CommunityPlan; channels: Com
         <div style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Pricing &amp; details</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
           <div><label className="setup-field-label">Name</label><input className="setup-field-input" defaultValue={plan.offer_name} readOnly /></div>
-          <div><label className="setup-field-label">Frequency</label><select className="setup-field-input" defaultValue={plan.yearly_amount_minor ? 'annual' : 'monthly'}><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="onetime">One-time</option></select></div>
-          <div><label className="setup-field-label">Price (USD)</label><input className="setup-field-input" defaultValue={priceUsd} readOnly /></div>
+          <div><label className="setup-field-label">Frequency</label><select className="setup-field-input" defaultValue={frequency} disabled><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="onetime">One-time</option></select></div>
+          <div><label className="setup-field-label">Price ({plan.currency.toUpperCase()})</label><input className="setup-field-input" defaultValue={displayPrice} readOnly /></div>
           <div><label className="setup-field-label">Trial (days)</label><input className="setup-field-input" defaultValue={String(trial)} readOnly /></div>
-          <div style={{ gridColumn: '1 / -1' }}><label className="setup-field-label">Description</label><textarea className="setup-field-textarea" rows={2} defaultValue="Daily signals, live sessions, and the private Discord." readOnly /></div>
-          <div><label className="setup-field-label">Seat cap <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>Optional</span></label><input className="setup-field-input" placeholder="No limit" readOnly /></div>
+          <div style={{ gridColumn: '1 / -1' }}><label className="setup-field-label">Description</label><textarea className="setup-field-textarea" rows={2} defaultValue={plan.description ?? ''} readOnly /></div>
+          <div><label className="setup-field-label">Seat cap <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>Optional</span></label><input className="setup-field-input" placeholder="No limit" defaultValue={seatCapValue} readOnly /></div>
           <div><label className="setup-field-label">Currency</label><select className="setup-field-input" defaultValue={plan.currency.toLowerCase()}><option value="usd">USD</option><option value="eur">EUR</option><option value="ars">ARS</option></select></div>
         </div>
+      </div>
+      <div style={{ padding: '16px 20px 0', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
+        What&apos;s included
       </div>
       <div className="setup-incl-section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -440,25 +611,7 @@ function PlanDetailBody({ plan, channels }: { plan: CommunityPlan; channels: Com
           Add channel
         </button>
       </div>
-      <div className="setup-incl-section">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <span style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text)' }}>Selling points <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '18px', height: '18px', padding: '0 6px', borderRadius: '999px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '6px' }}>{STATIC_SELLING_POINTS.length}</span></span>
-          <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Shown on the public page as the plan&apos;s checklist.</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {STATIC_SELLING_POINTS.map(pt => (
-            <div key={pt} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 0', fontSize: '13px', color: 'var(--text)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--accent)', flexShrink: 0 }}><path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <span style={{ flex: 1, minWidth: 0 }}>{pt}</span>
-              <svg className="bul-drag" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--text-muted)', cursor: 'grab', opacity: 0.5 }}><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
-            </div>
-          ))}
-        </div>
-        <button type="button" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 10px', border: '0.5px dashed var(--border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12.5px', fontWeight: 500, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          Add selling point
-        </button>
-      </div>
+      <PlanSellingPointsSection points={sellingPoints} onChange={onSellingPointsChange} />
     </>
   );
 }
@@ -469,24 +622,21 @@ function PlansPane({
   openPlanId,
   onToggle,
   onNewPlan,
+  planSellingPoints,
+  updatePlanSellingPoints,
 }: {
   plans: CommunityPlan[];
   channels: CommunityChannel[];
   openPlanId: string | null;
   onToggle: (planId: string) => void;
   onNewPlan: () => void;
+  planSellingPoints: Record<string, PlanSellingPoint[]>;
+  updatePlanSellingPoints: (planId: string, points: PlanSellingPoint[]) => void;
 }) {
-  const liveCount = plans.filter(planIsLive).length;
-  const progressPct = plans.length ? Math.round((liveCount / plans.length) * 100) : 0;
-  const firstPlanId = plans[0]?.id ?? null;
 
   return (
-  <div>
+  <div className="setup-form-stack">
     <div className="setup-progress">
-      <div className="setup-progress-left">
-        <div className="setup-progress-bar"><span style={{ width: `${progressPct}%` }} /></div>
-        <span className="setup-progress-label"><b>{liveCount} of {plans.length || 0}</b> plans live</span>
-      </div>
       <button type="button" style={btnPrimary} onClick={onNewPlan}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         New plan
@@ -494,16 +644,26 @@ function PlansPane({
     </div>
 
     {plans.length === 0 ? (
-      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-        No plans yet. Create one to start accepting members.
+      <div className="setup-acc">
+        <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>No plans yet</div>
+            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>Create one to start accepting members.</div>
+          </div>
+        </div>
       </div>
     ) : plans.map(plan => {
-      const color = planColor(plan.offer_name);
+      const color = planAccentColor(plan);
       const initials = planInitials(plan.offer_name);
       const pc = channelsForPlan(plan, channels);
       const isOpen = openPlanId === plan.id;
-      const isFirst = plan.id === firstPlanId;
       const provNames = Array.from(new Set(pc.map(c => c.provider.charAt(0).toUpperCase() + c.provider.slice(1))));
+      const sellingPoints = sellingPointsForPlan(plan, planSellingPoints[plan.id]);
 
       return (
         <details key={plan.id} className="setup-acc" open={isOpen}>
@@ -520,7 +680,7 @@ function PlansPane({
                 {plan.offer_name}
                 <span style={{ marginLeft: '2px' }}>{planIsLive(plan) ? <ChipLive /> : <ChipDraft />}</span>
               </span>
-              <span className="setup-acc-hint">{planHintLine(plan, pc)}</span>
+              <span className="setup-acc-hint">{planHintLine(plan, pc, sellingPoints.length)}</span>
             </div>
             <span className="setup-acc-summary">
               {planPriceLabel(plan)}
@@ -536,11 +696,16 @@ function PlansPane({
             <AccChevron />
           </summary>
           <div className="setup-acc-body">
-            {isFirst && isOpen ? (
-              <PlanDetailBody plan={plan} channels={channels} />
+            {isOpen ? (
+              <PlanDetailBody
+              plan={plan}
+              channels={channels}
+              sellingPoints={sellingPoints}
+              onSellingPointsChange={points => updatePlanSellingPoints(plan.id, points)}
+            />
             ) : (
               <div style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                Tap to edit {plan.offer_name} plan details, channels, and selling points.
+                Tap to edit {plan.offer_name} — pricing, what&apos;s included, channels, and selling points.
               </div>
             )}
           </div>
@@ -557,14 +722,7 @@ function CheckoutPane({ overview }: { overview: CommunityOverview | null }) {
   const stripeConnected = overview?.onboarding.stripe_connected ?? false;
 
   return (
-  <div>
-    <div className="setup-progress">
-      <div className="setup-progress-left">
-        <div className="setup-progress-bar"><span style={{ width: '100%' }} /></div>
-        <span className="setup-progress-label"><b>Checkout</b> ready to take payments</span>
-      </div>
-    </div>
-
+  <div className="setup-form-stack">
     <details className="setup-acc" open>
       <summary className="setup-acc-head">
         <span className="setup-acc-num done">1</span>
@@ -588,45 +746,17 @@ function CheckoutPane({ overview }: { overview: CommunityOverview | null }) {
       <summary className="setup-acc-head">
         <span className="setup-acc-num done">2</span>
         <div className="setup-acc-titles">
-          <span className="setup-acc-title">After payment</span>
-          <span className="setup-acc-hint">What members see right after they pay.</span>
-        </div>
-        <span className="setup-acc-summary">Thank-you message</span>
-        <AccChevron />
-      </summary>
-      <div className="setup-acc-body">
-        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
-            <label className="setup-field-label">Behaviour</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <label style={{ flex: 1, display: 'flex', gap: '10px', padding: '12px', border: '0.5px solid var(--accent-soft-border)', background: 'var(--accent-soft-bg)', borderRadius: '8px', cursor: 'pointer' }}>
-                <input type="radio" name="after" defaultChecked style={{ accentColor: 'var(--accent)', marginTop: '2px' }} />
-                <div><div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Show thank-you message</div><div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Built-in confirmation screen</div></div>
-              </label>
-              <label style={{ flex: 1, display: 'flex', gap: '10px', padding: '12px', border: '0.5px solid var(--border)', borderRadius: '8px', cursor: 'pointer' }}>
-                <input type="radio" name="after" style={{ accentColor: 'var(--accent)', marginTop: '2px' }} />
-                <div><div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Redirect to URL</div><div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Send to your own page</div></div>
-              </label>
-            </div>
-          </div>
-          <div>
-            <label className="setup-field-label">Thank-you message</label>
-            <textarea className="setup-field-textarea" rows={3} defaultValue="Welcome to the desk. Check your inbox — your Discord invite is on its way." />
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <details className="setup-acc">
-      <summary className="setup-acc-head">
-        <span className="setup-acc-num done">3</span>
-        <div className="setup-acc-titles">
           <span className="setup-acc-title">Payment methods</span>
           <span className="setup-acc-hint">Money goes to the Stripe account connected at the account level.</span>
         </div>
         <span className="setup-acc-summary">
           Stripe
-          {stripeConnected && <span style={{ color: 'var(--success, #2f9d6b)' }}> ● Connected</span>}
+          {stripeConnected ? (
+            <>
+              <span style={{ width: '1px', height: '10px', background: 'var(--border)', display: 'inline-block' }} />
+              <span style={{ color: 'var(--success-soft-text)' }}>● Connected</span>
+            </>
+          ) : null}
         </span>
         <AccChevron />
       </summary>
@@ -674,20 +804,20 @@ function CheckoutPane({ overview }: { overview: CommunityOverview | null }) {
 // ─── Setup section pages (routed) ────────────────────────────────────────────
 
 export function SetupPageSection() {
-  const { plans, channels, pageDraft, updatePageDraft, goToPlans } = useSetupWorkspace();
+  const { pageDraft, updatePageDraft, plans, goToPlans } = useSetupWorkspace();
   return (
     <PagePane
-      plans={plans}
-      channels={channels}
       pageDraft={pageDraft}
       onPageDraftChange={updatePageDraft}
-      onJumpToPlans={goToPlans}
+      plans={plans}
+      onGoToPlans={goToPlans}
     />
   );
 }
 
 export function SetupPlansSection() {
-  const { plans, channels, openPlanId, handlePlanToggle, onNewPlan } = useSetupWorkspace();
+  const { plans, channels, openPlanId, handlePlanToggle, onNewPlan, planSellingPoints, updatePlanSellingPoints } =
+    useSetupWorkspace();
   return (
     <PlansPane
       plans={plans}
@@ -695,6 +825,8 @@ export function SetupPlansSection() {
       openPlanId={openPlanId}
       onToggle={handlePlanToggle}
       onNewPlan={onNewPlan}
+      planSellingPoints={planSellingPoints}
+      updatePlanSellingPoints={updatePlanSellingPoints}
     />
   );
 }

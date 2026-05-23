@@ -21,12 +21,13 @@ import {
 import {
   COMMUNITY_PREVIEW_ACTIVE_KEY,
   DEFAULT_COMMUNITY_FAQ,
-  DEFAULT_COMMUNITY_SELLING_POINTS,
   DEFAULT_COMMUNITY_TESTIMONIALS,
+  loadCommunityPreviewDraft,
   saveCommunityPreviewDraft,
 } from '@/components/community/community-preview';
-import { SetupPageDraft, SetupPreviewModel } from '@/components/community/setup-preview-types';
-import { planColor } from '@/components/community/setup-utils';
+import { mergePlanSellingPointsMapFromPlans, sellingPointsForPlan } from '@/components/community/plan-model';
+import { SetupPageDraft, SetupPreviewModel, DEFAULT_SETUP_MEDIA, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import { planColor, mergePlanOrderIds } from '@/components/community/setup-utils';
 import { NewPlanModal } from '@/components/community/NewPlanModal';
 
 export type SetupSection = 'page' | 'plans' | 'checkout';
@@ -50,6 +51,8 @@ type SetupWorkspaceValue = {
   goToPlans: () => void;
   refreshPlans: () => void;
   refreshChannels: () => void;
+  planSellingPoints: Record<string, PlanSellingPoint[]>;
+  updatePlanSellingPoints: (planId: string, points: PlanSellingPoint[]) => void;
 };
 
 const SetupWorkspaceContext = createContext<SetupWorkspaceValue | null>(null);
@@ -72,15 +75,36 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
   const [channels, setChannels] = useState<CommunityChannel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [planModalOpen, setPlanModalOpen] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewDevice, setPreviewDeviceState] = useState<'desktop' | 'mobile'>(() => {
+    if (typeof window === 'undefined') return 'mobile';
+    try {
+      return localStorage.getItem('ag.preview.device') === 'desktop' ? 'desktop' : 'mobile';
+    } catch {
+      return 'mobile';
+    }
+  });
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
   const [pageDraft, setPageDraft] = useState<SetupPageDraft | null>(null);
+  const [planSellingPoints, setPlanSellingPoints] = useState<Record<string, PlanSellingPoint[]>>({});
+
+  const setPreviewDevice = useCallback((device: 'desktop' | 'mobile') => {
+    setPreviewDeviceState(device);
+    try {
+      localStorage.setItem('ag.preview.device', device);
+    } catch {
+      /* private mode */
+    }
+  }, []);
 
   const focusPlanId = searchParams.get('focus');
 
   useEffect(() => {
     if (!communityId) return;
     sessionStorage.setItem(COMMUNITY_PREVIEW_ACTIVE_KEY, communityId);
+    const draft = loadCommunityPreviewDraft(communityId);
+    if (draft?.planSellingPoints) {
+      setPlanSellingPoints(draft.planSellingPoints);
+    }
     return () => sessionStorage.removeItem(COMMUNITY_PREVIEW_ACTIVE_KEY);
   }, [communityId]);
 
@@ -106,6 +130,9 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
             subHeadline:
               'Real-time alerts, weekly sessions, and a no-noise Discord. Cancel anytime.',
             accentColor: planColor(c.name),
+            mediaItems: DEFAULT_SETUP_MEDIA,
+            autoplayVideoInHero: true,
+            showMemberStats: true,
           },
         );
       }
@@ -115,6 +142,35 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
   }, [communityId, setCurrentCommunityId]);
+
+  useEffect(() => {
+    if (plans.length === 0) return;
+    setPageDraft(prev => {
+      if (!prev) return prev;
+      const planIds = plans.map(p => p.id);
+      const existingVisible = prev.visiblePlanIds ?? [];
+      const keptVisible = existingVisible.filter(id => planIds.includes(id));
+      const addedVisible = planIds.filter(id => !keptVisible.includes(id));
+      const visiblePlanIds =
+        keptVisible.length === 0 && addedVisible.length > 0 ? planIds : [...keptVisible, ...addedVisible];
+
+      const planOrderIds = mergePlanOrderIds(prev.planOrderIds, planIds);
+      const visibleChanged =
+        existingVisible.length !== visiblePlanIds.length ||
+        !existingVisible.every((id, i) => id === visiblePlanIds[i]);
+      const orderChanged =
+        (prev.planOrderIds ?? []).length !== planOrderIds.length ||
+        !(prev.planOrderIds ?? []).every((id, i) => id === planOrderIds[i]);
+
+      if (!visibleChanged && !orderChanged) return prev;
+      return { ...prev, visiblePlanIds, planOrderIds };
+    });
+  }, [plans]);
+
+  useEffect(() => {
+    if (plans.length === 0) return;
+    setPlanSellingPoints(prev => mergePlanSellingPointsMapFromPlans(prev, plans));
+  }, [plans]);
 
   useEffect(() => {
     if (!focusPlanId) return;
@@ -146,6 +202,10 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     api.getCommunityChannels(communityId).then(setChannels).catch(() => {});
   }, [communityId]);
 
+  const updatePlanSellingPoints = useCallback((planId: string, points: PlanSellingPoint[]) => {
+    setPlanSellingPoints(prev => ({ ...prev, [planId]: points }));
+  }, []);
+
   const goToPlans = useCallback(() => {
     router.push(`/dashboard/community/${communityId}/setup/plans`);
   }, [communityId, router]);
@@ -158,18 +218,20 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       plans,
       channels,
       selectedPlanId: openPlanId,
-      sellingPoints: DEFAULT_COMMUNITY_SELLING_POINTS,
+      planSellingPoints,
       faq: DEFAULT_COMMUNITY_FAQ,
       testimonials: DEFAULT_COMMUNITY_TESTIMONIALS,
     };
-  }, [comm, pageDraft, plans, channels, openPlanId]);
+  }, [comm, pageDraft, plans, channels, openPlanId, planSellingPoints]);
 
   useEffect(() => {
     if (previewModel) saveCommunityPreviewDraft(communityId, previewModel);
   }, [communityId, previewModel]);
 
-  function handlePlanCreated(plan: { id: string }) {
+  function handlePlanCreated(plan: CommunityPlan, sellingPoints?: PlanSellingPoint[]) {
     refreshPlans();
+    const points = sellingPointsForPlan(plan, sellingPoints);
+    setPlanSellingPoints(prev => ({ ...prev, [plan.id]: points }));
     router.push(`/dashboard/community/${communityId}/setup/plans?focus=${plan.id}`);
   }
 
@@ -194,6 +256,8 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       goToPlans,
       refreshPlans,
       refreshChannels,
+      planSellingPoints,
+      updatePlanSellingPoints,
     };
   }, [
     comm,
@@ -211,6 +275,9 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     goToPlans,
     refreshPlans,
     refreshChannels,
+    setPreviewDevice,
+    planSellingPoints,
+    updatePlanSellingPoints,
   ]);
 
   if (!comm && isLoading) {

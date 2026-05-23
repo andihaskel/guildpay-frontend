@@ -499,6 +499,9 @@ export default function NewPlanPage() {
     try {
       await api.createCommunityPlan(communityId, {
         offer_name: form.planName.trim(),
+        billing_type: 'recurring',
+        monthly_enabled: true,
+        annual_enabled: !!(form.yearlyEnabled && yearlyPriceMinor > 0),
         monthly_amount_minor: priceMinor,
         currency: form.currency.toLowerCase(),
         yearly_amount_minor: form.yearlyEnabled && yearlyPriceMinor > 0 ? yearlyPriceMinor : undefined,

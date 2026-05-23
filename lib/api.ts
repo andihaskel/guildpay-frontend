@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel, ChannelProvider } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CreateCommunityPlanRequest, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel, ChannelProvider } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -361,15 +361,7 @@ class ApiClient {
     return this.get<CommunityPlan>(`/creator/communities/${communityId}/plans/${planId}`);
   }
 
-  async createCommunityPlan(communityId: string, data: {
-    offer_name: string;
-    monthly_amount_minor: number;
-    currency?: string;
-    yearly_amount_minor?: number;
-    trial_days?: number;
-    discord_role_id?: string;
-    channel_ids?: string[];
-  }): Promise<CommunityPlan> {
+  async createCommunityPlan(communityId: string, data: CreateCommunityPlanRequest): Promise<CommunityPlan> {
     return this.post<CommunityPlan>(`/creator/communities/${communityId}/plans`, data);
   }
 

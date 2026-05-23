@@ -302,13 +302,48 @@ export interface CommunityOverview {
   };
 }
 
+export interface PlanFeature {
+  id: string;
+  icon: string;
+  title: string;
+  description?: string;
+}
+
+export type PlanBillingType = 'recurring' | 'one_time';
+
+export interface CreateCommunityPlanRequest {
+  offer_name: string;
+  currency?: string;
+  billing_type: PlanBillingType;
+  trial_days?: number;
+  description?: string;
+  color?: string;
+  seat_cap?: number;
+  features?: PlanFeature[];
+  monthly_enabled?: boolean;
+  annual_enabled?: boolean;
+  monthly_amount_minor?: number;
+  yearly_amount_minor?: number;
+  one_time_amount_minor?: number;
+  discord_role_id?: string;
+  channel_ids?: string[];
+}
+
 export interface CommunityPlan {
   id: string;
   offer_name: string;
   published?: boolean;
   status?: 'active' | 'disabled' | 'payment_config_required';
+  billing_type?: PlanBillingType;
+  description?: string;
+  color?: string;
+  seat_cap?: number;
+  features?: PlanFeature[];
+  monthly_enabled?: boolean;
+  annual_enabled?: boolean;
   monthly_amount_minor: number;
   yearly_amount_minor?: number;
+  one_time_amount_minor?: number;
   currency: string;
   trial_days?: number;
   discord_role_id?: string;
