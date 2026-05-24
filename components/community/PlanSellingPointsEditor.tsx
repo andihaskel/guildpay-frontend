@@ -419,7 +419,7 @@ export function PlanSellingPointsSection({
                     <span className="incl-feat-desc">{point.description}</span>
                   ) : null}
                 </div>
-                <div className="incl-feat-actions">
+                <div className="incl-feat-actions incl-feat-actions-visible">
                   <button type="button" className="btn-icon feat-drag" aria-label="Reorder" tabIndex={-1}>
                     <FeatDragIcon />
                   </button>

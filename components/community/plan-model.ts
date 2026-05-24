@@ -2,7 +2,6 @@ import { CommunityPlan } from '@/lib/types';
 import { fmtAmount, planColor } from '@/components/community/setup-utils';
 import { PlanSellingPoint } from '@/components/community/setup-preview-types';
 import {
-  cloneDefaultSellingPoints,
   normalizePlanSellingPoints,
 } from '@/components/community/plan-selling-points';
 
@@ -43,10 +42,10 @@ export function sellingPointsForPlan(
   plan: CommunityPlan,
   local?: PlanSellingPoint[],
 ): PlanSellingPoint[] {
+  if (local !== undefined) return local;
   const fromApi = planFeaturesToSellingPoints(plan);
   if (fromApi.length) return fromApi;
-  if (local?.length) return local;
-  return cloneDefaultSellingPoints(plan.id);
+  return [];
 }
 
 export function mergePlanSellingPointsMapFromPlans(
@@ -56,12 +55,10 @@ export function mergePlanSellingPointsMapFromPlans(
   const map = { ...existing };
 
   for (const plan of plans) {
+    if (map[plan.id] !== undefined) continue;
+
     const fromApi = planFeaturesToSellingPoints(plan);
-    if (fromApi.length) {
-      map[plan.id] = fromApi;
-    } else if (!map[plan.id]?.length) {
-      map[plan.id] = cloneDefaultSellingPoints(plan.id);
-    }
+    map[plan.id] = fromApi.length ? fromApi : [];
   }
 
   return map;

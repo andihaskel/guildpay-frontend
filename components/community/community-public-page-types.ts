@@ -1,3 +1,5 @@
+import type { ImageFrame } from '@/lib/image-frame';
+
 export type PublicPageMediaItem = {
   id: string;
   type: 'image' | 'video';
@@ -56,6 +58,9 @@ export type CommunityPublicPageViewProps = {
   handle?: string;
   tagline?: string;
   heroImageUrl?: string;
+  heroImageFrame?: ImageFrame;
+  coverImageUrl?: string;
+  coverImageFrame?: ImageFrame;
   avatarInitial?: string;
   onlineCount?: number;
   memberCount?: number;

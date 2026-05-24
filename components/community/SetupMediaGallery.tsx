@@ -2,8 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { SetupMediaItem } from '@/components/community/setup-preview-types';
-
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+import { COMMUNITY_IMAGE_TYPES, uploadCommunityMedia } from '@/lib/community-media-upload';
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 80 * 1024 * 1024;
 
@@ -163,43 +162,73 @@ export function SetupMediaGallery({
   autoplayVideoInHero,
   onItemsChange,
   onAutoplayChange,
+  communityId,
 }: {
   items: SetupMediaItem[];
   autoplayVideoInHero: boolean;
   onItemsChange: (items: SetupMediaItem[]) => void;
   onAutoplayChange: (value: boolean) => void;
+  communityId?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const dragIndexRef = useRef<number | null>(null);
 
   const processFiles = useCallback(
     async (files: FileList | File[]) => {
+      setUploadError(null);
       const next = [...items];
+      let changed = false;
+
       for (const file of Array.from(files)) {
         const isVideo = file.type.startsWith('video/');
-        if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type)) continue;
+        const isImage = COMMUNITY_IMAGE_TYPES.includes(file.type as (typeof COMMUNITY_IMAGE_TYPES)[number]);
+
+        if (!isVideo && !isImage) continue;
         if (!isVideo && file.size > MAX_IMAGE_BYTES) continue;
         if (isVideo && file.size > MAX_VIDEO_BYTES) continue;
 
-        const url = URL.createObjectURL(file);
-        let duration: string | undefined;
-        if (isVideo) {
-          duration = await getVideoDuration(file);
+        if (isVideo || !communityId) {
+          const url = URL.createObjectURL(file);
+          let duration: string | undefined;
+          if (isVideo) {
+            duration = await getVideoDuration(file);
+          }
+          next.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            type: isVideo ? 'video' : 'image',
+            url,
+            filename: file.name,
+            sizeBytes: file.size,
+            duration: duration || undefined,
+          });
+          changed = true;
+          continue;
         }
 
-        next.push({
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          type: isVideo ? 'video' : 'image',
-          url,
-          filename: file.name,
-          sizeBytes: file.size,
-          duration: duration || undefined,
-        });
+        setUploading(true);
+        try {
+          const url = await uploadCommunityMedia(communityId, file);
+          next.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            type: 'image',
+            url,
+            filename: file.name,
+            sizeBytes: file.size,
+          });
+          changed = true;
+        } catch (err) {
+          setUploadError(err instanceof Error ? err.message : 'Upload failed');
+        } finally {
+          setUploading(false);
+        }
       }
-      if (next.length !== items.length) onItemsChange(next);
+
+      if (changed) onItemsChange(next);
     },
-    [items, onItemsChange],
+    [items, onItemsChange, communityId],
   );
 
   const handleDragStart = (index: number) => {
@@ -257,15 +286,18 @@ export function SetupMediaGallery({
           Drop photos &amp; videos here, or <b>click to browse</b>
         </span>
         <span className="setup-media-dropzone-sub">
-          JPG, PNG, WebP up to 10 MB · MP4, MOV up to 80 MB · Recommended 1600×900
+          {communityId
+            ? 'JPG, PNG, WebP, GIF up to 10 MB · MP4, MOV up to 80 MB (preview only) · Recommended 1600×900'
+            : 'JPG, PNG, WebP up to 10 MB · MP4, MOV up to 80 MB · Recommended 1600×900'}
         </span>
         <input
           ref={inputRef}
           id="setup-media-file-input"
           type="file"
-          accept="image/jpeg,image/png,image/webp,video/*"
+          accept={`${COMMUNITY_IMAGE_TYPES.join(',')},video/*`}
           multiple
           className="setup-visually-hidden"
+          disabled={uploading}
           onChange={e => {
             const files = e.target.files;
             e.target.value = '';
@@ -273,6 +305,13 @@ export function SetupMediaGallery({
           }}
         />
       </label>
+
+      {uploading ? (
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Uploading…</p>
+      ) : null}
+      {uploadError ? (
+        <p style={{ fontSize: '12px', color: 'var(--danger, #ef4444)', margin: 0 }}>{uploadError}</p>
+      ) : null}
 
       {items.length > 0 ? (
         <div className="setup-media-grid">

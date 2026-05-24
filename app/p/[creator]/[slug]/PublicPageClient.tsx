@@ -1,18 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader as Loader2, ArrowLeft, Lock } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { CommunityPublicPageView } from '@/components/community/CommunityPublicPageView';
-import { buildLivePublicPageProps } from '@/components/community/public-page-adapters';
+import {
+  buildLivePublicPageProps,
+  buildPublicCommunityPageProps,
+} from '@/components/community/public-page-adapters';
+import { planHasMonthly, planHasYearly } from '@/components/community/plan-model';
+import {
+  isPublicCommunityResponse,
+  publicCommunityPlanToCommunityPlan,
+  type PublicCommunityResponse,
+} from '@/components/community/public-community-types';
 import { fmtAmount } from '@/components/community/setup-utils';
 import { api } from '@/lib/api';
 import { normalizeAssetUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 
-interface PageData {
+interface LegacyPageData {
   creator_slug: string;
   page_slug: string;
   offer_name: string;
@@ -58,10 +67,51 @@ type Step = 'details' | 'checkout';
 
 const font = 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif';
 
+function normalizeCommunityResponse(raw: PublicCommunityResponse): PublicCommunityResponse {
+  const page = raw.page
+    ? {
+        ...raw.page,
+        coverImageUrl: normalizeAssetUrl(raw.page.coverImageUrl) ?? raw.page.coverImageUrl,
+        mediaItems: raw.page.mediaItems?.map(item => ({
+          ...item,
+          url: normalizeAssetUrl(item.url) ?? item.url,
+        })),
+      }
+    : undefined;
+
+  return {
+    ...raw,
+    logo_url: normalizeAssetUrl(raw.logo_url) ?? raw.logo_url,
+    page,
+  };
+}
+
+function normalizeLegacyPage(raw: LegacyPageData): LegacyPageData {
+  return {
+    ...raw,
+    hero_image_url: normalizeAssetUrl(raw.hero_image_url) || raw.hero_image_url,
+    media_items: raw.media_items?.map(item => ({
+      ...item,
+      url: normalizeAssetUrl(item.url) || item.url,
+    })),
+  };
+}
+
+function checkoutPriceKindForPlan(planId: string, data: PublicCommunityResponse): 'monthly' | 'yearly' {
+  const raw = data.plans.find(p => p.id === planId);
+  if (!raw) return 'monthly';
+  const mapped = publicCommunityPlanToCommunityPlan(raw);
+  if (planHasMonthly(mapped)) return 'monthly';
+  if (planHasYearly(mapped)) return 'yearly';
+  return 'monthly';
+}
+
 export default function PublicPageClient() {
   const params = useParams();
   const router = useRouter();
-  const [pageData, setPageData] = useState<PageData | null>(null);
+  const [communityData, setCommunityData] = useState<PublicCommunityResponse | null>(null);
+  const [legacyPageData, setLegacyPageData] = useState<LegacyPageData | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
@@ -71,29 +121,37 @@ export default function PublicPageClient() {
   const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
 
   const publicPath = `/p/${params.creator}/${params.slug}`;
+  const isCommunityPage = communityData != null;
 
   useEffect(() => {
     const load = async () => {
       if (!params.creator || !params.slug) return;
       try {
         setIsLoading(true);
-        const raw = (await api.getPublicPage(publicPath)) as PageData;
-        if (raw.hero_image_url) {
-          raw.hero_image_url = normalizeAssetUrl(raw.hero_image_url) || raw.hero_image_url;
+        const raw = await api.getPublicPage(publicPath);
+
+        if (isPublicCommunityResponse(raw)) {
+          const normalized = normalizeCommunityResponse(raw);
+          setCommunityData(normalized);
+          setLegacyPageData(null);
+          const firstOpen =
+            normalized.plans.find(p => p.accepts_signups)?.id ?? normalized.plans[0]?.id ?? null;
+          setSelectedPlanId(firstOpen);
+          setError(null);
+          return;
         }
-        if (raw.media_items) {
-          raw.media_items = raw.media_items.map(item => ({
-            ...item,
-            url: normalizeAssetUrl(item.url) || item.url,
-          }));
-        }
-        setPageData(raw);
-        if (raw.has_yearly && raw.yearly_amount_minor > 0 && raw.monthly_amount_minor <= 0) {
+
+        const legacy = normalizeLegacyPage(raw as LegacyPageData);
+        setLegacyPageData(legacy);
+        setCommunityData(null);
+        if (legacy.has_yearly && legacy.yearly_amount_minor > 0 && legacy.monthly_amount_minor <= 0) {
           setBillingInterval('yearly');
         }
         setError(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Page not found');
+        setCommunityData(null);
+        setLegacyPageData(null);
       } finally {
         setIsLoading(false);
       }
@@ -101,20 +159,21 @@ export default function PublicPageClient() {
     load();
   }, [params.creator, params.slug, publicPath]);
 
-  const handleGetAccess = useCallback(async () => {
-    if (!pageData) return;
+  const handleCommunityCheckout = useCallback(async () => {
+    if (!communityData || !selectedPlanId) return;
     const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     if (!stripePublishableKey) {
       toast.error('Stripe publishable key is missing.');
       return;
     }
-    if (!stripePublishableKey.startsWith('pk_test_') && !stripePublishableKey.startsWith('pk_live_')) {
-      toast.error('Invalid Stripe publishable key format.');
-      return;
-    }
     try {
       setIsCreatingSession(true);
-      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(publicPath, billingInterval);
+      const priceKind = checkoutPriceKindForPlan(selectedPlanId, communityData);
+      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(
+        publicPath,
+        priceKind,
+        selectedPlanId,
+      );
       sessionStorage.setItem('stripe_account', stripe_account);
       setStripePromise(loadStripe(stripePublishableKey));
       setClientSecret(client_secret);
@@ -124,7 +183,31 @@ export default function PublicPageClient() {
     } finally {
       setIsCreatingSession(false);
     }
-  }, [billingInterval, pageData, publicPath]);
+  }, [communityData, publicPath, selectedPlanId]);
+
+  const handleLegacyCheckout = useCallback(async () => {
+    if (!legacyPageData) return;
+    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (!stripePublishableKey) {
+      toast.error('Stripe publishable key is missing.');
+      return;
+    }
+    try {
+      setIsCreatingSession(true);
+      const { client_secret, stripe_account } = await api.createPublicCheckoutSession(
+        publicPath,
+        billingInterval,
+      );
+      sessionStorage.setItem('stripe_account', stripe_account);
+      setStripePromise(loadStripe(stripePublishableKey));
+      setClientSecret(client_secret);
+      setStep('checkout');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start checkout.');
+    } finally {
+      setIsCreatingSession(false);
+    }
+  }, [billingInterval, legacyPageData, publicPath]);
 
   const handleBackToDetails = () => {
     setStep('details');
@@ -142,7 +225,41 @@ export default function PublicPageClient() {
     });
   }, []);
 
-  const resolvedStyle = pageData?.style ?? pageData?.settings?.page_style ?? 'dark';
+  const checkoutTitle = useMemo(() => {
+    if (isCommunityPage && communityData && selectedPlanId) {
+      return communityData.plans.find(p => p.id === selectedPlanId)?.offer_name ?? communityData.community_name;
+    }
+    return legacyPageData?.offer_name ?? 'Checkout';
+  }, [communityData, isCommunityPage, legacyPageData, selectedPlanId]);
+
+  const checkoutPriceLabel = useMemo(() => {
+    if (isCommunityPage && communityData && selectedPlanId) {
+      const raw = communityData.plans.find(p => p.id === selectedPlanId);
+      if (!raw) return null;
+      const kind = checkoutPriceKindForPlan(selectedPlanId, communityData);
+      const amount =
+        kind === 'monthly' ? raw.monthly_amount_minor : (raw.yearly_amount_minor ?? raw.monthly_amount_minor);
+      return {
+        amount,
+        currency: raw.currency,
+        interval: kind,
+        trialDays: raw.trial_days && raw.trial_days > 0 ? raw.trial_days : null,
+      };
+    }
+    if (!legacyPageData) return null;
+    const amount =
+      billingInterval === 'monthly'
+        ? legacyPageData.monthly_amount_minor
+        : legacyPageData.yearly_amount_minor;
+    return {
+      amount,
+      currency: legacyPageData.currency,
+      interval: billingInterval,
+      trialDays: legacyPageData.trial_days && legacyPageData.trial_days > 0 ? legacyPageData.trial_days : null,
+    };
+  }, [billingInterval, communityData, isCommunityPage, legacyPageData, selectedPlanId]);
+
+  const resolvedStyle = legacyPageData?.style ?? legacyPageData?.settings?.page_style ?? 'dark';
   const isLight = resolvedStyle === 'light';
   const bg = isLight ? '#fafafa' : '#0a0a0a';
   const text = isLight ? '#0a0a0a' : '#f0f0f0';
@@ -160,7 +277,7 @@ export default function PublicPageClient() {
     );
   }
 
-  if (error || !pageData) {
+  if (error || (!communityData && !legacyPageData)) {
     return (
       <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: font }}>
         <div style={{ textAlign: 'center' }}>
@@ -175,24 +292,25 @@ export default function PublicPageClient() {
     );
   }
 
-  if (!pageData.accepts_signups) {
+  const signupsClosed = isCommunityPage
+    ? !communityData!.plans.some(p => p.accepts_signups)
+    : !legacyPageData!.accepts_signups;
+
+  if (signupsClosed) {
+    const title = isCommunityPage ? communityData!.community_name : legacyPageData!.offer_name;
     return (
       <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: font }}>
         <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'rgba(214,69,69,0.08)', border: '0.5px solid rgba(214,69,69,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <Lock style={{ width: '22px', height: '22px', color: '#e06a6a' }} />
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 500, color: text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>{pageData.offer_name}</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 500, color: text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>{title}</h1>
           <p style={{ fontSize: '14px', color: textSecondary, margin: '0 0 24px', lineHeight: 1.6 }}>Signups are currently closed. Check back later or contact the creator.</p>
           <button onClick={() => router.push('/')} style={{ padding: '8px 16px', borderRadius: '6px', background: isLight ? '#0a0a0a' : '#fff', color: isLight ? '#fff' : '#0a0a0a', fontSize: '13px', fontWeight: 500, border: '0', cursor: 'pointer' }}>Go home</button>
         </div>
       </div>
     );
   }
-
-  const trialDays = pageData.trial_days && pageData.trial_days > 0 ? pageData.trial_days : null;
-  const currentPrice =
-    billingInterval === 'monthly' ? pageData.monthly_amount_minor : pageData.yearly_amount_minor;
 
   if (step === 'checkout' && clientSecret && stripePromise) {
     return (
@@ -209,17 +327,17 @@ export default function PublicPageClient() {
             Back to details
           </button>
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: 500, color: text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>{pageData.offer_name}</h1>
-            {trialDays ? (
+            <h1 style={{ fontSize: '22px', fontWeight: 500, color: text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>{checkoutTitle}</h1>
+            {checkoutPriceLabel?.trialDays ? (
               <p style={{ fontSize: '13px', color: successSoftText, margin: 0 }}>
-                {trialDays}-day free trial, then {fmtAmount(currentPrice, pageData.currency)}/
-                {billingInterval === 'monthly' ? 'mo' : 'yr'}
+                {checkoutPriceLabel.trialDays}-day free trial, then {fmtAmount(checkoutPriceLabel.amount, checkoutPriceLabel.currency)}/
+                {checkoutPriceLabel.interval === 'monthly' ? 'mo' : 'yr'}
               </p>
-            ) : (
+            ) : checkoutPriceLabel ? (
               <p style={{ fontSize: '13px', color: textSecondary, margin: 0 }}>
-                {fmtAmount(currentPrice, pageData.currency)}/{billingInterval === 'monthly' ? 'month' : 'year'}
+                {fmtAmount(checkoutPriceLabel.amount, checkoutPriceLabel.currency)}/{checkoutPriceLabel.interval === 'monthly' ? 'month' : 'year'}
               </p>
-            )}
+            ) : null}
           </div>
           <div style={{ background: surface1, border: `0.5px solid ${border}`, borderRadius: '14px', overflow: 'hidden', padding: '24px' }}>
             <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
@@ -231,17 +349,28 @@ export default function PublicPageClient() {
     );
   }
 
+  if (isCommunityPage && communityData) {
+    const pageViewProps = buildPublicCommunityPageProps(
+      communityData,
+      selectedPlanId,
+      setSelectedPlanId,
+      handleCommunityCheckout,
+      isCreatingSession,
+    );
+    return <CommunityPublicPageView {...pageViewProps} />;
+  }
+
   const pageViewProps = buildLivePublicPageProps(
     {
-      ...pageData,
-      description: pageData.description
-        ? pageData.description.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[#*_>`~-]/g, '').trim()
+      ...legacyPageData!,
+      description: legacyPageData!.description
+        ? legacyPageData!.description.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[#*_>`~-]/g, '').trim()
         : undefined,
-      discord_channels: pageData.discord_channels,
+      discord_channels: legacyPageData!.discord_channels,
     },
     billingInterval,
     handleBillingIntervalChange,
-    handleGetAccess,
+    handleLegacyCheckout,
     isCreatingSession,
   );
 

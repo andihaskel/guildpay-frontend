@@ -1,7 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Loader as Loader2 } from 'lucide-react';
 import { CommunityOverview, CommunityPlan, CommunityChannel } from '@/lib/types';
+import { api } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import {
   DEFAULT_COMMUNITY_FAQ,
   DEFAULT_COMMUNITY_TESTIMONIALS,
@@ -9,16 +12,23 @@ import {
 import { useSetupWorkspace } from '@/components/community/SetupWorkspaceContext';
 import { SetupPageDraft, PlanSellingPoint } from '@/components/community/setup-preview-types';
 import { SetupMediaGallery } from '@/components/community/SetupMediaGallery';
+import { SetupImageUpload } from '@/components/community/SetupImageUpload';
+import { DEFAULT_IMAGE_FRAME } from '@/lib/image-frame';
 import { PlanSellingPointsSection } from '@/components/community/PlanSellingPointsEditor';
 import { fmtAmount, mergePlanOrderIds, planInitials, reorderByIndex } from '@/components/community/setup-utils';
 import {
   planAccentColor,
   planDisplayPriceMinor,
+  planFeaturesToSellingPoints,
   planFrequencyValue,
   planPickSubline,
   planPriceLabel,
   sellingPointsForPlan,
 } from '@/components/community/plan-model';
+import {
+  buildUpdateCommunityPlanPayload,
+  UpdateCommunityPlanFormValues,
+} from '@/components/community/create-plan-payload';
 
 // ─── types & props ───────────────────────────────────────────────────────────
 
@@ -35,7 +45,13 @@ export { fmtAmount, planColor, planInitials } from '@/components/community/setup
 export { planAccentColor, planPriceLabel } from '@/components/community/plan-model';
 
 function planIsLive(plan: CommunityPlan) {
+  if (plan.accepts_signups === false) return false;
   return !!plan.published && plan.status !== 'disabled';
+}
+
+function planAcceptsSignups(plan: CommunityPlan) {
+  if (plan.accepts_signups != null) return plan.accepts_signups;
+  return plan.status !== 'disabled';
 }
 
 function planHintLine(plan: CommunityPlan, planChannels: CommunityChannel[], benefitCount: number) {
@@ -165,15 +181,19 @@ function PagePlansPicker({
   plans,
   visiblePlanIds,
   planOrderIds,
+  featuredPlanId,
   onVisiblePlanIdsChange,
   onPlanOrderIdsChange,
+  onFeaturedPlanIdChange,
   onGoToPlans,
 }: {
   plans: CommunityPlan[];
   visiblePlanIds: string[];
   planOrderIds: string[];
+  featuredPlanId?: string | null;
   onVisiblePlanIdsChange: (ids: string[]) => void;
   onPlanOrderIdsChange: (ids: string[]) => void;
+  onFeaturedPlanIdChange: (planId: string | null) => void;
   onGoToPlans: () => void;
 }) {
   const dragIndexRef = useRef<number | null>(null);
@@ -196,9 +216,22 @@ function PagePlansPicker({
     const order = mergePlanOrderIds(planOrderIds, plans.map(plan => plan.id));
     if (visibleSet.has(planId)) {
       onVisiblePlanIdsChange(visiblePlanIds.filter(id => id !== planId));
+      if (featuredPlanId === planId) onFeaturedPlanIdChange(null);
       return;
     }
     onVisiblePlanIdsChange(order.filter(id => visibleSet.has(id) || id === planId));
+  };
+
+  const toggleFeatured = (planId: string) => {
+    if (featuredPlanId === planId) {
+      onFeaturedPlanIdChange(null);
+      return;
+    }
+    onFeaturedPlanIdChange(planId);
+    if (!visibleSet.has(planId)) {
+      const order = mergePlanOrderIds(planOrderIds, plans.map(plan => plan.id));
+      onVisiblePlanIdsChange(order.filter(id => visibleSet.has(id) || id === planId));
+    }
   };
 
   const handleDragStart = (index: number, planId: string) => {
@@ -223,14 +256,18 @@ function PagePlansPicker({
 
   return (
     <>
+      <div className="setup-plan-pick-hint">
+        Check plans to show on the page. Mark one as <strong>Most popular</strong> or leave none.
+      </div>
       {orderedPlans.map((plan, index) => {
         const isOn = visibleSet.has(plan.id);
+        const isFeatured = featuredPlanId === plan.id;
         const color = planAccentColor(plan);
         const initials = planInitials(plan.offer_name);
         return (
           <div
             key={plan.id}
-            className={`setup-plan-pick${isOn ? ' is-on' : ' is-off'}${draggingId === plan.id ? ' is-dragging' : ''}`}
+            className={`setup-plan-pick${isOn ? ' is-on' : ' is-off'}${isFeatured ? ' is-featured' : ''}${draggingId === plan.id ? ' is-dragging' : ''}`}
             draggable
             role="button"
             tabIndex={0}
@@ -239,7 +276,7 @@ function PagePlansPicker({
             onDragEnd={handleDragEnd}
             onDrop={e => e.preventDefault()}
             onClick={e => {
-              if ((e.target as HTMLElement).closest('.setup-plan-pick-drag')) return;
+              if ((e.target as HTMLElement).closest('.setup-plan-pick-drag, .setup-plan-pick-popular')) return;
               togglePlan(plan.id);
             }}
             onKeyDown={e => {
@@ -258,10 +295,24 @@ function PagePlansPicker({
             <div className="setup-plan-pick-meta">
               <span className="setup-plan-pick-name">
                 {plan.offer_name}
+                {isFeatured ? <Chip variant="accent">Most popular</Chip> : null}
                 {planIsLive(plan) ? <ChipLive /> : <ChipDraft />}
               </span>
               <span className="setup-plan-pick-sub">{planPickSubline(plan)}</span>
             </div>
+            <button
+              type="button"
+              className={`setup-plan-pick-popular${isFeatured ? ' is-on' : ''}`}
+              aria-pressed={isFeatured}
+              aria-label={isFeatured ? 'Remove most popular badge' : 'Mark as most popular'}
+              title={isFeatured ? 'Remove most popular' : 'Mark as most popular'}
+              onClick={e => {
+                e.stopPropagation();
+                toggleFeatured(plan.id);
+              }}
+            >
+              {isFeatured ? 'Popular ✓' : 'Popular'}
+            </button>
             <span
               className="setup-plan-pick-drag"
               aria-label="Drag to reorder"
@@ -296,12 +347,59 @@ function PagePlansPicker({
 
 // ─── PagePane ──────────────────────────────────────────────────────────────────
 
+// ─── PagePane ──────────────────────────────────────────────────────────────────
+
+function PageSaveBar() {
+  const { pageDraftDirty, isSavingPageDraft, pageDraftSaveError, savePageDraft } = useSetupWorkspace();
+  const { toast } = useToast();
+
+  async function handleSave() {
+    const error = await savePageDraft();
+    if (!error) {
+      toast({ title: 'Page saved', description: 'Your public page changes were saved.' });
+      return;
+    }
+    toast({ title: 'Could not save page', description: error, variant: 'destructive' });
+  }
+
+  return (
+    <div className="setup-page-save-bar">
+      <div className="setup-page-save-meta">
+        {pageDraftDirty ? (
+          <span className="setup-page-save-status is-dirty">Unsaved changes</span>
+        ) : (
+          <span className="setup-page-save-status">All changes saved</span>
+        )}
+        {pageDraftSaveError ? <span className="setup-page-save-error">{pageDraftSaveError}</span> : null}
+      </div>
+      <button
+        type="button"
+        className="setup-page-save-btn"
+        style={{ ...btnPrimary, opacity: !pageDraftDirty || isSavingPageDraft ? 0.45 : 1 }}
+        disabled={!pageDraftDirty || isSavingPageDraft}
+        onClick={() => void handleSave()}
+      >
+        {isSavingPageDraft ? (
+          <>
+            <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite' }} aria-hidden />
+            Saving…
+          </>
+        ) : (
+          'Save changes'
+        )}
+      </button>
+    </div>
+  );
+}
+
 function PagePane({
+  communityId,
   pageDraft,
   onPageDraftChange,
   plans,
   onGoToPlans,
 }: {
+  communityId: string;
   pageDraft: SetupPageDraft;
   onPageDraftChange: (patch: Partial<SetupPageDraft>) => void;
   plans: CommunityPlan[];
@@ -310,10 +408,12 @@ function PagePane({
   const accRef = useRef<HTMLDivElement>(null);
   const {
     communityName,
-    tagline,
-    headline,
     subHeadline,
     accentColor,
+    coverImageUrl,
+    coverImageFrame,
+    logoUrl,
+    logoImageFrame,
     mediaItems,
     autoplayVideoInHero,
     showMemberStats = true,
@@ -328,6 +428,8 @@ function PagePane({
     .map(id => plans.find(plan => plan.id === id))
     .filter((plan): plan is CommunityPlan => !!plan);
   const visiblePlanNames = visiblePlans.map(p => p.offer_name).join(' · ') || '—';
+  const featuredPlanId = pageDraft.featuredPlanId ?? null;
+  const featuredPlan = featuredPlanId ? plans.find(p => p.id === featuredPlanId) : null;
   const previewMemberCount = Math.max(
     plans[0]?.member_counts?.active ?? 0,
     28,
@@ -357,9 +459,9 @@ function PagePane({
           <span className="setup-acc-num done">1</span>
           <div className="setup-acc-titles">
             <span className="setup-acc-title">Hero</span>
-            <span className="setup-acc-hint">Name, headline, cover, logo, and accent color.</span>
+            <span className="setup-acc-hint">Name, cover, logo, and accent color.</span>
           </div>
-          <span className="setup-acc-summary">“{headline}”</span>
+          <span className="setup-acc-summary">{communityName || '—'}</span>
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
@@ -367,15 +469,55 @@ function PagePane({
             <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
                 <label className="setup-field-label" style={{ marginBottom: '6px' }}>Cover image</label>
-                <div style={{ height: '96px', borderRadius: '8px', background: `linear-gradient(135deg, ${accentColor}, #7c3aed)`, border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.65)', fontSize: '12px', cursor: 'pointer' }}>
-                  Click to upload · 1600×400
-                </div>
+                <SetupImageUpload
+                  communityId={communityId}
+                  variant="cover"
+                  label="Upload cover image"
+                  hint="1600×400 recommended"
+                  value={coverImageUrl}
+                  frame={coverImageFrame}
+                  onChange={url =>
+                    onPageDraftChange({
+                      coverImageUrl: url,
+                      ...(url ? {} : { coverImageFrame: DEFAULT_IMAGE_FRAME }),
+                    })
+                  }
+                  onFrameChange={frame => onPageDraftChange({ coverImageFrame: frame })}
+                  fallback={
+                    <div
+                      className="setup-hero-upload-fallback"
+                      style={{ background: `linear-gradient(135deg, ${accentColor}, #7c3aed)` }}
+                    >
+                      Click to upload · 1600×400
+                    </div>
+                  }
+                />
               </div>
               <div style={{ width: '96px' }}>
                 <label className="setup-field-label" style={{ marginBottom: '6px' }}>Logo</label>
-                <div style={{ height: '96px', borderRadius: '50%', background: accentColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '34px', fontWeight: 600, border: '0.5px solid var(--border)', cursor: 'pointer' }}>
-                  {initial}
-                </div>
+                <SetupImageUpload
+                  communityId={communityId}
+                  variant="logo"
+                  label="Upload logo"
+                  hint="Square image recommended"
+                  value={logoUrl}
+                  frame={logoImageFrame}
+                  onChange={url =>
+                    onPageDraftChange({
+                      logoUrl: url,
+                      ...(url ? {} : { logoImageFrame: DEFAULT_IMAGE_FRAME }),
+                    })
+                  }
+                  onFrameChange={frame => onPageDraftChange({ logoImageFrame: frame })}
+                  fallback={
+                    <div
+                      className="setup-hero-upload-fallback setup-hero-upload-fallback-logo"
+                      style={{ background: accentColor }}
+                    >
+                      {initial}
+                    </div>
+                  }
+                />
               </div>
             </div>
             <div>
@@ -389,14 +531,6 @@ function PagePane({
             <div>
               <label className="setup-field-label">Community name</label>
               <input className="setup-field-input" value={communityName} onChange={e => onPageDraftChange({ communityName: e.target.value })} />
-            </div>
-            <div>
-              <label className="setup-field-label">Tagline</label>
-              <input className="setup-field-input" value={tagline} onChange={e => onPageDraftChange({ tagline: e.target.value })} />
-            </div>
-            <div>
-              <label className="setup-field-label">Headline</label>
-              <input className="setup-field-input" value={headline} onChange={e => onPageDraftChange({ headline: e.target.value })} />
             </div>
             <div>
               <label className="setup-field-label">Sub-headline</label>
@@ -444,6 +578,7 @@ function PagePane({
         </summary>
         <div className="setup-acc-body">
           <SetupMediaGallery
+            communityId={communityId}
             items={mediaItems}
             autoplayVideoInHero={autoplayVideoInHero}
             onItemsChange={items => onPageDraftChange({ mediaItems: items })}
@@ -468,6 +603,12 @@ function PagePane({
                 <span>{visiblePlanNames}</span>
               </>
             ) : null}
+            {featuredPlan ? (
+              <>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)', display: 'inline-block' }} />
+                <span>{featuredPlan.offer_name} · Most popular</span>
+              </>
+            ) : null}
           </span>
           <AccChevron />
         </summary>
@@ -476,8 +617,10 @@ function PagePane({
             plans={plans}
             visiblePlanIds={visiblePlanIds}
             planOrderIds={planOrderIds}
+            featuredPlanId={featuredPlanId}
             onVisiblePlanIdsChange={ids => onPageDraftChange({ visiblePlanIds: ids })}
             onPlanOrderIdsChange={ids => onPageDraftChange({ planOrderIds: ids })}
+            onFeaturedPlanIdChange={id => onPageDraftChange({ featuredPlanId: id })}
             onGoToPlans={onGoToPlans}
           />
         </div>
@@ -530,6 +673,8 @@ function PagePane({
           <div style={{ padding: '10px 20px 16px' }}><button type="button" style={btnSecondary}>Add question</button></div>
         </div>
       </details>
+
+      <PageSaveBar />
     </div>
   );
 }
@@ -538,40 +683,192 @@ function PagePane({
 
 function PlanDetailBody({
   plan,
+  communityId,
   channels,
   sellingPoints,
   onSellingPointsChange,
+  onSaved,
+  onDeleted,
 }: {
   plan: CommunityPlan;
+  communityId: string;
   channels: CommunityChannel[];
   sellingPoints: PlanSellingPoint[];
   onSellingPointsChange: (points: PlanSellingPoint[]) => void;
+  onSaved: (plan: CommunityPlan) => void;
+  onDeleted: (planId: string) => void;
 }) {
+  const { toast } = useToast();
   const planChannels = channelsForPlan(plan, channels);
   const displayPrice = (planDisplayPriceMinor(plan) / 100).toFixed(2);
-  const trial = plan.trial_days ?? 0;
   const frequency = planFrequencyValue(plan);
-  const seatCapValue = plan.seat_cap ? String(plan.seat_cap) : '';
+  const [form, setForm] = useState<UpdateCommunityPlanFormValues>(() => ({
+    offerName: plan.offer_name,
+    description: plan.description ?? '',
+    trialDays: String(plan.trial_days ?? 0),
+    seatCap: plan.seat_cap ? String(plan.seat_cap) : '',
+    currency: plan.currency.toLowerCase(),
+    acceptsSignups: planAcceptsSignups(plan),
+  }));
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setForm({
+      offerName: plan.offer_name,
+      description: plan.description ?? '',
+      trialDays: String(plan.trial_days ?? 0),
+      seatCap: plan.seat_cap ? String(plan.seat_cap) : '',
+      currency: plan.currency.toLowerCase(),
+      acceptsSignups: planAcceptsSignups(plan),
+    });
+    setError('');
+  }, [
+    plan.id,
+    plan.updated_at,
+    plan.offer_name,
+    plan.description,
+    plan.trial_days,
+    plan.seat_cap,
+    plan.currency,
+    plan.accepts_signups,
+    plan.status,
+  ]);
+
+  async function handleSave() {
+    if (form.offerName.trim().length < 2) {
+      setError('Plan name must be at least 2 characters.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    try {
+      const payload = buildUpdateCommunityPlanPayload(plan, form, sellingPoints);
+      const updated = await api.updateCommunityPlan(communityId, plan.id, payload);
+      toast({ title: 'Plan saved', description: `${updated.offer_name} was updated.` });
+      onSaved(updated);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to save plan. Please try again.';
+      setError(message);
+      toast({ title: 'Could not save plan', description: message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        `Delete "${plan.offer_name}"? Existing members keep access until their subscription ends.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    setError('');
+    try {
+      await api.deleteCommunityPlan(communityId, plan.id);
+      toast({ title: 'Plan deleted', description: `${plan.offer_name} was removed.` });
+      onDeleted(plan.id);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete plan. Please try again.';
+      setError(message);
+      toast({ title: 'Could not delete plan', description: message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const busy = saving || deleting;
 
   return (
     <>
       <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '0.5px solid var(--border-soft)' }}>
         <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>Changes apply to new sign-ups; existing members keep their price.</span>
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-          <input type="checkbox" defaultChecked={planIsLive(plan)} style={{ accentColor: 'var(--accent)' }} />
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--text-secondary)', cursor: busy ? 'not-allowed' : 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={form.acceptsSignups}
+            disabled={busy}
+            onChange={e => setForm(prev => ({ ...prev, acceptsSignups: e.target.checked }))}
+            style={{ accentColor: 'var(--accent)' }}
+          />
           Active
         </label>
       </div>
       <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Pricing &amp; details</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-          <div><label className="setup-field-label">Name</label><input className="setup-field-input" defaultValue={plan.offer_name} readOnly /></div>
-          <div><label className="setup-field-label">Frequency</label><select className="setup-field-input" defaultValue={frequency} disabled><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="onetime">One-time</option></select></div>
-          <div><label className="setup-field-label">Price ({plan.currency.toUpperCase()})</label><input className="setup-field-input" defaultValue={displayPrice} readOnly /></div>
-          <div><label className="setup-field-label">Trial (days)</label><input className="setup-field-input" defaultValue={String(trial)} readOnly /></div>
-          <div style={{ gridColumn: '1 / -1' }}><label className="setup-field-label">Description</label><textarea className="setup-field-textarea" rows={2} defaultValue={plan.description ?? ''} readOnly /></div>
-          <div><label className="setup-field-label">Seat cap <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>Optional</span></label><input className="setup-field-input" placeholder="No limit" defaultValue={seatCapValue} readOnly /></div>
-          <div><label className="setup-field-label">Currency</label><select className="setup-field-input" defaultValue={plan.currency.toLowerCase()}><option value="usd">USD</option><option value="eur">EUR</option><option value="ars">ARS</option></select></div>
+          <div>
+            <label className="setup-field-label">Name</label>
+            <input
+              className="setup-field-input"
+              value={form.offerName}
+              disabled={busy}
+              onChange={e => setForm(prev => ({ ...prev, offerName: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="setup-field-label">Frequency</label>
+            <select className="setup-field-input" value={frequency} disabled>
+              <option value="monthly">Monthly</option>
+              <option value="annual">Annual</option>
+              <option value="onetime">One-time</option>
+            </select>
+          </div>
+          <div>
+            <label className="setup-field-label">Price ({form.currency.toUpperCase()})</label>
+            <input className="setup-field-input" value={displayPrice} readOnly />
+          </div>
+          <div>
+            <label className="setup-field-label">Trial (days)</label>
+            <input
+              className="setup-field-input"
+              value={form.trialDays}
+              disabled={busy}
+              onChange={e => setForm(prev => ({ ...prev, trialDays: e.target.value }))}
+            />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="setup-field-label">Description</label>
+            <textarea
+              className="setup-field-textarea"
+              rows={2}
+              value={form.description}
+              disabled={busy}
+              onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="setup-field-label">
+              Seat cap <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>Optional</span>
+            </label>
+            <input
+              className="setup-field-input"
+              placeholder="No limit"
+              value={form.seatCap}
+              disabled={busy}
+              onChange={e => setForm(prev => ({ ...prev, seatCap: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="setup-field-label">Currency</label>
+            <select
+              className="setup-field-input"
+              value={form.currency}
+              disabled={busy}
+              onChange={e => setForm(prev => ({ ...prev, currency: e.target.value }))}
+            >
+              <option value="usd">USD</option>
+              <option value="eur">EUR</option>
+              <option value="ars">ARS</option>
+            </select>
+          </div>
         </div>
       </div>
       <div style={{ padding: '16px 20px 0', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
@@ -612,26 +909,67 @@ function PlanDetailBody({
         </button>
       </div>
       <PlanSellingPointsSection points={sellingPoints} onChange={onSellingPointsChange} />
+      {error ? (
+        <div style={{ padding: '0 20px 8px', color: 'var(--danger, #e06a6a)', fontSize: '12.5px' }}>{error}</div>
+      ) : null}
+      <div
+        style={{
+          padding: '14px 20px 18px',
+          borderTop: '0.5px solid var(--border-soft)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+        }}
+      >
+        <button
+          type="button"
+          style={{ ...btnSecondary, color: 'var(--danger, #e06a6a)', opacity: busy ? 0.6 : 1 }}
+          disabled={busy}
+          onClick={handleDelete}
+        >
+          {deleting ? 'Deleting…' : 'Delete plan'}
+        </button>
+        <button
+          type="button"
+          style={{ ...btnPrimary, opacity: busy ? 0.7 : 1 }}
+          disabled={busy}
+          onClick={handleSave}
+        >
+          {saving ? (
+            <>
+              <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite' }} aria-hidden />
+              Saving…
+            </>
+          ) : (
+            'Save changes'
+          )}
+        </button>
+      </div>
     </>
   );
 }
 
 function PlansPane({
   plans,
+  communityId,
   channels,
   openPlanId,
   onToggle,
   onNewPlan,
   planSellingPoints,
   updatePlanSellingPoints,
+  refreshPlans,
 }: {
   plans: CommunityPlan[];
+  communityId: string;
   channels: CommunityChannel[];
   openPlanId: string | null;
   onToggle: (planId: string) => void;
   onNewPlan: () => void;
   planSellingPoints: Record<string, PlanSellingPoint[]>;
   updatePlanSellingPoints: (planId: string, points: PlanSellingPoint[]) => void;
+  refreshPlans: () => void;
 }) {
 
   return (
@@ -698,11 +1036,17 @@ function PlansPane({
           <div className="setup-acc-body">
             {isOpen ? (
               <PlanDetailBody
-              plan={plan}
-              channels={channels}
-              sellingPoints={sellingPoints}
-              onSellingPointsChange={points => updatePlanSellingPoints(plan.id, points)}
-            />
+                plan={plan}
+                communityId={communityId}
+                channels={channels}
+                sellingPoints={sellingPoints}
+                onSellingPointsChange={points => updatePlanSellingPoints(plan.id, points)}
+                onSaved={updated => {
+                  updatePlanSellingPoints(updated.id, planFeaturesToSellingPoints(updated));
+                  refreshPlans();
+                }}
+                onDeleted={() => refreshPlans()}
+              />
             ) : (
               <div style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '12.5px' }}>
                 Tap to edit {plan.offer_name} — pricing, what&apos;s included, channels, and selling points.
@@ -804,9 +1148,10 @@ function CheckoutPane({ overview }: { overview: CommunityOverview | null }) {
 // ─── Setup section pages (routed) ────────────────────────────────────────────
 
 export function SetupPageSection() {
-  const { pageDraft, updatePageDraft, plans, goToPlans } = useSetupWorkspace();
+  const { communityId, pageDraft, updatePageDraft, plans, goToPlans } = useSetupWorkspace();
   return (
     <PagePane
+      communityId={communityId}
       pageDraft={pageDraft}
       onPageDraftChange={updatePageDraft}
       plans={plans}
@@ -816,10 +1161,20 @@ export function SetupPageSection() {
 }
 
 export function SetupPlansSection() {
-  const { plans, channels, openPlanId, handlePlanToggle, onNewPlan, planSellingPoints, updatePlanSellingPoints } =
-    useSetupWorkspace();
+  const {
+    communityId,
+    plans,
+    channels,
+    openPlanId,
+    handlePlanToggle,
+    onNewPlan,
+    planSellingPoints,
+    updatePlanSellingPoints,
+    refreshPlans,
+  } = useSetupWorkspace();
   return (
     <PlansPane
+      communityId={communityId}
       plans={plans}
       channels={channels}
       openPlanId={openPlanId}
@@ -827,6 +1182,7 @@ export function SetupPlansSection() {
       onNewPlan={onNewPlan}
       planSellingPoints={planSellingPoints}
       updatePlanSellingPoints={updatePlanSellingPoints}
+      refreshPlans={refreshPlans}
     />
   );
 }

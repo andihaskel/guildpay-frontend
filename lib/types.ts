@@ -275,6 +275,7 @@ export interface Community {
   pages_count?: number;
   monthly_revenue?: number;
   slug?: string;
+  settings?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -329,10 +330,20 @@ export interface CreateCommunityPlanRequest {
   channel_ids?: string[];
 }
 
+export interface UpdateCommunityPlanRequest extends CreateCommunityPlanRequest {
+  slug?: string;
+  accepts_signups?: boolean;
+}
+
+export interface DeleteCommunityPlanResponse {
+  ok: boolean;
+}
+
 export interface CommunityPlan {
   id: string;
   offer_name: string;
   published?: boolean;
+  accepts_signups?: boolean;
   status?: 'active' | 'disabled' | 'payment_config_required';
   billing_type?: PlanBillingType;
   description?: string;

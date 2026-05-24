@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FramedImage } from '@/components/community/FramedImage';
 import {
   CommunityPublicPageViewProps,
   GALLERY_BG_GRADIENTS,
@@ -95,9 +96,11 @@ export function CommunityPublicPageView({
   accentColor = '#5865f2',
   compact = false,
   communityName,
-  handle,
   tagline,
   heroImageUrl,
+  heroImageFrame,
+  coverImageUrl,
+  coverImageFrame,
   avatarInitial,
   onlineCount,
   memberCount,
@@ -200,7 +203,12 @@ export function CommunityPublicPageView({
         </header>
       ) : null}
 
-      <section className="hero">
+      <section className="hero" data-has-cover={coverImageUrl ? 'true' : undefined}>
+        {coverImageUrl ? (
+          <div className="hero-cover" aria-hidden>
+            <FramedImage src={coverImageUrl} frame={coverImageFrame} />
+          </div>
+        ) : null}
         <div className="wrap">
           <div className="hero-inner">
             <div
@@ -214,12 +222,11 @@ export function CommunityPublicPageView({
               }
             >
               {heroImageUrl ? (
-                <img src={heroImageUrl} alt={communityName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <FramedImage src={heroImageUrl} alt={communityName} frame={heroImageFrame} />
               ) : (
                 avatarLetter
               )}
             </div>
-            {handle ? <p className="handle">@{handle}</p> : null}
             <h1>{communityName}</h1>
             {tagline ? <p className="tagline">{tagline}</p> : null}
 

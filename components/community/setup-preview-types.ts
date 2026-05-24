@@ -1,4 +1,5 @@
 import { CommunityChannel, CommunityPlan } from '@/lib/types';
+import type { ImageFrame } from '@/lib/image-frame';
 
 export type SetupPreviewFaq = { q: string; a: string };
 export type SetupPreviewTestimonial = { quote: string; author: string; since: string };
@@ -58,6 +59,10 @@ export type SetupPageDraft = {
   headline: string;
   subHeadline: string;
   accentColor: string;
+  coverImageUrl?: string;
+  coverImageFrame?: ImageFrame;
+  logoUrl?: string;
+  logoImageFrame?: ImageFrame;
   mediaItems: SetupMediaItem[];
   autoplayVideoInHero: boolean;
   /** Show “X online now · Y members” in the hero */
@@ -66,6 +71,8 @@ export type SetupPageDraft = {
   visiblePlanIds?: string[];
   /** Full plan order used in the Page → Plans picker */
   planOrderIds?: string[];
+  /** Plan shown with the “Most popular” badge on the public page (optional) */
+  featuredPlanId?: string | null;
 };
 
 export type SetupPreviewModel = {

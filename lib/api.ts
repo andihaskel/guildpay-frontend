@@ -1,4 +1,4 @@
-import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CreateCommunityPlanRequest, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel, ChannelProvider } from './types';
+import { User, Product, Role, Member, CreatorSubscription, ApiError, DiscordServer, DiscordRole, DiscordChannel, StripePrice, ProductOverview, AccessPage, CreatePageRequest, BillingPlan, BillingPlanStatus, InvoicesResponse, MemberStatus, Community, DashboardHome, CommunityOverview, CommunityPlan, CreateCommunityPlanRequest, UpdateCommunityPlanRequest, DeleteCommunityPlanResponse, CommunityPage, CommunityChannel, CommunityMember, ActivityItem, CreatorProfile, IntegrationsResponse, IntegrationChannel, ChannelProvider } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -279,6 +279,21 @@ class ApiClient {
     return this.post(`/creator/products/${productId}/pages/media/presign`, params);
   }
 
+  async presignCommunityMedia(
+    communityId: string,
+    params: { filename: string; content_type: string; plan_id?: string },
+  ): Promise<{
+    upload_url: string;
+    method: string;
+    headers: Record<string, string>;
+    asset_url: string;
+    asset_key: string;
+    expires_in: number;
+    content_type: string;
+  }> {
+    return this.post(`/creator/communities/${communityId}/plans/media/presign`, params);
+  }
+
   async checkSlug(productId: string, slug: string, excludePageId?: string): Promise<{ available: boolean }> {
     const params = new URLSearchParams({ slug });
     if (excludePageId) params.append('exclude_page_id', excludePageId);
@@ -315,11 +330,13 @@ class ApiClient {
 
   async createPublicCheckoutSession(
     publicPath: string,
-    priceKind: 'monthly' | 'yearly'
+    priceKind: 'monthly' | 'yearly',
+    planId?: string,
   ): Promise<{ client_secret: string; stripe_account: string }> {
+    const query = planId ? `?plan_id=${encodeURIComponent(planId)}` : '';
     return this.post<{ client_secret: string; stripe_account: string }>(
-      `${publicPath}/checkout-session`,
-      { price_kind: priceKind }
+      `${publicPath}/checkout-session${query}`,
+      { price_kind: priceKind },
     );
   }
 
@@ -365,8 +382,18 @@ class ApiClient {
     return this.post<CommunityPlan>(`/creator/communities/${communityId}/plans`, data);
   }
 
-  async updateCommunityPlan(communityId: string, planId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
+  async updateCommunityPlan(
+    communityId: string,
+    planId: string,
+    data: UpdateCommunityPlanRequest,
+  ): Promise<CommunityPlan> {
     return this.put<CommunityPlan>(`/creator/communities/${communityId}/plans/${planId}`, data);
+  }
+
+  async deleteCommunityPlan(communityId: string, planId: string): Promise<DeleteCommunityPlanResponse> {
+    return this.delete<DeleteCommunityPlanResponse>(
+      `/creator/communities/${communityId}/plans/${planId}`,
+    );
   }
 
   // Legacy aliases kept for backward compat with old pages/edit form
@@ -379,8 +406,16 @@ class ApiClient {
   async createCommunityPage(communityId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
     return this.createCommunityPlan(communityId, data as any);
   }
-  async updateCommunityPage(communityId: string, pageId: string, data: Partial<CommunityPlan>): Promise<CommunityPlan> {
+  async updateCommunityPage(
+    communityId: string,
+    pageId: string,
+    data: UpdateCommunityPlanRequest,
+  ): Promise<CommunityPlan> {
     return this.updateCommunityPlan(communityId, pageId, data);
+  }
+
+  async deleteCommunityPage(communityId: string, pageId: string): Promise<DeleteCommunityPlanResponse> {
+    return this.deleteCommunityPlan(communityId, pageId);
   }
 
   async getCommunityChannels(communityId: string): Promise<CommunityChannel[]> {

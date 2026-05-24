@@ -1,7 +1,6 @@
 import { Community, CommunityChannel, CommunityPlan } from '@/lib/types';
-import { planColor } from '@/components/community/setup-utils';
+import { pageDraftFromCommunity } from '@/components/community/community-page-draft';
 import {
-  cloneDefaultSellingPoints,
   normalizePlanSellingPoints,
 } from '@/components/community/plan-selling-points';
 import { SetupPageDraft, SetupPreviewModel, DEFAULT_SETUP_MEDIA, PlanSellingPoint } from '@/components/community/setup-preview-types';
@@ -70,14 +69,11 @@ export function loadCommunityPreviewDraft(communityId: string): SetupPreviewMode
     }
     const legacy = parsed as SetupPreviewModel & { sellingPoints?: string[] };
     if (!parsed.planSellingPoints && parsed.plans?.length) {
-      const fallback = legacy.sellingPoints
-        ? normalizePlanSellingPoints(legacy.sellingPoints)
-        : cloneDefaultSellingPoints();
       parsed.planSellingPoints = Object.fromEntries(
-        parsed.plans.map(plan => [plan.id, cloneDefaultSellingPoints(plan.id)]),
+        parsed.plans.map(plan => [plan.id, normalizePlanSellingPoints(plan.features)]),
       );
-      if (legacy.sellingPoints?.length) {
-        parsed.planSellingPoints[parsed.plans[0].id] = fallback;
+      if (legacy.sellingPoints?.length && parsed.plans[0]) {
+        parsed.planSellingPoints[parsed.plans[0].id] = normalizePlanSellingPoints(legacy.sellingPoints);
       }
     }
     return parsed;
@@ -97,23 +93,15 @@ export function buildCommunityPreviewModel(
   channels: CommunityChannel[],
   selectedPlanId?: string | null,
 ): SetupPreviewModel {
+  const page = pageDraftFromCommunity(community, plans);
   return {
     slug: community.slug,
-    page: {
-      communityName: community.name,
-      tagline: community.tagline || 'Daily signals + live sessions',
-      headline: 'Trade alongside a proven desk.',
-      subHeadline: 'Real-time alerts, weekly sessions, and a no-noise Discord. Cancel anytime.',
-      accentColor: planColor(community.name),
-      mediaItems: DEFAULT_SETUP_MEDIA,
-      autoplayVideoInHero: true,
-      showMemberStats: true,
-    },
+    page,
     plans,
     channels,
-    selectedPlanId: selectedPlanId ?? plans[0]?.id ?? null,
+    selectedPlanId: selectedPlanId ?? page.visiblePlanIds?.[0] ?? plans[0]?.id ?? null,
     planSellingPoints: Object.fromEntries(
-      plans.map(plan => [plan.id, cloneDefaultSellingPoints(plan.id)]),
+      plans.map(plan => [plan.id, normalizePlanSellingPoints(plan.features)]),
     ),
     faq: DEFAULT_COMMUNITY_FAQ,
     testimonials: DEFAULT_COMMUNITY_TESTIMONIALS,

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -26,8 +27,13 @@ import {
   saveCommunityPreviewDraft,
 } from '@/components/community/community-preview';
 import { mergePlanSellingPointsMapFromPlans, sellingPointsForPlan } from '@/components/community/plan-model';
-import { SetupPageDraft, SetupPreviewModel, DEFAULT_SETUP_MEDIA, PlanSellingPoint } from '@/components/community/setup-preview-types';
-import { planColor, mergePlanOrderIds } from '@/components/community/setup-utils';
+import {
+  buildCommunityPageUpdate,
+  mergePlanFieldsIntoPageDraft,
+  pageDraftFromCommunity,
+  pageDraftsEqual,
+} from '@/components/community/community-page-draft';
+import { SetupPageDraft, SetupPreviewModel, PlanSellingPoint } from '@/components/community/setup-preview-types';
 import { NewPlanModal } from '@/components/community/NewPlanModal';
 
 export type SetupSection = 'page' | 'plans' | 'checkout';
@@ -41,6 +47,10 @@ type SetupWorkspaceValue = {
   isLoading: boolean;
   pageDraft: SetupPageDraft;
   updatePageDraft: (patch: Partial<SetupPageDraft>) => void;
+  pageDraftDirty: boolean;
+  isSavingPageDraft: boolean;
+  pageDraftSaveError: string | null;
+  savePageDraft: () => Promise<string | null>;
   openPlanId: string | null;
   setOpenPlanId: (id: string | null) => void;
   handlePlanToggle: (planId: string) => void;
@@ -84,8 +94,13 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     }
   });
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
+  const hasInitializedOpenPlan = useRef(false);
   const [pageDraft, setPageDraft] = useState<SetupPageDraft | null>(null);
+  const [savedPageDraft, setSavedPageDraft] = useState<SetupPageDraft | null>(null);
+  const [isSavingPageDraft, setIsSavingPageDraft] = useState(false);
+  const [pageDraftSaveError, setPageDraftSaveError] = useState<string | null>(null);
   const [planSellingPoints, setPlanSellingPoints] = useState<Record<string, PlanSellingPoint[]>>({});
+  const hasInitializedPageDraft = useRef(false);
 
   const setPreviewDevice = useCallback((device: 'desktop' | 'mobile') => {
     setPreviewDeviceState(device);
@@ -109,6 +124,13 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
   }, [communityId]);
 
   useEffect(() => {
+    hasInitializedPageDraft.current = false;
+    setPageDraft(null);
+    setSavedPageDraft(null);
+    setPageDraftSaveError(null);
+  }, [communityId]);
+
+  useEffect(() => {
     if (!communityId) return;
     setCurrentCommunityId(communityId);
     setIsLoading(true);
@@ -120,21 +142,7 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       api.getCommunityChannels(communityId),
     ]).then(([comm, ovr, pl, ch]) => {
       if (comm.status === 'fulfilled') {
-        const c = comm.value;
-        setCommunity(c);
-        setPageDraft(prev =>
-          prev ?? {
-            communityName: c.name,
-            tagline: c.tagline || 'Daily signals + live sessions',
-            headline: 'Trade alongside a proven desk.',
-            subHeadline:
-              'Real-time alerts, weekly sessions, and a no-noise Discord. Cancel anytime.',
-            accentColor: planColor(c.name),
-            mediaItems: DEFAULT_SETUP_MEDIA,
-            autoplayVideoInHero: true,
-            showMemberStats: true,
-          },
-        );
+        setCommunity(comm.value);
       }
       if (ovr.status === 'fulfilled') setOverview(ovr.value);
       if (pl.status === 'fulfilled') setPlans(pl.value);
@@ -144,27 +152,17 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
   }, [communityId, setCurrentCommunityId]);
 
   useEffect(() => {
-    if (plans.length === 0) return;
-    setPageDraft(prev => {
-      if (!prev) return prev;
-      const planIds = plans.map(p => p.id);
-      const existingVisible = prev.visiblePlanIds ?? [];
-      const keptVisible = existingVisible.filter(id => planIds.includes(id));
-      const addedVisible = planIds.filter(id => !keptVisible.includes(id));
-      const visiblePlanIds =
-        keptVisible.length === 0 && addedVisible.length > 0 ? planIds : [...keptVisible, ...addedVisible];
+    if (!community || isLoading || hasInitializedPageDraft.current) return;
+    const draft = pageDraftFromCommunity(community, plans);
+    setPageDraft(draft);
+    setSavedPageDraft(draft);
+    hasInitializedPageDraft.current = true;
+  }, [community, plans, isLoading]);
 
-      const planOrderIds = mergePlanOrderIds(prev.planOrderIds, planIds);
-      const visibleChanged =
-        existingVisible.length !== visiblePlanIds.length ||
-        !existingVisible.every((id, i) => id === visiblePlanIds[i]);
-      const orderChanged =
-        (prev.planOrderIds ?? []).length !== planOrderIds.length ||
-        !(prev.planOrderIds ?? []).every((id, i) => id === planOrderIds[i]);
-
-      if (!visibleChanged && !orderChanged) return prev;
-      return { ...prev, visiblePlanIds, planOrderIds };
-    });
+  useEffect(() => {
+    if (!hasInitializedPageDraft.current || plans.length === 0) return;
+    setPageDraft(prev => (prev ? mergePlanFieldsIntoPageDraft(prev, plans) : prev));
+    setSavedPageDraft(prev => (prev ? mergePlanFieldsIntoPageDraft(prev, plans) : prev));
   }, [plans]);
 
   useEffect(() => {
@@ -179,16 +177,61 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
   }, [focusPlanId, communityId, router]);
 
   useEffect(() => {
-    if (plans.length > 0 && (!openPlanId || !plans.some(p => p.id === openPlanId))) {
+    if (plans.length === 0) {
+      hasInitializedOpenPlan.current = false;
+      return;
+    }
+
+    if (openPlanId && plans.some(p => p.id === openPlanId)) {
+      hasInitializedOpenPlan.current = true;
+      return;
+    }
+
+    if (!hasInitializedOpenPlan.current) {
       setOpenPlanId(plans[0].id);
+      hasInitializedOpenPlan.current = true;
+      return;
+    }
+
+    if (openPlanId && !plans.some(p => p.id === openPlanId)) {
+      setOpenPlanId(plans[0]?.id ?? null);
     }
   }, [plans, openPlanId]);
 
   const comm = community ?? communities.find(c => c.id === communityId) ?? null;
 
   const updatePageDraft = useCallback((patch: Partial<SetupPageDraft>) => {
+    setPageDraftSaveError(null);
     setPageDraft(prev => (prev ? { ...prev, ...patch } : prev));
   }, []);
+
+  const pageDraftDirty = useMemo(() => {
+    if (!pageDraft || !savedPageDraft) return false;
+    return !pageDraftsEqual(pageDraft, savedPageDraft);
+  }, [pageDraft, savedPageDraft]);
+
+  const savePageDraft = useCallback(async (): Promise<string | null> => {
+    if (!community || !pageDraft || !pageDraftDirty) return null;
+
+    setIsSavingPageDraft(true);
+    setPageDraftSaveError(null);
+    try {
+      const payload = buildCommunityPageUpdate(community, pageDraft);
+      await api.updateCommunity(communityId, payload);
+      const refreshed = await api.getCommunity(communityId);
+      setCommunity(refreshed);
+      const nextSaved = pageDraftFromCommunity(refreshed, plans);
+      setPageDraft(nextSaved);
+      setSavedPageDraft(nextSaved);
+      return null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save page changes.';
+      setPageDraftSaveError(message);
+      return message;
+    } finally {
+      setIsSavingPageDraft(false);
+    }
+  }, [community, communityId, pageDraft, pageDraftDirty, plans]);
 
   const handlePlanToggle = useCallback((planId: string) => {
     setOpenPlanId(prev => (prev === planId ? null : planId));
@@ -246,6 +289,10 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       isLoading,
       pageDraft,
       updatePageDraft,
+      pageDraftDirty,
+      isSavingPageDraft,
+      pageDraftSaveError,
+      savePageDraft,
       openPlanId,
       setOpenPlanId,
       handlePlanToggle,
@@ -269,6 +316,10 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     channels,
     isLoading,
     updatePageDraft,
+    pageDraftDirty,
+    isSavingPageDraft,
+    pageDraftSaveError,
+    savePageDraft,
     openPlanId,
     handlePlanToggle,
     previewDevice,

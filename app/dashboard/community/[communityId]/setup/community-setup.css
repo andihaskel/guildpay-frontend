@@ -133,6 +133,52 @@
   background: var(--surface-2);
 }
 
+.setup-page-save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  margin-top: 8px;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.setup-page-save-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.setup-page-save-status {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.setup-page-save-status.is-dirty {
+  color: var(--accent-soft-text, #8b92f8);
+  font-weight: 500;
+}
+
+.setup-page-save-error {
+  font-size: 11.5px;
+  color: var(--danger, #ef4444);
+}
+
+.setup-page-save-btn {
+  flex-shrink: 0;
+}
+
+.setup-page-save-btn:disabled {
+  cursor: not-allowed;
+}
+
 .setup-acc {
   background: var(--surface-1);
   border: 0.5px solid var(--border);
@@ -216,10 +262,22 @@
 .setup-acc[open] .setup-acc-chev {
   transform: rotate(180deg);
   color: var(--text-secondary);
+  margin-left: auto;
 }
 .setup-acc-body { border-top: 0.5px solid var(--border-soft); }
 
 /* Plan picker rows (Page → Plans section) */
+.setup-plan-pick-hint {
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-bottom: 0.5px solid var(--border-soft);
+  line-height: 1.45;
+}
+.setup-plan-pick-hint strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
 .setup-plan-pick {
   display: flex;
   align-items: center;
@@ -232,6 +290,9 @@
 }
 .setup-plan-pick:hover { background: rgba(255,255,255,0.025); }
 .setup-plan-pick.is-off { opacity: 0.55; }
+.setup-plan-pick.is-featured {
+  background: rgba(88, 101, 242, 0.04);
+}
 .setup-plan-pick.is-dragging {
   opacity: 0.72;
   background: rgba(255,255,255,0.04);
@@ -291,6 +352,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.setup-plan-pick-popular {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0.5px solid var(--border);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.setup-plan-pick-popular:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+.setup-plan-pick-popular.is-on {
+  color: var(--accent-soft-text);
+  border-color: var(--accent-soft-border);
+  background: var(--accent-soft-bg);
 }
 .setup-plan-pick-drag {
   color: var(--text-muted);
@@ -1741,6 +1825,206 @@
   border-radius: 10px;
   background: var(--surface-1);
   border: 0.5px solid var(--border);
+}
+
+/* ========== HERO IMAGE UPLOAD ========== */
+.setup-hero-upload-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setup-hero-upload {
+  position: relative;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  background: var(--surface-1);
+}
+
+.setup-hero-upload-cover {
+  width: 100%;
+  height: 96px;
+  border-radius: 8px;
+}
+
+.setup-hero-upload-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+.setup-hero-upload-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.setup-hero-upload-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.setup-hero-upload-img {
+  display: block;
+  pointer-events: none;
+}
+
+.setup-hero-upload-toolbar {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.setup-hero-upload-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.setup-hero-upload-tool:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.setup-hero-upload-tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.setup-hero-upload-tool-text {
+  width: auto;
+  padding: 0 8px;
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.setup-hero-upload-zoom-label {
+  min-width: 36px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.setup-hero-upload-overlay-busy {
+  opacity: 1;
+  pointer-events: none;
+}
+
+.setup-hero-upload-hint {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.setup-hero-upload-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
+}
+
+.setup-hero-upload-fallback-logo {
+  color: #fff;
+  font-size: 34px;
+  font-weight: 600;
+}
+
+.setup-hero-upload-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+  padding: 0;
+}
+
+.setup-hero-upload:hover .setup-hero-upload-overlay,
+.setup-hero-upload:focus-within .setup-hero-upload-overlay {
+  opacity: 1;
+}
+
+.setup-hero-upload-overlay:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+.setup-hero-upload-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-hero-upload-remove:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.setup-hero-upload-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: setup-upload-spin 0.7s linear infinite;
+}
+
+@keyframes setup-upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+.setup-hero-upload-error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--danger, #ef4444);
 }
 
 /* ========== MEDIA GALLERY (page editor) ========== */

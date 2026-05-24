@@ -15,8 +15,16 @@ import {
   PublicPagePlanOption,
   PublicPageTestimonial,
 } from '@/components/community/community-public-page-types';
-import { DEFAULT_PLAN_SELLING_POINTS } from '@/components/community/plan-selling-points';
 import { SetupPreviewModel, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import {
+  draftMediaToPublicItems,
+  parsePublicPageFrame,
+  publicCommunityPlanToCommunityPlan,
+  type PublicCommunityResponse,
+} from '@/components/community/public-community-types';
+import { planFeaturesToSellingPoints } from '@/components/community/plan-model';
+import { DEFAULT_IMAGE_FRAME } from '@/lib/image-frame';
+import { normalizeAssetUrl } from '@/lib/utils';
 
 const TESTIMONIAL_GRADIENTS = [
   'linear-gradient(135deg, #f4b860, #e0735a)',
@@ -102,7 +110,10 @@ function planPriceParts(plan: CommunityPlan, billing: 'monthly' | 'yearly') {
   return { amount: fmtAmount(0, plan.currency), period: '', subHtml: '', ctaSuffix: '' };
 }
 
-function buildPlanOptions(plans: CommunityPlan[]): PublicPagePlanOption[] {
+function buildPlanOptions(
+  plans: CommunityPlan[],
+  featuredPlanId?: string | null,
+): PublicPagePlanOption[] {
   return plans.map((plan, index) => {
     const hasYearly = planHasYearly(plan);
     const hasMonthly = planHasMonthly(plan);
@@ -113,8 +124,9 @@ function buildPlanOptions(plans: CommunityPlan[]): PublicPagePlanOption[] {
 
     let tag: string | undefined;
     let tagVariant: 'popular' | 'save' | undefined;
-    if (index === 1) {
+    if (featuredPlanId && plan.id === featuredPlanId) {
       tag = 'Most popular';
+      tagVariant = 'popular';
     } else if (index === plans.length - 1 && plans.length > 2) {
       tag = 'Limited';
       tagVariant = 'save';
@@ -159,17 +171,7 @@ function buildPerks(plan: CommunityPlan | null, channels: CommunityChannel[]): P
 }
 
 function setupMediaItems(model: SetupPreviewModel): PublicPageMediaItem[] {
-  return model.page.mediaItems.map((item, index) => ({
-    id: item.id,
-    type: item.type,
-    url: item.url,
-    gradient: item.gradient,
-    bgIndex: (index % 8) + 1,
-    duration: item.duration,
-    caption: item.filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-    wide: index === 0 || index === 3 || index === 7,
-    tall: index === 0,
-  }));
+  return draftMediaToPublicItems(model.page.mediaItems);
 }
 
 export function buildSetupPreviewPageProps(
@@ -188,10 +190,7 @@ export function buildSetupPreviewPageProps(
     (selectedPlanId && visiblePlans.find(p => p.id === selectedPlanId)) ||
     visiblePlans[0] ||
     null;
-  const sellingPoints =
-    plan
-      ? sellingPointsForPlan(plan, planSellingPoints[plan.id])
-      : DEFAULT_PLAN_SELLING_POINTS;
+  const sellingPoints = plan ? sellingPointsForPlan(plan, planSellingPoints[plan.id]) : [];
 
   const memberCount = plan?.member_counts.active ?? 0;
 
@@ -205,22 +204,25 @@ export function buildSetupPreviewPageProps(
 
   const selected = selectedPlanId ?? visiblePlans[0]?.id;
   const selectedPlanOption =
-    buildPlanOptions(visiblePlans).find(p => p.id === selected) ??
-    buildPlanOptions(visiblePlans)[0];
+    buildPlanOptions(visiblePlans, page.featuredPlanId).find(p => p.id === selected) ??
+    buildPlanOptions(visiblePlans, page.featuredPlanId)[0];
 
   return {
     accentColor: page.accentColor,
     compact: false,
     communityName: page.communityName,
-    handle: slug,
-    tagline: page.subHeadline || page.headline || page.tagline,
+    tagline: page.subHeadline || undefined,
+    coverImageUrl: page.coverImageUrl,
+    coverImageFrame: page.coverImageFrame,
+    heroImageUrl: page.logoUrl,
+    heroImageFrame: page.logoImageFrame,
     avatarInitial: (page.communityName.trim()[0] || '?').toUpperCase(),
     memberCount: memberCount > 0 ? memberCount : 28,
     showMemberStats: page.showMemberStats !== false,
     mediaItems: setupMediaItems(model),
     galleryCountLabel: `${page.mediaItems.length} item${page.mediaItems.length === 1 ? '' : 's'}`,
     features: sellingPointsToFeatures(sellingPoints),
-    plans: buildPlanOptions(visiblePlans),
+    plans: buildPlanOptions(visiblePlans, page.featuredPlanId),
     selectedPlanId: selected ?? undefined,
     onSelectPlan,
     priceSubHtml: selectedPlanOption?.subHtml,
@@ -231,6 +233,80 @@ export function buildSetupPreviewPageProps(
     emptyPlansMessage: 'Add a plan to preview pricing.',
     showFooterLinks: false,
     showTopChrome: false,
+    interactive: true,
+  };
+}
+
+const DEFAULT_PUBLIC_FAQ = [
+  {
+    q: 'How does access work?',
+    a: "After checkout, you'll get an invite link and be auto-assigned your role in Discord within seconds.",
+  },
+  {
+    q: 'Can I cancel anytime?',
+    a: 'Yes. Cancel from your dashboard and keep access until the end of your billing period.',
+  },
+  {
+    q: 'Is my payment secure?',
+    a: 'All payments are processed by Stripe. We never see or store your card details.',
+  },
+];
+
+export function buildPublicCommunityPageProps(
+  data: PublicCommunityResponse,
+  selectedPlanId: string | null,
+  onSelectPlan?: (id: string) => void,
+  onCtaClick?: () => void,
+  ctaLoading?: boolean,
+): CommunityPublicPageViewProps {
+  const page = data.page;
+  const mappedPlans = data.plans.map(publicCommunityPlanToCommunityPlan);
+  const visiblePlans = mappedPlans.filter(plan => {
+    const raw = data.plans.find(p => p.id === plan.id);
+    return raw?.accepts_signups !== false;
+  });
+  const plan =
+    (selectedPlanId && visiblePlans.find(p => p.id === selectedPlanId)) ||
+    visiblePlans[0] ||
+    null;
+  const sellingPoints = plan ? planFeaturesToSellingPoints(plan) : [];
+
+  const selected = selectedPlanId ?? visiblePlans[0]?.id;
+  const planOptions = buildPlanOptions(visiblePlans, page?.featuredPlanId ?? null);
+  const selectedPlanOption = planOptions.find(p => p.id === selected) ?? planOptions[0];
+
+  const mediaItems = page?.mediaItems?.length
+    ? draftMediaToPublicItems(page.mediaItems)
+    : [];
+
+  return {
+    accentColor: page?.accentColor,
+    communityName: data.community_name,
+    tagline: data.tagline || undefined,
+    coverImageUrl: normalizeAssetUrl(page?.coverImageUrl),
+    coverImageFrame: parsePublicPageFrame(page?.coverImageFrame) ?? DEFAULT_IMAGE_FRAME,
+    heroImageUrl: normalizeAssetUrl(data.logo_url),
+    heroImageFrame: parsePublicPageFrame(page?.logoImageFrame) ?? DEFAULT_IMAGE_FRAME,
+    showMemberStats: page?.showMemberStats !== false,
+    mediaItems,
+    galleryCountLabel: mediaItems.length
+      ? `${mediaItems.length} item${mediaItems.length === 1 ? '' : 's'}`
+      : undefined,
+    features: sellingPointsToFeatures(sellingPoints),
+    plans: planOptions,
+    selectedPlanId: selected ?? undefined,
+    onSelectPlan,
+    priceSubHtml: selectedPlanOption?.subHtml,
+    ctaLabel: selectedPlanOption?.ctaLabel,
+    onCtaClick,
+    ctaLoading,
+    perks: [
+      { type: 'check', label: 'Cancel anytime' },
+      { type: 'check', label: 'Secure payment via Stripe' },
+    ],
+    faq: DEFAULT_PUBLIC_FAQ,
+    showFooterLinks: true,
+    showTopChrome: true,
     interactive: true,
   };
 }
