@@ -21,37 +21,10 @@ export type SetupMediaItem = {
   duration?: string;
 };
 
-export const DEFAULT_SETUP_MEDIA: SetupMediaItem[] = [
-  {
-    id: 'demo-1',
-    type: 'image',
-    gradient: 'linear-gradient(135deg, #5865f2 0%, #7c3aed 60%, #db2777 100%)',
-    filename: 'hero-gradient.jpg',
-    sizeBytes: 1_200_000,
-  },
-  {
-    id: 'demo-2',
-    type: 'video',
-    gradient: 'radial-gradient(ellipse at 30% 40%, #1f2937 0%, #0a0a0a 70%)',
-    filename: 'intro-pitch.mp4',
-    sizeBytes: 14_600_000,
-    duration: '0:42',
-  },
-  {
-    id: 'demo-3',
-    type: 'image',
-    gradient: 'linear-gradient(160deg, #2f9d6b 0%, #0891b2 100%)',
-    filename: 'desk-shot.jpg',
-    sizeBytes: 2_400_000,
-  },
-  {
-    id: 'demo-4',
-    type: 'image',
-    gradient: 'linear-gradient(200deg, #d97706 0%, #dc2626 100%)',
-    filename: 'chart-overlay.jpg',
-    sizeBytes: 880_000,
-  },
-];
+export const DEFAULT_GALLERY_LABEL = 'Inside the community';
+export const DEFAULT_GALLERY_HEADLINE = "A peek at what's inside";
+export const DEFAULT_GALLERY_DESCRIPTION =
+  "Streams, behind-the-scenes clips, screenshots, and the kind of stuff you won't find anywhere else.";
 
 export type SetupPageDraft = {
   communityName: string;
@@ -63,6 +36,9 @@ export type SetupPageDraft = {
   coverImageFrame?: ImageFrame;
   logoUrl?: string;
   logoImageFrame?: ImageFrame;
+  galleryLabel: string;
+  galleryHeadline: string;
+  galleryDescription: string;
   mediaItems: SetupMediaItem[];
   autoplayVideoInHero: boolean;
   /** Show “X online now · Y members” in the hero */

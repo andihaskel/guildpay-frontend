@@ -46,7 +46,7 @@ type SetupWorkspaceValue = {
   channels: CommunityChannel[];
   isLoading: boolean;
   pageDraft: SetupPageDraft;
-  updatePageDraft: (patch: Partial<SetupPageDraft>) => void;
+  updatePageDraft: (patch: Partial<SetupPageDraft> | ((prev: SetupPageDraft) => Partial<SetupPageDraft>)) => void;
   pageDraftDirty: boolean;
   isSavingPageDraft: boolean;
   pageDraftSaveError: string | null;
@@ -94,7 +94,6 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     }
   });
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
-  const hasInitializedOpenPlan = useRef(false);
   const [pageDraft, setPageDraft] = useState<SetupPageDraft | null>(null);
   const [savedPageDraft, setSavedPageDraft] = useState<SetupPageDraft | null>(null);
   const [isSavingPageDraft, setIsSavingPageDraft] = useState(false);
@@ -177,33 +176,24 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
   }, [focusPlanId, communityId, router]);
 
   useEffect(() => {
-    if (plans.length === 0) {
-      hasInitializedOpenPlan.current = false;
-      return;
-    }
-
-    if (openPlanId && plans.some(p => p.id === openPlanId)) {
-      hasInitializedOpenPlan.current = true;
-      return;
-    }
-
-    if (!hasInitializedOpenPlan.current) {
-      setOpenPlanId(plans[0].id);
-      hasInitializedOpenPlan.current = true;
-      return;
-    }
-
-    if (openPlanId && !plans.some(p => p.id === openPlanId)) {
-      setOpenPlanId(plans[0]?.id ?? null);
+    if (openPlanId && plans.length > 0 && !plans.some(p => p.id === openPlanId)) {
+      setOpenPlanId(null);
     }
   }, [plans, openPlanId]);
 
   const comm = community ?? communities.find(c => c.id === communityId) ?? null;
 
-  const updatePageDraft = useCallback((patch: Partial<SetupPageDraft>) => {
-    setPageDraftSaveError(null);
-    setPageDraft(prev => (prev ? { ...prev, ...patch } : prev));
-  }, []);
+  const updatePageDraft = useCallback(
+    (patch: Partial<SetupPageDraft> | ((prev: SetupPageDraft) => Partial<SetupPageDraft>)) => {
+      setPageDraftSaveError(null);
+      setPageDraft(prev => {
+        if (!prev) return prev;
+        const nextPatch = typeof patch === 'function' ? patch(prev) : patch;
+        return { ...prev, ...nextPatch };
+      });
+    },
+    [],
+  );
 
   const pageDraftDirty = useMemo(() => {
     if (!pageDraft || !savedPageDraft) return false;

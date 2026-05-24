@@ -3,7 +3,7 @@ import { pageDraftFromCommunity } from '@/components/community/community-page-dr
 import {
   normalizePlanSellingPoints,
 } from '@/components/community/plan-selling-points';
-import { SetupPageDraft, SetupPreviewModel, DEFAULT_SETUP_MEDIA, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import { SetupPageDraft, SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL } from '@/components/community/setup-preview-types';
 
 export const COMMUNITY_PREVIEW_ACTIVE_KEY = 'ag-community-preview-active';
 
@@ -29,6 +29,26 @@ export function getCommunityPreviewPath(communityId: string) {
   return `/preview/community/${communityId}`;
 }
 
+export function getCommunityPublicPath(creatorSlug: string, communitySlug: string) {
+  return `/p/${creatorSlug}/${communitySlug}`;
+}
+
+export function getCommunityPublicUrl(creatorSlug: string, communitySlug: string, origin?: string) {
+  const base =
+    origin ?? (typeof window !== 'undefined' ? window.location.origin : 'https://accessgate.io');
+  return `${base}${getCommunityPublicPath(creatorSlug, communitySlug)}`;
+}
+
+export function getCommunityPublicDisplayHost(origin?: string) {
+  const base =
+    origin ?? (typeof window !== 'undefined' ? window.location.origin : 'https://accessgate.io');
+  try {
+    return new URL(base).host.replace(/^www\./, '');
+  } catch {
+    return 'accessgate.io';
+  }
+}
+
 export function saveCommunityPreviewDraft(communityId: string, model: SetupPreviewModel) {
   if (typeof window === 'undefined') return;
   try {
@@ -44,8 +64,19 @@ export function loadCommunityPreviewDraft(communityId: string): SetupPreviewMode
     const raw = sessionStorage.getItem(STORAGE_KEY(communityId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as SetupPreviewModel;
-    if (!parsed.page.mediaItems?.length) {
-      parsed.page.mediaItems = DEFAULT_SETUP_MEDIA;
+    if (!parsed.page.mediaItems) {
+      parsed.page.mediaItems = [];
+    } else {
+      parsed.page.mediaItems = parsed.page.mediaItems.filter(item => !!item.url?.trim());
+    }
+    if (!parsed.page.galleryLabel?.trim()) {
+      parsed.page.galleryLabel = DEFAULT_GALLERY_LABEL;
+    }
+    if (!parsed.page.galleryHeadline?.trim()) {
+      parsed.page.galleryHeadline = DEFAULT_GALLERY_HEADLINE;
+    }
+    if (!parsed.page.galleryDescription?.trim()) {
+      parsed.page.galleryDescription = DEFAULT_GALLERY_DESCRIPTION;
     }
     if (parsed.page.autoplayVideoInHero == null) {
       parsed.page.autoplayVideoInHero = true;

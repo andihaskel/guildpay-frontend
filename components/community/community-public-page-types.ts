@@ -67,6 +67,9 @@ export type CommunityPublicPageViewProps = {
   showMemberStats?: boolean;
   sinceLabel?: string;
   mediaItems?: PublicPageMediaItem[];
+  galleryLabel?: string;
+  galleryHeadline?: string;
+  galleryDescription?: string;
   galleryCountLabel?: string;
   features?: PublicPageFeature[];
   plans?: PublicPagePlanOption[];

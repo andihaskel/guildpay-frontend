@@ -15,7 +15,7 @@ import {
   PublicPagePlanOption,
   PublicPageTestimonial,
 } from '@/components/community/community-public-page-types';
-import { SetupPreviewModel, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import { SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL } from '@/components/community/setup-preview-types';
 import {
   draftMediaToPublicItems,
   parsePublicPageFrame,
@@ -171,7 +171,7 @@ function buildPerks(plan: CommunityPlan | null, channels: CommunityChannel[]): P
 }
 
 function setupMediaItems(model: SetupPreviewModel): PublicPageMediaItem[] {
-  return draftMediaToPublicItems(model.page.mediaItems);
+  return draftMediaToPublicItems(model.page.mediaItems ?? []);
 }
 
 export function buildSetupPreviewPageProps(
@@ -207,6 +207,8 @@ export function buildSetupPreviewPageProps(
     buildPlanOptions(visiblePlans, page.featuredPlanId).find(p => p.id === selected) ??
     buildPlanOptions(visiblePlans, page.featuredPlanId)[0];
 
+  const galleryItems = setupMediaItems(model);
+
   return {
     accentColor: page.accentColor,
     compact: false,
@@ -219,8 +221,13 @@ export function buildSetupPreviewPageProps(
     avatarInitial: (page.communityName.trim()[0] || '?').toUpperCase(),
     memberCount: memberCount > 0 ? memberCount : 28,
     showMemberStats: page.showMemberStats !== false,
-    mediaItems: setupMediaItems(model),
-    galleryCountLabel: `${page.mediaItems.length} item${page.mediaItems.length === 1 ? '' : 's'}`,
+    mediaItems: galleryItems,
+    galleryLabel: page.galleryLabel,
+    galleryHeadline: page.galleryHeadline,
+    galleryDescription: page.galleryDescription,
+    galleryCountLabel: galleryItems.length
+      ? `${galleryItems.length} item${galleryItems.length === 1 ? '' : 's'}`
+      : undefined,
     features: sellingPointsToFeatures(sellingPoints),
     plans: buildPlanOptions(visiblePlans, page.featuredPlanId),
     selectedPlanId: selected ?? undefined,
@@ -289,6 +296,9 @@ export function buildPublicCommunityPageProps(
     heroImageFrame: parsePublicPageFrame(page?.logoImageFrame) ?? DEFAULT_IMAGE_FRAME,
     showMemberStats: page?.showMemberStats !== false,
     mediaItems,
+    galleryLabel: page?.galleryLabel?.trim() || DEFAULT_GALLERY_LABEL,
+    galleryHeadline: page?.galleryHeadline?.trim() || DEFAULT_GALLERY_HEADLINE,
+    galleryDescription: page?.galleryDescription?.trim() || DEFAULT_GALLERY_DESCRIPTION,
     galleryCountLabel: mediaItems.length
       ? `${mediaItems.length} item${mediaItems.length === 1 ? '' : 's'}`
       : undefined,

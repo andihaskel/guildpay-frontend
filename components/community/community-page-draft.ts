@@ -2,7 +2,9 @@ import { Community, CommunityPlan } from '@/lib/types';
 import { DEFAULT_IMAGE_FRAME, type ImageFrame } from '@/lib/image-frame';
 import { normalizeAssetUrl } from '@/lib/utils';
 import {
-  DEFAULT_SETUP_MEDIA,
+  DEFAULT_GALLERY_DESCRIPTION,
+  DEFAULT_GALLERY_HEADLINE,
+  DEFAULT_GALLERY_LABEL,
   SetupMediaItem,
   SetupPageDraft,
 } from '@/components/community/setup-preview-types';
@@ -16,6 +18,9 @@ export type StoredCommunityPageSettings = {
   coverImageUrl?: string;
   coverImageFrame?: ImageFrame;
   logoImageFrame?: ImageFrame;
+  galleryLabel?: string;
+  galleryHeadline?: string;
+  galleryDescription?: string;
   mediaItems?: SetupMediaItem[];
   autoplayVideoInHero?: boolean;
   showMemberStats?: boolean;
@@ -31,8 +36,28 @@ function readPageSettings(settings: Community['settings']): StoredCommunityPageS
   return page as StoredCommunityPageSettings;
 }
 
+export function isPersistableMediaItem(item: SetupMediaItem): boolean {
+  const url = item.url?.trim();
+  return !!url && !url.startsWith('blob:');
+}
+
+export function isRenderableMediaItem(item: SetupMediaItem): boolean {
+  return !!item.url?.trim();
+}
+
+/** Drop blob previews, gradient placeholders, and other non-persisted gallery entries. */
+export function sanitizePersistableMediaItems(items: SetupMediaItem[]): SetupMediaItem[] {
+  return items.filter(isPersistableMediaItem);
+}
+
+/** Drop gradient-only placeholders while keeping in-session blob previews. */
+export function sanitizeRenderableMediaItems(items: SetupMediaItem[]): SetupMediaItem[] {
+  return items.filter(isRenderableMediaItem);
+}
+
+/** @deprecated Use sanitizePersistableMediaItems */
 export function stripBlobMediaItems(items: SetupMediaItem[]): SetupMediaItem[] {
-  return items.filter(item => !item.url?.startsWith('blob:'));
+  return sanitizePersistableMediaItems(items);
 }
 
 export function mergePlanFieldsIntoPageDraft(
@@ -86,7 +111,10 @@ export function pageDraftFromCommunity(community: Community, plans: CommunityPla
     coverImageFrame: stored?.coverImageFrame ?? DEFAULT_IMAGE_FRAME,
     logoUrl: normalizeAssetUrl(community.logo_url),
     logoImageFrame: stored?.logoImageFrame ?? DEFAULT_IMAGE_FRAME,
-    mediaItems: stored?.mediaItems?.length ? stored.mediaItems : DEFAULT_SETUP_MEDIA,
+    galleryLabel: stored?.galleryLabel?.trim() || DEFAULT_GALLERY_LABEL,
+    galleryHeadline: stored?.galleryHeadline?.trim() || DEFAULT_GALLERY_HEADLINE,
+    galleryDescription: stored?.galleryDescription?.trim() || DEFAULT_GALLERY_DESCRIPTION,
+    mediaItems: sanitizePersistableMediaItems(stored?.mediaItems ?? []),
     autoplayVideoInHero: stored?.autoplayVideoInHero ?? true,
     showMemberStats: stored?.showMemberStats ?? true,
     visiblePlanIds,
@@ -110,7 +138,10 @@ export function buildCommunityPageUpdate(community: Community, draft: SetupPageD
         coverImageUrl: draft.coverImageUrl,
         coverImageFrame: draft.coverImageFrame,
         logoImageFrame: draft.logoImageFrame,
-        mediaItems: stripBlobMediaItems(draft.mediaItems),
+        galleryLabel: draft.galleryLabel.trim(),
+        galleryHeadline: draft.galleryHeadline.trim(),
+        galleryDescription: draft.galleryDescription.trim(),
+        mediaItems: sanitizePersistableMediaItems(draft.mediaItems),
         autoplayVideoInHero: draft.autoplayVideoInHero,
         showMemberStats: draft.showMemberStats,
         visiblePlanIds: draft.visiblePlanIds,
@@ -130,7 +161,10 @@ export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
     coverImageFrame: draft.coverImageFrame ?? DEFAULT_IMAGE_FRAME,
     logoUrl: draft.logoUrl ?? null,
     logoImageFrame: draft.logoImageFrame ?? DEFAULT_IMAGE_FRAME,
-    mediaItems: stripBlobMediaItems(draft.mediaItems),
+    galleryLabel: draft.galleryLabel.trim(),
+    galleryHeadline: draft.galleryHeadline.trim(),
+    galleryDescription: draft.galleryDescription.trim(),
+    mediaItems: sanitizePersistableMediaItems(draft.mediaItems),
     autoplayVideoInHero: draft.autoplayVideoInHero,
     showMemberStats: draft.showMemberStats !== false,
     visiblePlanIds: draft.visiblePlanIds ?? [],

@@ -1,7 +1,8 @@
 import { CommunityPlan } from '@/lib/types';
-import { StoredCommunityPageSettings } from '@/components/community/community-page-draft';
+import { sanitizeRenderableMediaItems, StoredCommunityPageSettings } from '@/components/community/community-page-draft';
 import { SetupMediaItem } from '@/components/community/setup-preview-types';
 import { PublicPageMediaItem } from '@/components/community/community-public-page-types';
+import { normalizeAssetUrl } from '@/lib/utils';
 import type { ImageFrame } from '@/lib/image-frame';
 
 export type PublicCommunityPageMediaItem = {
@@ -52,19 +53,18 @@ export function isPublicCommunityResponse(data: unknown): data is PublicCommunit
 }
 
 export function draftMediaToPublicItems(items: SetupMediaItem[] | PublicCommunityPageMediaItem[]): PublicPageMediaItem[] {
-  return items
-    .filter(item => item.url || item.gradient)
-    .map((item, index) => ({
-      id: item.id,
-      type: item.type === 'video' ? 'video' : 'image',
-      url: item.url,
-      gradient: item.gradient,
-      bgIndex: (index % 8) + 1,
-      caption: item.filename?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-      duration: item.duration,
-      wide: index === 0 || index === 3 || index === 7,
-      tall: index === 0,
-    }));
+  const renderable = sanitizeRenderableMediaItems(items as SetupMediaItem[]);
+
+  return renderable.map((item, index) => ({
+    id: item.id,
+    type: item.type === 'video' ? 'video' : 'image',
+    url: normalizeAssetUrl(item.url) ?? item.url,
+    gradient: item.gradient,
+    bgIndex: (index % 8) + 1,
+    duration: item.duration,
+    wide: index === 0 || index === 3 || index === 7,
+    tall: index === 0,
+  }));
 }
 
 export function publicCommunityPlanToCommunityPlan(plan: PublicCommunityPlan): CommunityPlan {

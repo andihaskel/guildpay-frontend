@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FramedImage } from '@/components/community/FramedImage';
 import {
+  DEFAULT_GALLERY_DESCRIPTION,
+  DEFAULT_GALLERY_HEADLINE,
+  DEFAULT_GALLERY_LABEL,
+} from '@/components/community/setup-preview-types';
+import {
   CommunityPublicPageViewProps,
   GALLERY_BG_GRADIENTS,
   PublicPageMediaItem,
@@ -107,6 +112,9 @@ export function CommunityPublicPageView({
   showMemberStats = true,
   sinceLabel,
   mediaItems = [],
+  galleryLabel = DEFAULT_GALLERY_LABEL,
+  galleryHeadline = DEFAULT_GALLERY_HEADLINE,
+  galleryDescription = DEFAULT_GALLERY_DESCRIPTION,
   galleryCountLabel,
   features = [],
   plans = [],
@@ -268,20 +276,23 @@ export function CommunityPublicPageView({
         </div>
       </section>
 
-      {mediaItems.length > 0 ? (
+      {mediaItems.length > 0 || interactive ? (
         <section className="gallery">
           <div className="wrap">
-            <span className="gallery-label">Inside the community</span>
+            <span className="gallery-label">{galleryLabel}</span>
             <div className="gallery-head">
               <div>
-                <h2>A peek at what&apos;s inside</h2>
-                <p>Streams, behind-the-scenes clips, screenshots, and the kind of stuff you won&apos;t find anywhere else.</p>
+                <h2>{galleryHeadline}</h2>
+                <p>{galleryDescription}</p>
               </div>
-              <span className="gallery-count">
-                {galleryCountLabel ?? `${mediaItems.length} item${mediaItems.length === 1 ? '' : 's'}`}
-              </span>
+              {mediaItems.length > 0 ? (
+                <span className="gallery-count">
+                  {galleryCountLabel ?? `${mediaItems.length} item${mediaItems.length === 1 ? '' : 's'}`}
+                </span>
+              ) : null}
             </div>
 
+            {mediaItems.length > 0 ? (
             <div className="gallery-grid">
               {mediaItems.map((item, index) => (
                 <div
@@ -303,7 +314,7 @@ export function CommunityPublicPageView({
                     item.type === 'video' ? (
                       <video src={item.url} muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <img src={item.url} alt={item.caption || item.id} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={item.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     )
                   ) : (
                     <div className="media-placeholder" style={mediaBgStyle(item, index)} />
@@ -323,11 +334,10 @@ export function CommunityPublicPageView({
                       <PlayIcon />
                     </span>
                   ) : null}
-
-                  {item.caption ? <span className="media-caption">{item.caption}</span> : null}
                 </div>
               ))}
             </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -579,7 +589,7 @@ export function CommunityPublicPageView({
               lightboxItem.type === 'video' ? (
                 <video src={lightboxItem.url} controls style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <img src={lightboxItem.url} alt={lightboxItem.caption || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={lightboxItem.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
               )
             ) : (
               <div className="media-placeholder" style={mediaBgStyle(lightboxItem, safeLightboxIdx)} />
@@ -595,7 +605,6 @@ export function CommunityPublicPageView({
                   ? `Video${lightboxItem.duration ? ` · ${lightboxItem.duration}` : ''}`
                   : 'Photo'}
               </span>
-              <span>{lightboxItem.caption || (lightboxItem.type === 'video' ? 'Video' : 'Photo')}</span>
             </div>
           </div>
         </div>

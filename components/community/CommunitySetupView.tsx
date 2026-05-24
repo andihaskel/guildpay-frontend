@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Loader as Loader2 } from 'lucide-react';
 import { CommunityOverview, CommunityPlan, CommunityChannel } from '@/lib/types';
 import { api } from '@/lib/api';
@@ -11,11 +11,12 @@ import {
 } from '@/components/community/community-preview';
 import { useSetupWorkspace } from '@/components/community/SetupWorkspaceContext';
 import { SetupPageDraft, PlanSellingPoint } from '@/components/community/setup-preview-types';
-import { SetupMediaGallery } from '@/components/community/SetupMediaGallery';
+import { SetupMediaGallery, type SetupMediaItemsUpdater } from '@/components/community/SetupMediaGallery';
 import { SetupImageUpload } from '@/components/community/SetupImageUpload';
 import { DEFAULT_IMAGE_FRAME } from '@/lib/image-frame';
 import { PlanSellingPointsSection } from '@/components/community/PlanSellingPointsEditor';
 import { fmtAmount, mergePlanOrderIds, planInitials, reorderByIndex } from '@/components/community/setup-utils';
+import { sanitizeRenderableMediaItems } from '@/components/community/community-page-draft';
 import {
   planAccentColor,
   planDisplayPriceMinor,
@@ -401,7 +402,9 @@ function PagePane({
 }: {
   communityId: string;
   pageDraft: SetupPageDraft;
-  onPageDraftChange: (patch: Partial<SetupPageDraft>) => void;
+  onPageDraftChange: (
+    patch: Partial<SetupPageDraft> | ((prev: SetupPageDraft) => Partial<SetupPageDraft>),
+  ) => void;
   plans: CommunityPlan[];
   onGoToPlans: () => void;
 }) {
@@ -414,11 +417,25 @@ function PagePane({
     coverImageFrame,
     logoUrl,
     logoImageFrame,
-    mediaItems,
+    galleryLabel,
+    galleryHeadline,
+    galleryDescription,
+    mediaItems: rawMediaItems,
     autoplayVideoInHero,
     showMemberStats = true,
   } = pageDraft;
+  const mediaItems = sanitizeRenderableMediaItems(rawMediaItems ?? []);
   const videoCount = mediaItems.filter(m => m.type === 'video').length;
+
+  const handleMediaItemsChange = useCallback(
+    (update: SetupMediaItemsUpdater) => {
+      onPageDraftChange(prev => ({
+        mediaItems:
+          typeof update === 'function' ? update(prev.mediaItems ?? []) : (update ?? []),
+      }));
+    },
+    [onPageDraftChange],
+  );
   const visiblePlanIds = pageDraft.visiblePlanIds ?? plans.map(p => p.id);
   const planOrderIds = mergePlanOrderIds(
     pageDraft.planOrderIds,
@@ -454,7 +471,7 @@ function PagePane({
         </div>
       </div>
 
-      <details className="setup-acc" open>
+      <details className="setup-acc">
         <summary className="setup-acc-head">
           <span className="setup-acc-num done">1</span>
           <div className="setup-acc-titles">
@@ -561,12 +578,12 @@ function PagePane({
         <summary className="setup-acc-head">
           <span className="setup-acc-num done">2</span>
           <div className="setup-acc-titles">
-            <span className="setup-acc-title">Photos &amp; video</span>
-            <span className="setup-acc-hint">Gallery shown on the public page. First item is the cover.</span>
+            <span className="setup-acc-title">Inside the community</span>
+            <span className="setup-acc-hint">Gallery copy and media shown on the public page.</span>
           </div>
           <span className="setup-acc-summary">
             <span>{mediaItems.length}</span>
-            <span>items</span>
+            <span>item{mediaItems.length === 1 ? '' : 's'}</span>
             {videoCount > 0 ? (
               <>
                 <span style={{ width: '1px', height: '10px', background: 'var(--border)', display: 'inline-block' }} />
@@ -577,11 +594,38 @@ function PagePane({
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
+          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', borderBottom: '0.5px solid var(--border-soft)' }}>
+            <div>
+              <label className="setup-field-label">Section label</label>
+              <input
+                className="setup-field-input"
+                value={galleryLabel}
+                onChange={e => onPageDraftChange({ galleryLabel: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="setup-field-label">Headline</label>
+              <input
+                className="setup-field-input"
+                value={galleryHeadline}
+                onChange={e => onPageDraftChange({ galleryHeadline: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="setup-field-label">Description</label>
+              <textarea
+                className="setup-field-textarea"
+                rows={3}
+                value={galleryDescription}
+                onChange={e => onPageDraftChange({ galleryDescription: e.target.value })}
+              />
+            </div>
+          </div>
           <SetupMediaGallery
             communityId={communityId}
             items={mediaItems}
             autoplayVideoInHero={autoplayVideoInHero}
-            onItemsChange={items => onPageDraftChange({ mediaItems: items })}
+            onItemsChange={handleMediaItemsChange}
             onAutoplayChange={value => onPageDraftChange({ autoplayVideoInHero: value })}
           />
         </div>
@@ -1067,7 +1111,7 @@ function CheckoutPane({ overview }: { overview: CommunityOverview | null }) {
 
   return (
   <div className="setup-form-stack">
-    <details className="setup-acc" open>
+    <details className="setup-acc">
       <summary className="setup-acc-head">
         <span className="setup-acc-num done">1</span>
         <div className="setup-acc-titles">
