@@ -8,8 +8,8 @@ import {
 import {
   sanitizePersistableFaqItems,
   sanitizePersistableTestimonials,
-  sanitizePersistableMediaItems,
-} from '@/components/community/community-page-draft';
+} from '@/components/community/page-content';
+import { sanitizePersistableMediaItems } from '@/components/community/community-page-draft';
 
 /** Payload shape for `settings.page` accepted by PUT /creator/communities/{id}. */
 export type CommunityPageSettingsApiPayload = {
