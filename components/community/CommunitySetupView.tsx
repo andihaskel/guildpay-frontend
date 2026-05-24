@@ -5,16 +5,14 @@ import { Loader as Loader2 } from 'lucide-react';
 import { CommunityOverview, CommunityPlan, CommunityChannel } from '@/lib/types';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import {
-  DEFAULT_COMMUNITY_FAQ,
-  DEFAULT_COMMUNITY_TESTIMONIALS,
-} from '@/components/community/community-preview';
 import { useSetupWorkspace } from '@/components/community/SetupWorkspaceContext';
 import { SetupPageDraft, PlanSellingPoint } from '@/components/community/setup-preview-types';
 import { SetupMediaGallery, type SetupMediaItemsUpdater } from '@/components/community/SetupMediaGallery';
 import { SetupImageUpload } from '@/components/community/SetupImageUpload';
 import { DEFAULT_IMAGE_FRAME } from '@/lib/image-frame';
 import { PlanSellingPointsSection } from '@/components/community/PlanSellingPointsEditor';
+import { PageTestimonialsSection } from '@/components/community/PageTestimonialsSection';
+import { PageFaqSection } from '@/components/community/PageFaqSection';
 import { fmtAmount, mergePlanOrderIds, planInitials, reorderByIndex } from '@/components/community/setup-utils';
 import { sanitizeRenderableMediaItems } from '@/components/community/community-page-draft';
 import {
@@ -38,9 +36,6 @@ export type SetupTab = 'page' | 'plans' | 'checkout';
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const ACCENT_SWATCHES = ['#5865f2', '#7c3aed', '#2f9d6b', '#d97706', '#dc2626', '#0891b2'];
-
-const DEFAULT_TESTIMONIALS = DEFAULT_COMMUNITY_TESTIMONIALS;
-const DEFAULT_FAQ = DEFAULT_COMMUNITY_FAQ;
 
 export { fmtAmount, planColor, planInitials } from '@/components/community/setup-utils';
 export { planAccentColor, planPriceLabel } from '@/components/community/plan-model';
@@ -423,6 +418,12 @@ function PagePane({
     mediaItems: rawMediaItems,
     autoplayVideoInHero,
     showMemberStats = true,
+    testimonialsLabel,
+    testimonialsHeadline,
+    testimonials,
+    faqLabel,
+    faqHeadline,
+    faq,
   } = pageDraft;
   const mediaItems = sanitizeRenderableMediaItems(rawMediaItems ?? []);
   const videoCount = mediaItems.filter(m => m.type === 'video').length;
@@ -677,20 +678,34 @@ function PagePane({
             <span className="setup-acc-title">Testimonials</span>
             <span className="setup-acc-hint">Social proof on the page.</span>
           </div>
-          <span className="setup-acc-summary"><span>{DEFAULT_TESTIMONIALS.length}</span> quotes</span>
+          <span className="setup-acc-summary"><span>{testimonials.length}</span> quotes</span>
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
-          {DEFAULT_TESTIMONIALS.map(t => (
-            <div key={t.author} className="setup-settings-row">
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>“{t.quote}” — {t.author}</div>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>Member since {t.since}</div>
-              </div>
-              <button type="button" style={btnSecondary}>Edit</button>
+          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', borderBottom: '0.5px solid var(--border-soft)' }}>
+            <div>
+              <label className="setup-field-label">Section label</label>
+              <input
+                className="setup-field-input"
+                value={testimonialsLabel}
+                onChange={e => onPageDraftChange({ testimonialsLabel: e.target.value })}
+              />
             </div>
-          ))}
-          <div style={{ padding: '10px 20px 16px' }}><button type="button" style={btnSecondary}>Add testimonial</button></div>
+            <div>
+              <label className="setup-field-label">Headline</label>
+              <input
+                className="setup-field-input"
+                value={testimonialsHeadline}
+                onChange={e => onPageDraftChange({ testimonialsHeadline: e.target.value })}
+              />
+            </div>
+          </div>
+          <div style={{ padding: '18px 20px' }}>
+            <PageTestimonialsSection
+              items={testimonials}
+              onChange={items => onPageDraftChange({ testimonials: items })}
+            />
+          </div>
         </div>
       </details>
 
@@ -701,20 +716,31 @@ function PagePane({
             <span className="setup-acc-title">FAQ</span>
             <span className="setup-acc-hint">Answer the obvious questions.</span>
           </div>
-          <span className="setup-acc-summary"><span>{DEFAULT_FAQ.length}</span> questions</span>
+          <span className="setup-acc-summary"><span>{faq.length}</span> questions</span>
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
-          {DEFAULT_FAQ.map(f => (
-            <div key={f.q} className="setup-settings-row">
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--text)' }}>{f.q}</div>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '1px' }}>{f.a}</div>
-              </div>
-              <button type="button" style={btnSecondary}>Edit</button>
+          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', borderBottom: '0.5px solid var(--border-soft)' }}>
+            <div>
+              <label className="setup-field-label">Section label</label>
+              <input
+                className="setup-field-input"
+                value={faqLabel}
+                onChange={e => onPageDraftChange({ faqLabel: e.target.value })}
+              />
             </div>
-          ))}
-          <div style={{ padding: '10px 20px 16px' }}><button type="button" style={btnSecondary}>Add question</button></div>
+            <div>
+              <label className="setup-field-label">Headline</label>
+              <input
+                className="setup-field-input"
+                value={faqHeadline}
+                onChange={e => onPageDraftChange({ faqHeadline: e.target.value })}
+              />
+            </div>
+          </div>
+          <div style={{ padding: '18px 20px' }}>
+            <PageFaqSection items={faq} onChange={items => onPageDraftChange({ faq: items })} />
+          </div>
         </div>
       </details>
 

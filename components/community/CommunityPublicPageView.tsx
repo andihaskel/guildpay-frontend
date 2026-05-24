@@ -6,6 +6,10 @@ import {
   DEFAULT_GALLERY_DESCRIPTION,
   DEFAULT_GALLERY_HEADLINE,
   DEFAULT_GALLERY_LABEL,
+  DEFAULT_FAQ_HEADLINE,
+  DEFAULT_FAQ_LABEL,
+  DEFAULT_TESTIMONIALS_HEADLINE,
+  DEFAULT_TESTIMONIALS_LABEL,
 } from '@/components/community/setup-preview-types';
 import {
   CommunityPublicPageViewProps,
@@ -127,7 +131,11 @@ export function CommunityPublicPageView({
   ctaLoading,
   perks = [],
   testimonials = [],
+  testimonialsLabel = DEFAULT_TESTIMONIALS_LABEL,
+  testimonialsHeadline = DEFAULT_TESTIMONIALS_HEADLINE,
   faq = [],
+  faqLabel = DEFAULT_FAQ_LABEL,
+  faqHeadline = DEFAULT_FAQ_HEADLINE,
   emptyPlansMessage = 'Add a plan to preview pricing.',
   showFooterLinks = true,
   showTopChrome = true,
@@ -463,8 +471,8 @@ export function CommunityPublicPageView({
           <div className="wrap">
             <div className="tm-head">
               <div>
-                <span className="tm-label">Testimonials</span>
-                <h2>What members are saying</h2>
+                <span className="tm-label">{testimonialsLabel}</span>
+                <h2>{testimonialsHeadline}</h2>
               </div>
               {interactive ? (
                 <div className="tm-nav">
@@ -512,8 +520,8 @@ export function CommunityPublicPageView({
         <section className="faq">
           <div className="wrap">
             <div className="faq-head">
-              <span className="faq-label">Common questions</span>
-              <h2>Everything you need to know</h2>
+              <span className="faq-label">{faqLabel}</span>
+              <h2>{faqHeadline}</h2>
             </div>
             <div className="faq-list">
               {faq.map((item, index) => {

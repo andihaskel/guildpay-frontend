@@ -358,7 +358,10 @@ class ApiClient {
     return this.get<Community>(`/creator/communities/${communityId}`);
   }
 
-  async updateCommunity(communityId: string, data: Partial<Community>): Promise<Community> {
+  async updateCommunity(
+    communityId: string,
+    data: import('@/components/community/community-page-api').UpdateCommunityPageRequest,
+  ): Promise<Community> {
     return this.put<Community>(`/creator/communities/${communityId}`, data);
   }
 

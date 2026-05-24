@@ -21,8 +21,6 @@ import {
 } from '@/lib/types';
 import {
   COMMUNITY_PREVIEW_ACTIVE_KEY,
-  DEFAULT_COMMUNITY_FAQ,
-  DEFAULT_COMMUNITY_TESTIMONIALS,
   loadCommunityPreviewDraft,
   saveCommunityPreviewDraft,
 } from '@/components/community/community-preview';
@@ -252,8 +250,6 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       channels,
       selectedPlanId: openPlanId,
       planSellingPoints,
-      faq: DEFAULT_COMMUNITY_FAQ,
-      testimonials: DEFAULT_COMMUNITY_TESTIMONIALS,
     };
   }, [comm, pageDraft, plans, channels, openPlanId, planSellingPoints]);
 

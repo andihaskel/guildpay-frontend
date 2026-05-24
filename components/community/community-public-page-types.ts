@@ -82,7 +82,11 @@ export type CommunityPublicPageViewProps = {
   ctaLoading?: boolean;
   perks?: PublicPagePerk[];
   testimonials?: PublicPageTestimonial[];
+  testimonialsLabel?: string;
+  testimonialsHeadline?: string;
   faq?: PublicPageFaqItem[];
+  faqLabel?: string;
+  faqHeadline?: string;
   emptyPlansMessage?: string;
   showFooterLinks?: boolean;
   showTopChrome?: boolean;

@@ -1,9 +1,26 @@
 import { Community, CommunityChannel, CommunityPlan } from '@/lib/types';
 import { pageDraftFromCommunity } from '@/components/community/community-page-draft';
 import {
+  defaultPageFaqItems,
+  defaultPageTestimonials,
+  normalizePageFaqItems,
+  normalizePageTestimonials,
+} from '@/components/community/page-content';
+import {
   normalizePlanSellingPoints,
 } from '@/components/community/plan-selling-points';
-import { SetupPageDraft, SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL } from '@/components/community/setup-preview-types';
+import {
+  SetupPageDraft,
+  SetupPreviewModel,
+  PlanSellingPoint,
+  DEFAULT_GALLERY_DESCRIPTION,
+  DEFAULT_GALLERY_HEADLINE,
+  DEFAULT_GALLERY_LABEL,
+  DEFAULT_FAQ_HEADLINE,
+  DEFAULT_FAQ_LABEL,
+  DEFAULT_TESTIMONIALS_HEADLINE,
+  DEFAULT_TESTIMONIALS_LABEL,
+} from '@/components/community/setup-preview-types';
 
 export const COMMUNITY_PREVIEW_ACTIVE_KEY = 'ag-community-preview-active';
 
@@ -90,6 +107,48 @@ export function loadCommunityPreviewDraft(communityId: string): SetupPreviewMode
     if (!parsed.page.planOrderIds?.length && parsed.plans?.length) {
       parsed.page.planOrderIds = parsed.page.visiblePlanIds ?? parsed.plans.map(plan => plan.id);
     }
+    if (!parsed.page.testimonialsLabel?.trim()) {
+      parsed.page.testimonialsLabel = DEFAULT_TESTIMONIALS_LABEL;
+    }
+    if (!parsed.page.testimonialsHeadline?.trim()) {
+      parsed.page.testimonialsHeadline = DEFAULT_TESTIMONIALS_HEADLINE;
+    }
+    if (!parsed.page.faqLabel?.trim()) {
+      parsed.page.faqLabel = DEFAULT_FAQ_LABEL;
+    }
+    if (!parsed.page.faqHeadline?.trim()) {
+      parsed.page.faqHeadline = DEFAULT_FAQ_HEADLINE;
+    }
+    const legacy = parsed as SetupPreviewModel & {
+      sellingPoints?: string[];
+      testimonials?: Array<{ quote: string; author: string; since: string }>;
+      faq?: Array<{ q: string; a: string }>;
+    };
+    if (parsed.page.testimonials == null && legacy.testimonials?.length) {
+      parsed.page.testimonials = legacy.testimonials.map(item => ({
+        id: `pc_${Math.random().toString(36).slice(2, 9)}`,
+        quote: item.quote,
+        author: item.author,
+        since: item.since,
+      }));
+    }
+    if (parsed.page.testimonials == null) {
+      parsed.page.testimonials = defaultPageTestimonials();
+    } else {
+      parsed.page.testimonials = normalizePageTestimonials(parsed.page.testimonials);
+    }
+    if (parsed.page.faq == null && legacy.faq?.length) {
+      parsed.page.faq = legacy.faq.map(item => ({
+        id: `pc_${Math.random().toString(36).slice(2, 9)}`,
+        q: item.q,
+        a: item.a,
+      }));
+    }
+    if (parsed.page.faq == null) {
+      parsed.page.faq = defaultPageFaqItems();
+    } else {
+      parsed.page.faq = normalizePageFaqItems(parsed.page.faq);
+    }
     if (parsed.planSellingPoints) {
       parsed.planSellingPoints = Object.fromEntries(
         Object.entries(parsed.planSellingPoints).map(([planId, points]) => [
@@ -98,13 +157,13 @@ export function loadCommunityPreviewDraft(communityId: string): SetupPreviewMode
         ]),
       );
     }
-    const legacy = parsed as SetupPreviewModel & { sellingPoints?: string[] };
+    const legacySelling = parsed as SetupPreviewModel & { sellingPoints?: string[] };
     if (!parsed.planSellingPoints && parsed.plans?.length) {
       parsed.planSellingPoints = Object.fromEntries(
         parsed.plans.map(plan => [plan.id, normalizePlanSellingPoints(plan.features)]),
       );
-      if (legacy.sellingPoints?.length && parsed.plans[0]) {
-        parsed.planSellingPoints[parsed.plans[0].id] = normalizePlanSellingPoints(legacy.sellingPoints);
+      if (legacySelling.sellingPoints?.length && parsed.plans[0]) {
+        parsed.planSellingPoints[parsed.plans[0].id] = normalizePlanSellingPoints(legacySelling.sellingPoints);
       }
     }
     return parsed;
@@ -134,7 +193,5 @@ export function buildCommunityPreviewModel(
     planSellingPoints: Object.fromEntries(
       plans.map(plan => [plan.id, normalizePlanSellingPoints(plan.features)]),
     ),
-    faq: DEFAULT_COMMUNITY_FAQ,
-    testimonials: DEFAULT_COMMUNITY_TESTIMONIALS,
   };
 }

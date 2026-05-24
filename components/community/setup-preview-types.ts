@@ -1,8 +1,23 @@
 import { CommunityChannel, CommunityPlan } from '@/lib/types';
 import type { ImageFrame } from '@/lib/image-frame';
 
-export type SetupPreviewFaq = { q: string; a: string };
-export type SetupPreviewTestimonial = { quote: string; author: string; since: string };
+export type PageTestimonial = {
+  id: string;
+  quote: string;
+  author: string;
+  since: string;
+};
+
+export type PageFaqItem = {
+  id: string;
+  q: string;
+  a: string;
+};
+
+export const DEFAULT_TESTIMONIALS_LABEL = 'Testimonials';
+export const DEFAULT_TESTIMONIALS_HEADLINE = 'What members are saying';
+export const DEFAULT_FAQ_LABEL = 'Common questions';
+export const DEFAULT_FAQ_HEADLINE = 'Everything you need to know';
 
 export type PlanSellingPoint = {
   id: string;
@@ -49,6 +64,12 @@ export type SetupPageDraft = {
   planOrderIds?: string[];
   /** Plan shown with the “Most popular” badge on the public page (optional) */
   featuredPlanId?: string | null;
+  testimonialsLabel: string;
+  testimonialsHeadline: string;
+  testimonials: PageTestimonial[];
+  faqLabel: string;
+  faqHeadline: string;
+  faq: PageFaqItem[];
 };
 
 export type SetupPreviewModel = {
@@ -58,6 +79,4 @@ export type SetupPreviewModel = {
   channels: CommunityChannel[];
   selectedPlanId: string | null;
   planSellingPoints: Record<string, PlanSellingPoint[]>;
-  faq: SetupPreviewFaq[];
-  testimonials: SetupPreviewTestimonial[];
 };

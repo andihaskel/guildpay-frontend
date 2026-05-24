@@ -14,8 +14,10 @@ import {
   PublicPagePerk,
   PublicPagePlanOption,
   PublicPageTestimonial,
+  PublicPageFaqItem,
 } from '@/components/community/community-public-page-types';
-import { SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL } from '@/components/community/setup-preview-types';
+import { SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL, DEFAULT_FAQ_HEADLINE, DEFAULT_FAQ_LABEL, DEFAULT_TESTIMONIALS_HEADLINE, DEFAULT_TESTIMONIALS_LABEL, PageTestimonial } from '@/components/community/setup-preview-types';
+import { normalizePageFaqItems, normalizePageTestimonials } from '@/components/community/page-content';
 import {
   draftMediaToPublicItems,
   parsePublicPageFrame,
@@ -174,12 +176,26 @@ function setupMediaItems(model: SetupPreviewModel): PublicPageMediaItem[] {
   return draftMediaToPublicItems(model.page.mediaItems ?? []);
 }
 
+function mapTestimonialsToPublic(items: PageTestimonial[]): PublicPageTestimonial[] {
+  return items.map((t, i) => ({
+    quote: t.quote,
+    author: t.author,
+    role: t.since ? `Member · ${t.since}` : 'Member',
+    initials: (t.author.trim()[0] || 'M').toUpperCase(),
+    avatarGradient: TESTIMONIAL_GRADIENTS[i % TESTIMONIAL_GRADIENTS.length],
+  }));
+}
+
+function mapFaqToPublic(items: ReturnType<typeof normalizePageFaqItems>): PublicPageFaqItem[] {
+  return items.map(item => ({ q: item.q, a: item.a }));
+}
+
 export function buildSetupPreviewPageProps(
   model: SetupPreviewModel,
   selectedPlanId: string | null,
   onSelectPlan?: (id: string) => void,
 ): CommunityPublicPageViewProps {
-  const { page, plans, channels, faq, testimonials, slug, planSellingPoints } = model;
+  const { page, plans, channels, slug, planSellingPoints } = model;
   const visiblePlanIds = page.visiblePlanIds?.length
     ? page.visiblePlanIds
     : plans.map(p => p.id);
@@ -194,13 +210,8 @@ export function buildSetupPreviewPageProps(
 
   const memberCount = plan?.member_counts.active ?? 0;
 
-  const mappedTestimonials: PublicPageTestimonial[] = testimonials.map((t, i) => ({
-    quote: t.quote,
-    author: t.author,
-    role: t.since ? `Member · ${t.since}` : 'Member',
-    initials: (t.author.trim()[0] || 'M').toUpperCase(),
-    avatarGradient: TESTIMONIAL_GRADIENTS[i % TESTIMONIAL_GRADIENTS.length],
-  }));
+  const mappedTestimonials = mapTestimonialsToPublic(page.testimonials ?? []);
+  const mappedFaq = mapFaqToPublic(page.faq ?? []);
 
   const selected = selectedPlanId ?? visiblePlans[0]?.id;
   const selectedPlanOption =
@@ -236,7 +247,11 @@ export function buildSetupPreviewPageProps(
     ctaLabel: selectedPlanOption?.ctaLabel,
     perks: buildPerks(plan, channels),
     testimonials: mappedTestimonials,
-    faq,
+    testimonialsLabel: page.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
+    testimonialsHeadline: page.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,
+    faq: mappedFaq,
+    faqLabel: page.faqLabel?.trim() || DEFAULT_FAQ_LABEL,
+    faqHeadline: page.faqHeadline?.trim() || DEFAULT_FAQ_HEADLINE,
     emptyPlansMessage: 'Add a plan to preview pricing.',
     showFooterLinks: false,
     showTopChrome: false,
@@ -244,7 +259,7 @@ export function buildSetupPreviewPageProps(
   };
 }
 
-const DEFAULT_PUBLIC_FAQ = [
+const DEFAULT_PUBLIC_FAQ: PublicPageFaqItem[] = [
   {
     q: 'How does access work?',
     a: "After checkout, you'll get an invite link and be auto-assigned your role in Discord within seconds.",
@@ -286,6 +301,13 @@ export function buildPublicCommunityPageProps(
     ? draftMediaToPublicItems(page.mediaItems)
     : [];
 
+  const publicTestimonials =
+    page?.testimonials != null
+      ? mapTestimonialsToPublic(normalizePageTestimonials(page.testimonials))
+      : [];
+  const publicFaq =
+    page?.faq != null ? mapFaqToPublic(normalizePageFaqItems(page.faq)) : DEFAULT_PUBLIC_FAQ;
+
   return {
     accentColor: page?.accentColor,
     communityName: data.community_name,
@@ -314,7 +336,12 @@ export function buildPublicCommunityPageProps(
       { type: 'check', label: 'Cancel anytime' },
       { type: 'check', label: 'Secure payment via Stripe' },
     ],
-    faq: DEFAULT_PUBLIC_FAQ,
+    testimonials: publicTestimonials,
+    testimonialsLabel: page?.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
+    testimonialsHeadline: page?.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,
+    faq: publicFaq,
+    faqLabel: page?.faqLabel?.trim() || DEFAULT_FAQ_LABEL,
+    faqHeadline: page?.faqHeadline?.trim() || DEFAULT_FAQ_HEADLINE,
     showFooterLinks: true,
     showTopChrome: true,
     interactive: true,

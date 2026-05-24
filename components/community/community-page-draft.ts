@@ -5,10 +5,23 @@ import {
   DEFAULT_GALLERY_DESCRIPTION,
   DEFAULT_GALLERY_HEADLINE,
   DEFAULT_GALLERY_LABEL,
+  DEFAULT_FAQ_HEADLINE,
+  DEFAULT_FAQ_LABEL,
+  DEFAULT_TESTIMONIALS_HEADLINE,
+  DEFAULT_TESTIMONIALS_LABEL,
   SetupMediaItem,
   SetupPageDraft,
 } from '@/components/community/setup-preview-types';
+import {
+  defaultPageFaqItems,
+  defaultPageTestimonials,
+  normalizePageFaqItems,
+  normalizePageTestimonials,
+  sanitizePersistableFaqItems,
+  sanitizePersistableTestimonials,
+} from '@/components/community/page-content';
 import { mergePlanOrderIds, planColor } from '@/components/community/setup-utils';
+import { buildUpdateCommunityPageRequest } from '@/components/community/community-page-api';
 
 const DEFAULT_SUB_HEADLINE =
   'Real-time alerts, weekly sessions, and a no-noise Discord. Cancel anytime.';
@@ -27,6 +40,12 @@ export type StoredCommunityPageSettings = {
   visiblePlanIds?: string[];
   planOrderIds?: string[];
   featuredPlanId?: string | null;
+  testimonialsLabel?: string;
+  testimonialsHeadline?: string;
+  testimonials?: SetupPageDraft['testimonials'];
+  faqLabel?: string;
+  faqHeadline?: string;
+  faq?: SetupPageDraft['faq'];
 };
 
 function readPageSettings(settings: Community['settings']): StoredCommunityPageSettings | null {
@@ -120,36 +139,20 @@ export function pageDraftFromCommunity(community: Community, plans: CommunityPla
     visiblePlanIds,
     planOrderIds,
     featuredPlanId,
+    testimonialsLabel: stored?.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
+    testimonialsHeadline: stored?.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,
+    testimonials:
+      stored?.testimonials != null
+        ? normalizePageTestimonials(stored.testimonials)
+        : defaultPageTestimonials(),
+    faqLabel: stored?.faqLabel?.trim() || DEFAULT_FAQ_LABEL,
+    faqHeadline: stored?.faqHeadline?.trim() || DEFAULT_FAQ_HEADLINE,
+    faq: stored?.faq != null ? normalizePageFaqItems(stored.faq) : defaultPageFaqItems(),
   };
 }
 
 export function buildCommunityPageUpdate(community: Community, draft: SetupPageDraft) {
-  const existing =
-    community.settings && typeof community.settings === 'object' ? community.settings : {};
-
-  return {
-    name: draft.communityName.trim(),
-    tagline: draft.subHeadline.trim(),
-    logo_url: draft.logoUrl ?? '',
-    settings: {
-      ...existing,
-      page: {
-        accentColor: draft.accentColor,
-        coverImageUrl: draft.coverImageUrl,
-        coverImageFrame: draft.coverImageFrame,
-        logoImageFrame: draft.logoImageFrame,
-        galleryLabel: draft.galleryLabel.trim(),
-        galleryHeadline: draft.galleryHeadline.trim(),
-        galleryDescription: draft.galleryDescription.trim(),
-        mediaItems: sanitizePersistableMediaItems(draft.mediaItems),
-        autoplayVideoInHero: draft.autoplayVideoInHero,
-        showMemberStats: draft.showMemberStats,
-        visiblePlanIds: draft.visiblePlanIds,
-        planOrderIds: draft.planOrderIds,
-        featuredPlanId: draft.featuredPlanId ?? null,
-      } satisfies StoredCommunityPageSettings,
-    },
-  };
+  return buildUpdateCommunityPageRequest(community, draft);
 }
 
 export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
@@ -170,6 +173,12 @@ export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
     visiblePlanIds: draft.visiblePlanIds ?? [],
     planOrderIds: draft.planOrderIds ?? [],
     featuredPlanId: draft.featuredPlanId ?? null,
+    testimonialsLabel: draft.testimonialsLabel.trim(),
+    testimonialsHeadline: draft.testimonialsHeadline.trim(),
+    testimonials: sanitizePersistableTestimonials(draft.testimonials),
+    faqLabel: draft.faqLabel.trim(),
+    faqHeadline: draft.faqHeadline.trim(),
+    faq: sanitizePersistableFaqItems(draft.faq),
   });
 }
 
