@@ -75,6 +75,15 @@ export function sanitizeRenderableMediaItems(items: SetupMediaItem[]): SetupMedi
   return items.filter(isRenderableMediaItem);
 }
 
+function normalizeMediaItemsForCompare(items: SetupMediaItem[] | undefined) {
+  return sanitizeRenderableMediaItems(items ?? []).map(item => ({
+    type: item.type,
+    url: normalizeAssetUrl(item.url) ?? item.url?.trim() ?? '',
+    filename: item.filename?.trim() ?? '',
+    duration: item.duration?.trim() ?? '',
+  }));
+}
+
 /** @deprecated Use sanitizePersistableMediaItems */
 export function stripBlobMediaItems(items: SetupMediaItem[]): SetupMediaItem[] {
   return sanitizePersistableMediaItems(items);
@@ -165,7 +174,7 @@ export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
     galleryLabel: draft.galleryLabel.trim(),
     galleryHeadline: draft.galleryHeadline.trim(),
     galleryDescription: draft.galleryDescription.trim(),
-    mediaItems: sanitizePersistableMediaItems(draft.mediaItems),
+    mediaItems: normalizeMediaItemsForCompare(draft.mediaItems),
     autoplayVideoInHero: draft.autoplayVideoInHero,
     showMemberStats: draft.showMemberStats !== false,
     visiblePlanIds: draft.visiblePlanIds ?? [],

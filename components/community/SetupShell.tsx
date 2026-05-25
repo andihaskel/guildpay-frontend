@@ -85,7 +85,7 @@ function SetupPreviewPanel() {
           <div className="device device-mobile">
             <div className="device-mobile-notch" aria-hidden />
             <div className="device-mobile-screen">
-              <CommunitySetupPreview model={previewModel} />
+              <CommunitySetupPreview model={previewModel} previewFrame="mobile" />
             </div>
           </div>
         ) : (
@@ -109,7 +109,7 @@ function SetupPreviewPanel() {
                 className="device-desktop-screen"
                 style={{ ['--scale' as string]: String(desktopScale) }}
               >
-                <CommunitySetupPreview model={previewModel} />
+                <CommunitySetupPreview model={previewModel} previewFrame="desktop" />
               </div>
             </div>
           </div>
