@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FramedImage } from '@/components/community/FramedImage';
 import {
   DEFAULT_GALLERY_DESCRIPTION,
@@ -15,6 +16,7 @@ import {
 import {
   CommunityPublicPageViewProps,
   GALLERY_BG_GRADIENTS,
+  PublicPageFeature,
   PublicPageMediaItem,
 } from '@/components/community/community-public-page-types';
 import '@/components/community/community-public-page.css';
@@ -102,6 +104,44 @@ function mediaSpanClasses(item: PublicPageMediaItem, index: number) {
   return classes.join(' ');
 }
 
+function WhatsIncludedBlock({
+  features,
+  planName,
+}: {
+  features: PublicPageFeature[];
+  planName: string;
+}) {
+  if (features.length === 0) return null;
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <h2>
+          What&apos;s included in{' '}
+          <span className="included-plan-name">{planName}</span>
+        </h2>
+        <span className="card-count">
+          {features.length} benefit{features.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      <div className="features">
+        {features.map(feature => (
+          <div key={feature.id ?? feature.title} className="feature">
+            <span className="feature-icon">{feature.icon}</span>
+            <div className="feature-body">
+              <p className="feature-title">{feature.title}</p>
+              {feature.description ? <p className="feature-desc">{feature.description}</p> : null}
+            </div>
+            <span className="feature-check">
+              <CheckIcon />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function CommunityPublicPageView({
   accentColor = '#5865f2',
   compact = false,
@@ -147,6 +187,7 @@ export function CommunityPublicPageView({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(0);
   const tmTrackRef = useRef<HTMLDivElement>(null);
+  const lightboxVideoRef = useRef<HTMLVideoElement>(null);
 
   const selectedPlan = useMemo(
     () => plans.find(p => p.id === selectedPlanId) ?? plans[0] ?? null,
@@ -204,6 +245,102 @@ export function CommunityPublicPageView({
     ? ((lightboxIdx % mediaItems.length) + mediaItems.length) % mediaItems.length
     : 0;
   const lightboxItem = mediaItems[safeLightboxIdx];
+  const isVideoLightbox = lightboxItem?.type === 'video';
+
+  useEffect(() => {
+    lightboxVideoRef.current?.pause();
+  }, [lightboxOpen, safeLightboxIdx]);
+
+  const lightboxPortal =
+    interactive && lightboxOpen && lightboxItem && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            className="pub pub-lb-portal"
+            style={{ ['--pub-accent' as string]: accentColor }}
+          >
+            <div
+              className="lb open"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Media viewer"
+              onClick={e => {
+                if (e.target === e.currentTarget) closeLightbox();
+              }}
+            >
+              <span className="lb-counter">
+                {safeLightboxIdx + 1} / {mediaItems.length}
+              </span>
+              <button type="button" className="lb-close" aria-label="Close" onClick={closeLightbox}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+              <button type="button" className="lb-nav prev" aria-label="Previous" onClick={prevLightbox}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M15 6l-6 6 6 6" />
+                </svg>
+              </button>
+              <button type="button" className="lb-nav next" aria-label="Next" onClick={nextLightbox}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+              <div
+                className={`lb-frame${isVideoLightbox ? ' lb-frame--video' : ''}`}
+                onClick={e => e.stopPropagation()}
+              >
+                {lightboxItem.url ? (
+                  isVideoLightbox ? (
+                    <>
+                      <div className="lb-video-shell">
+                        <video
+                          ref={lightboxVideoRef}
+                          key={lightboxItem.url}
+                          className="lb-video"
+                          src={lightboxItem.url}
+                          controls
+                          playsInline
+                          preload="auto"
+                          controlsList="nodownload"
+                        />
+                      </div>
+                      <div className="lb-caption lb-caption--below">
+                        <span className="lb-caption-meta">
+                          Video{lightboxItem.duration ? ` · ${lightboxItem.duration}` : ''}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <img src={lightboxItem.url} alt="" className="lb-image" />
+                      <div className="lb-caption">
+                        <span className="lb-caption-meta">Photo</span>
+                      </div>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <div className="media-placeholder" style={mediaBgStyle(lightboxItem, safeLightboxIdx)} />
+                    {isVideoLightbox ? (
+                      <div className="lb-play-big">
+                        <PlayIcon size={22} />
+                      </div>
+                    ) : null}
+                    <div className={`lb-caption${isVideoLightbox ? ' lb-caption--below' : ''}`}>
+                      <span className="lb-caption-meta">
+                        {isVideoLightbox
+                          ? `Video${lightboxItem.duration ? ` · ${lightboxItem.duration}` : ''}`
+                          : 'Photo'}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div
@@ -440,31 +577,12 @@ export function CommunityPublicPageView({
           </div>
 
           <div className="left-col">
-            {features.length > 0 ? (
-              <div className="card">
-                <div className="card-head">
-                  <h2>
-                    What&apos;s <span className="accent">included</span>
-                  </h2>
-                  <span className="card-count">
-                    {features.length} benefit{features.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-                <div className="features">
-                  {features.map(feature => (
-                    <div key={feature.id ?? feature.title} className="feature">
-                      <span className="feature-icon">{feature.icon}</span>
-                      <div className="feature-body">
-                        <p className="feature-title">{feature.title}</p>
-                        {feature.description ? <p className="feature-desc">{feature.description}</p> : null}
-                      </div>
-                      <span className="feature-check">
-                        <CheckIcon />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {selectedPlan ? (
+              <WhatsIncludedBlock
+                key={selectedPlan.id}
+                features={features}
+                planName={selectedPlan.name}
+              />
             ) : null}
           </div>
         </div>
@@ -568,59 +686,7 @@ export function CommunityPublicPageView({
         ) : null}
       </footer>
 
-      {interactive && lightboxOpen && lightboxItem ? (
-        <div
-          className={`lb open`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Media viewer"
-          onClick={e => {
-            if (e.target === e.currentTarget) closeLightbox();
-          }}
-        >
-          <span className="lb-counter">
-            {safeLightboxIdx + 1} / {mediaItems.length}
-          </span>
-          <button type="button" className="lb-close" aria-label="Close" onClick={closeLightbox}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-          <button type="button" className="lb-nav prev" aria-label="Previous" onClick={prevLightbox}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </button>
-          <button type="button" className="lb-nav next" aria-label="Next" onClick={nextLightbox}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </button>
-          <div className="lb-frame">
-            {lightboxItem.url ? (
-              lightboxItem.type === 'video' ? (
-                <video src={lightboxItem.url} controls style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
-              ) : (
-                <img src={lightboxItem.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
-              )
-            ) : (
-              <div className="media-placeholder" style={mediaBgStyle(lightboxItem, safeLightboxIdx)} />
-            )}
-            {lightboxItem.type === 'video' && !lightboxItem.url ? (
-              <div className="lb-play-big">
-                <PlayIcon size={22} />
-              </div>
-            ) : null}
-            <div className="lb-caption">
-              <span className="lb-caption-meta">
-                {lightboxItem.type === 'video'
-                  ? `Video${lightboxItem.duration ? ` · ${lightboxItem.duration}` : ''}`
-                  : 'Photo'}
-              </span>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {lightboxPortal}
     </div>
   );
 }

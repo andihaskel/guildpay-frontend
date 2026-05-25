@@ -72,8 +72,11 @@ function uploadErrorMessage(err: unknown): string {
     (typeof apiErr?.error === 'string' && apiErr.error.trim()) ||
     (err instanceof Error && err.message.trim()) ||
     '';
-  if (raw.includes('content_type must be an image MIME type')) {
-    return 'Video uploads are not enabled on the API yet. Deploy the latest backend or point NEXT_PUBLIC_API_URL to a local API with video presign support.';
+  if (
+    raw.includes('content_type must be an image MIME type') ||
+    raw.includes('unsupported video content_type')
+  ) {
+    return 'Video uploads are not available yet on AccessGate (api.accessgate.io). Photos work; videos need a server update on our side — not a browser or localhost issue.';
   }
   if (raw) return raw;
   return 'Upload failed. Please try again.';
