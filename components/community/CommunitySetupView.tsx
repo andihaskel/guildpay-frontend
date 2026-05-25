@@ -350,7 +350,13 @@ function PagePlansPicker({
 // ─── PagePane ──────────────────────────────────────────────────────────────────
 
 function PageSaveBar() {
-  const { pageDraftDirty, isSavingPageDraft, pageDraftSaveError, savePageDraft } = useSetupWorkspace();
+  const {
+    pageDraftDirty,
+    isSavingPageDraft,
+    pageDraftSaveError,
+    savePageDraft,
+    undoPageDraftChanges,
+  } = useSetupWorkspace();
   const { toast } = useToast();
 
   async function handleSave() {
@@ -362,11 +368,23 @@ function PageSaveBar() {
     toast({ title: 'Could not save page', description: error, variant: 'destructive' });
   }
 
+  function handleUndo() {
+    undoPageDraftChanges();
+    toast({ title: 'Changes discarded', description: 'Your page draft was restored to the last saved version.' });
+  }
+
   return (
     <div className="setup-page-save-bar">
       <div className="setup-page-save-meta">
         {pageDraftDirty ? (
-          <span className="setup-page-save-status is-dirty">Unsaved changes</span>
+          <button
+            type="button"
+            className="setup-page-undo-btn"
+            disabled={isSavingPageDraft}
+            onClick={handleUndo}
+          >
+            Undo changes
+          </button>
         ) : (
           <span className="setup-page-save-status">All changes saved</span>
         )}

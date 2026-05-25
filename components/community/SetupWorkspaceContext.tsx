@@ -49,6 +49,7 @@ type SetupWorkspaceValue = {
   isSavingPageDraft: boolean;
   pageDraftSaveError: string | null;
   savePageDraft: () => Promise<string | null>;
+  undoPageDraftChanges: () => void;
   openPlanId: string | null;
   setOpenPlanId: (id: string | null) => void;
   handlePlanToggle: (planId: string) => void;
@@ -221,6 +222,23 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [community, communityId, pageDraft, pageDraftDirty, plans]);
 
+  const undoPageDraftChanges = useCallback(() => {
+    if (!pageDraft || !savedPageDraft || !pageDraftDirty) return;
+
+    const savedUrls = new Set(
+      (savedPageDraft.mediaItems ?? []).map(item => item.url).filter((url): url is string => !!url),
+    );
+    for (const item of pageDraft.mediaItems ?? []) {
+      const url = item.url;
+      if (url?.startsWith('blob:') && !savedUrls.has(url)) {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    setPageDraft(structuredClone(savedPageDraft));
+    setPageDraftSaveError(null);
+  }, [pageDraft, savedPageDraft, pageDraftDirty]);
+
   const handlePlanToggle = useCallback((planId: string) => {
     setOpenPlanId(prev => (prev === planId ? null : planId));
   }, []);
@@ -279,6 +297,7 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
       isSavingPageDraft,
       pageDraftSaveError,
       savePageDraft,
+      undoPageDraftChanges,
       openPlanId,
       setOpenPlanId,
       handlePlanToggle,
@@ -306,6 +325,7 @@ export function SetupWorkspaceProvider({ children }: { children: ReactNode }) {
     isSavingPageDraft,
     pageDraftSaveError,
     savePageDraft,
+    undoPageDraftChanges,
     openPlanId,
     handlePlanToggle,
     previewDevice,
