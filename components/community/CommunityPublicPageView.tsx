@@ -8,6 +8,7 @@ import {
   DEFAULT_GALLERY_LABEL,
   DEFAULT_FAQ_HEADLINE,
   DEFAULT_FAQ_LABEL,
+  DEFAULT_PLANS_LABEL,
   DEFAULT_TESTIMONIALS_HEADLINE,
   DEFAULT_TESTIMONIALS_LABEL,
 } from '@/components/community/setup-preview-types';
@@ -130,6 +131,7 @@ export function CommunityPublicPageView({
   ctaDisabled,
   ctaLoading,
   perks = [],
+  plansLabel = DEFAULT_PLANS_LABEL,
   testimonials = [],
   testimonialsLabel = DEFAULT_TESTIMONIALS_LABEL,
   testimonialsHeadline = DEFAULT_TESTIMONIALS_HEADLINE,
@@ -352,45 +354,18 @@ export function CommunityPublicPageView({
 
       <section className="wrap">
         <div className="content">
-          <div className="left-col">
-            {features.length > 0 ? (
-              <div className="card">
-                <div className="card-head">
-                  <h2>
-                    What&apos;s <span className="accent">included</span>
-                  </h2>
-                  <span className="card-count">
-                    {features.length} benefit{features.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-                <div className="features">
-                  {features.map(feature => (
-                    <div key={feature.id ?? feature.title} className="feature">
-                      <span className="feature-icon">{feature.icon}</span>
-                      <div className="feature-body">
-                        <p className="feature-title">{feature.title}</p>
-                        {feature.description ? <p className="feature-desc">{feature.description}</p> : null}
-                      </div>
-                      <span className="feature-check">
-                        <CheckIcon />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
           <div className="pricing-col">
+            <div className="pricing-section-head">
+              <span className="section-label">{plansLabel}</span>
+              {plans.length > 0 ? (
+                <span className="pricing-count">
+                  {plans.length} plan{plans.length === 1 ? '' : 's'}
+                </span>
+              ) : null}
+            </div>
+
             {plans.length > 0 && selectedPlan ? (
               <div className="pricing">
-                <div className="pricing-head">
-                  <p className="pricing-title">Choose a plan</p>
-                  <span className="pricing-count">
-                    {plans.length} plan{plans.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-
                 <div className="plans" role="radiogroup" aria-label="Available plans">
                   {plans.map(plan => (
                     <button
@@ -463,6 +438,35 @@ export function CommunityPublicPageView({
               <div className="pricing pub-empty-plan">{emptyPlansMessage}</div>
             )}
           </div>
+
+          <div className="left-col">
+            {features.length > 0 ? (
+              <div className="card">
+                <div className="card-head">
+                  <h2>
+                    What&apos;s <span className="accent">included</span>
+                  </h2>
+                  <span className="card-count">
+                    {features.length} benefit{features.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <div className="features">
+                  {features.map(feature => (
+                    <div key={feature.id ?? feature.title} className="feature">
+                      <span className="feature-icon">{feature.icon}</span>
+                      <div className="feature-body">
+                        <p className="feature-title">{feature.title}</p>
+                        {feature.description ? <p className="feature-desc">{feature.description}</p> : null}
+                      </div>
+                      <span className="feature-check">
+                        <CheckIcon />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -520,7 +524,7 @@ export function CommunityPublicPageView({
         <section className="faq">
           <div className="wrap">
             <div className="faq-head">
-              <span className="faq-label">{faqLabel}</span>
+              <span className="section-label">{faqLabel}</span>
               <h2>{faqHeadline}</h2>
             </div>
             <div className="faq-list">

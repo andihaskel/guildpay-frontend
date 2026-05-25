@@ -4,9 +4,36 @@ import type { ApiError } from '@/lib/types';
 import { normalizeAssetUrl } from '@/lib/utils';
 
 export const COMMUNITY_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+export const COMMUNITY_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'] as const;
 
 function fileExtension(name: string): string {
   return name.split('.').pop()?.toLowerCase() ?? '';
+}
+
+function normalizeVideoMime(type: string, filename: string): string | null {
+  const normalized = type.toLowerCase().trim();
+  switch (normalized) {
+    case 'video/mp4':
+    case 'video/x-m4v':
+      return 'video/mp4';
+    case 'video/quicktime':
+      return 'video/quicktime';
+    case 'video/webm':
+      return 'video/webm';
+    default:
+      break;
+  }
+  switch (fileExtension(filename)) {
+    case 'mp4':
+    case 'm4v':
+      return 'video/mp4';
+    case 'mov':
+      return 'video/quicktime';
+    case 'webm':
+      return 'video/webm';
+    default:
+      return null;
+  }
 }
 
 function normalizeImageMime(type: string, filename: string): string | null {
@@ -37,8 +64,18 @@ export function isUploadableImageFile(file: File): boolean {
 
 function uploadErrorMessage(err: unknown): string {
   const apiErr = err as ApiError;
-  if (typeof apiErr?.message === 'string' && apiErr.message.trim()) return apiErr.message;
-  if (err instanceof Error && err.message.trim()) return err.message;
+  if (apiErr?.statusCode === 401) {
+    return 'Session expired. Please sign in again and retry.';
+  }
+  const raw =
+    (typeof apiErr?.message === 'string' && apiErr.message.trim()) ||
+    (typeof apiErr?.error === 'string' && apiErr.error.trim()) ||
+    (err instanceof Error && err.message.trim()) ||
+    '';
+  if (raw.includes('content_type must be an image MIME type')) {
+    return 'Video uploads are not enabled on the API yet. Deploy the latest backend or point NEXT_PUBLIC_API_URL to a local API with video presign support.';
+  }
+  if (raw) return raw;
   return 'Upload failed. Please try again.';
 }
 
@@ -58,11 +95,25 @@ export async function uploadCommunityMedia(communityId: string, file: File): Pro
     throw new Error('Only JPEG, PNG, WebP, and GIF images are supported.');
   }
 
+  return presignAndUploadCommunityBlob(
+    communityId,
+    compressed.blob,
+    compressed.filename,
+    compressed.content_type,
+  );
+}
+
+async function presignAndUploadCommunityBlob(
+  communityId: string,
+  blob: Blob,
+  filename: string,
+  contentType: string,
+): Promise<string> {
   let presign: Awaited<ReturnType<typeof api.presignCommunityMedia>>;
   try {
     presign = await api.presignCommunityMedia(communityId, {
-      filename: compressed.filename,
-      content_type: compressed.content_type,
+      filename,
+      content_type: contentType,
     });
   } catch (err) {
     throw new Error(uploadErrorMessage(err));
@@ -70,7 +121,7 @@ export async function uploadCommunityMedia(communityId: string, file: File): Pro
 
   const uploadHeaders: Record<string, string> = {
     ...(presign.headers ?? {}),
-    'Content-Type': compressed.content_type,
+    'Content-Type': contentType,
   };
 
   let uploadResp: Response;
@@ -78,7 +129,7 @@ export async function uploadCommunityMedia(communityId: string, file: File): Pro
     uploadResp = await fetch(presign.upload_url, {
       method: presign.method || 'PUT',
       headers: uploadHeaders,
-      body: compressed.blob,
+      body: blob,
     });
   } catch {
     throw new Error('Could not reach storage. Check your connection and try again.');
@@ -94,6 +145,22 @@ export async function uploadCommunityMedia(communityId: string, file: File): Pro
   }
 
   return assetUrl;
+}
+
+export async function uploadCommunityVideo(communityId: string, file: File): Promise<string> {
+  const contentType = normalizeVideoMime(file.type, file.name);
+  if (!contentType) {
+    throw new Error('Only MP4, MOV, and WebM videos are supported.');
+  }
+
+  return presignAndUploadCommunityBlob(communityId, file, file.name, contentType);
+}
+
+export async function uploadCommunityGalleryMedia(communityId: string, file: File): Promise<string> {
+  if (isVideoFile(file)) {
+    return uploadCommunityVideo(communityId, file);
+  }
+  return uploadCommunityMedia(communityId, file);
 }
 
 export function isVideoFile(file: File): boolean {

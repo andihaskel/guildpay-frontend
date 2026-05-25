@@ -60,12 +60,38 @@
   font-size: 13px;
 }
 
-/* Mobile preview frame — responsive by container width, not browser viewport */
+/* Mobile preview frame — stack content; plans above features */
+.device-mobile-screen .setup-preview-scroll .pub .content {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "pricing"
+    "features";
+  gap: 24px;
+  padding: 0 0 40px;
+}
+
+.device-mobile-screen .setup-preview-scroll .pub .hero + section.wrap,
+.device-mobile-screen .setup-preview-scroll .pub .gallery + section.wrap {
+  padding-top: 28px;
+}
+
+.device-mobile-screen .setup-preview-scroll .pub .pricing-col {
+  position: static;
+}
+
 @container mobile-preview (max-width: 900px) {
   .pub .content {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 24px 0 48px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "pricing"
+      "features";
+    gap: 24px;
+    padding: 0 0 40px;
+  }
+
+  .pub .hero + section.wrap,
+  .pub .gallery + section.wrap {
+    padding-top: 28px;
   }
 
   .pub .pricing-col {

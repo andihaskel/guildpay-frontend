@@ -16,7 +16,7 @@ import {
   PublicPageTestimonial,
   PublicPageFaqItem,
 } from '@/components/community/community-public-page-types';
-import { SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL, DEFAULT_FAQ_HEADLINE, DEFAULT_FAQ_LABEL, DEFAULT_TESTIMONIALS_HEADLINE, DEFAULT_TESTIMONIALS_LABEL, PageTestimonial } from '@/components/community/setup-preview-types';
+import { SetupPreviewModel, PlanSellingPoint, DEFAULT_GALLERY_DESCRIPTION, DEFAULT_GALLERY_HEADLINE, DEFAULT_GALLERY_LABEL, DEFAULT_FAQ_HEADLINE, DEFAULT_FAQ_LABEL, DEFAULT_PLANS_LABEL, DEFAULT_TESTIMONIALS_HEADLINE, DEFAULT_TESTIMONIALS_LABEL, PageTestimonial } from '@/components/community/setup-preview-types';
 import { normalizePageFaqItems, normalizePageTestimonials } from '@/components/community/page-content';
 import {
   draftMediaToPublicItems,
@@ -246,6 +246,7 @@ export function buildSetupPreviewPageProps(
     priceSubHtml: selectedPlanOption?.subHtml,
     ctaLabel: selectedPlanOption?.ctaLabel,
     perks: buildPerks(plan, channels),
+    plansLabel: page.plansLabel?.trim() || DEFAULT_PLANS_LABEL,
     testimonials: mappedTestimonials,
     testimonialsLabel: page.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
     testimonialsHeadline: page.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,
@@ -336,6 +337,7 @@ export function buildPublicCommunityPageProps(
       { type: 'check', label: 'Cancel anytime' },
       { type: 'check', label: 'Secure payment via Stripe' },
     ],
+    plansLabel: page?.plansLabel?.trim() || DEFAULT_PLANS_LABEL,
     testimonials: publicTestimonials,
     testimonialsLabel: page?.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
     testimonialsHeadline: page?.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,

@@ -6,7 +6,11 @@ import { CommunityOverview, CommunityPlan, CommunityChannel } from '@/lib/types'
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useSetupWorkspace } from '@/components/community/SetupWorkspaceContext';
-import { SetupPageDraft, PlanSellingPoint } from '@/components/community/setup-preview-types';
+import {
+  DEFAULT_PLANS_LABEL,
+  SetupPageDraft,
+  PlanSellingPoint,
+} from '@/components/community/setup-preview-types';
 import { SetupMediaGallery, type SetupMediaItemsUpdater } from '@/components/community/SetupMediaGallery';
 import { SetupImageUpload } from '@/components/community/SetupImageUpload';
 import { DEFAULT_IMAGE_FRAME } from '@/lib/image-frame';
@@ -418,6 +422,7 @@ function PagePane({
     mediaItems: rawMediaItems,
     autoplayVideoInHero,
     showMemberStats = true,
+    plansLabel = DEFAULT_PLANS_LABEL,
     testimonialsLabel,
     testimonialsHeadline,
     testimonials,
@@ -658,6 +663,16 @@ function PagePane({
           <AccChevron />
         </summary>
         <div className="setup-acc-body">
+          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', borderBottom: '0.5px solid var(--border-soft)' }}>
+            <div>
+              <label className="setup-field-label">Section label</label>
+              <input
+                className="setup-field-input"
+                value={plansLabel}
+                onChange={e => onPageDraftChange({ plansLabel: e.target.value })}
+              />
+            </div>
+          </div>
           <PagePlansPicker
             plans={plans}
             visiblePlanIds={visiblePlanIds}

@@ -6,6 +6,7 @@ import { SetupShell } from '@/components/community/SetupShell';
 import { SetupWorkspaceProvider } from '@/components/community/SetupWorkspaceContext';
 
 import './community-setup.css';
+import '../community-workspace.css';
 import '@/components/community/setup-preview.css';
 
 function SetupLayoutFallback() {

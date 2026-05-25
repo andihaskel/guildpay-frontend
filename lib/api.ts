@@ -36,11 +36,17 @@ class ApiClient {
       console.log('API Response:', { url, status: response.status, ok: response.ok });
 
       if (!response.ok) {
-        const error: ApiError = await response.json().catch(() => ({
-          error: 'Request failed',
-          message: `HTTP ${response.status}: ${response.statusText}`,
+        const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+        const error: ApiError = {
+          error: typeof body.error === 'string' ? body.error : 'Request failed',
+          message:
+            typeof body.message === 'string'
+              ? body.message
+              : typeof body.error === 'string'
+                ? body.error
+                : `HTTP ${response.status}: ${response.statusText}`,
           statusCode: response.status,
-        }));
+        };
         console.error('API Error:', error);
         throw error;
       }

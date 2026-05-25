@@ -26,11 +26,11 @@ import {
 } from '@/components/community/community-preview';
 import { mergePlanSellingPointsMapFromPlans, sellingPointsForPlan } from '@/components/community/plan-model';
 import {
-  buildCommunityPageUpdate,
   mergePlanFieldsIntoPageDraft,
   pageDraftFromCommunity,
   pageDraftsEqual,
 } from '@/components/community/community-page-draft';
+import { buildCommunityPageUpdate } from '@/components/community/community-page-api';
 import { SetupPageDraft, SetupPreviewModel, PlanSellingPoint } from '@/components/community/setup-preview-types';
 import { NewPlanModal } from '@/components/community/NewPlanModal';
 

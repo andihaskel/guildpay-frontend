@@ -7,6 +7,7 @@ import {
   DEFAULT_GALLERY_LABEL,
   DEFAULT_FAQ_HEADLINE,
   DEFAULT_FAQ_LABEL,
+  DEFAULT_PLANS_LABEL,
   DEFAULT_TESTIMONIALS_HEADLINE,
   DEFAULT_TESTIMONIALS_LABEL,
   SetupMediaItem,
@@ -21,7 +22,6 @@ import {
   sanitizePersistableTestimonials,
 } from '@/components/community/page-content';
 import { mergePlanOrderIds, planColor } from '@/components/community/setup-utils';
-import { buildUpdateCommunityPageRequest } from '@/components/community/community-page-api';
 
 const DEFAULT_SUB_HEADLINE =
   'Real-time alerts, weekly sessions, and a no-noise Discord. Cancel anytime.';
@@ -40,6 +40,7 @@ export type StoredCommunityPageSettings = {
   visiblePlanIds?: string[];
   planOrderIds?: string[];
   featuredPlanId?: string | null;
+  plansLabel?: string;
   testimonialsLabel?: string;
   testimonialsHeadline?: string;
   testimonials?: SetupPageDraft['testimonials'];
@@ -139,6 +140,7 @@ export function pageDraftFromCommunity(community: Community, plans: CommunityPla
     visiblePlanIds,
     planOrderIds,
     featuredPlanId,
+    plansLabel: stored?.plansLabel?.trim() || DEFAULT_PLANS_LABEL,
     testimonialsLabel: stored?.testimonialsLabel?.trim() || DEFAULT_TESTIMONIALS_LABEL,
     testimonialsHeadline: stored?.testimonialsHeadline?.trim() || DEFAULT_TESTIMONIALS_HEADLINE,
     testimonials:
@@ -149,10 +151,6 @@ export function pageDraftFromCommunity(community: Community, plans: CommunityPla
     faqHeadline: stored?.faqHeadline?.trim() || DEFAULT_FAQ_HEADLINE,
     faq: stored?.faq != null ? normalizePageFaqItems(stored.faq) : defaultPageFaqItems(),
   };
-}
-
-export function buildCommunityPageUpdate(community: Community, draft: SetupPageDraft) {
-  return buildUpdateCommunityPageRequest(community, draft);
 }
 
 export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
@@ -173,6 +171,7 @@ export function normalizePageDraftForCompare(draft: SetupPageDraft): string {
     visiblePlanIds: draft.visiblePlanIds ?? [],
     planOrderIds: draft.planOrderIds ?? [],
     featuredPlanId: draft.featuredPlanId ?? null,
+    plansLabel: draft.plansLabel.trim(),
     testimonialsLabel: draft.testimonialsLabel.trim(),
     testimonialsHeadline: draft.testimonialsHeadline.trim(),
     testimonials: sanitizePersistableTestimonials(draft.testimonials),

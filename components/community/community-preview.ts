@@ -18,6 +18,7 @@ import {
   DEFAULT_GALLERY_LABEL,
   DEFAULT_FAQ_HEADLINE,
   DEFAULT_FAQ_LABEL,
+  DEFAULT_PLANS_LABEL,
   DEFAULT_TESTIMONIALS_HEADLINE,
   DEFAULT_TESTIMONIALS_LABEL,
 } from '@/components/community/setup-preview-types';
@@ -106,6 +107,9 @@ export function loadCommunityPreviewDraft(communityId: string): SetupPreviewMode
     }
     if (!parsed.page.planOrderIds?.length && parsed.plans?.length) {
       parsed.page.planOrderIds = parsed.page.visiblePlanIds ?? parsed.plans.map(plan => plan.id);
+    }
+    if (!parsed.page.plansLabel?.trim()) {
+      parsed.page.plansLabel = DEFAULT_PLANS_LABEL;
     }
     if (!parsed.page.testimonialsLabel?.trim()) {
       parsed.page.testimonialsLabel = DEFAULT_TESTIMONIALS_LABEL;

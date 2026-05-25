@@ -32,6 +32,7 @@ export type CommunityPageSettingsApiPayload = {
   visiblePlanIds?: string[];
   planOrderIds?: string[];
   featuredPlanId?: string | null;
+  plansLabel?: string;
   testimonialsLabel?: string;
   testimonialsHeadline?: string;
   testimonials?: Array<{
@@ -103,6 +104,7 @@ export function buildCommunityPageSettingsPayload(
     visiblePlanIds: draft.visiblePlanIds,
     planOrderIds: draft.planOrderIds,
     featuredPlanId: draft.featuredPlanId ?? null,
+    plansLabel: draft.plansLabel.trim(),
     testimonialsLabel: draft.testimonialsLabel.trim(),
     testimonialsHeadline: draft.testimonialsHeadline.trim(),
     testimonials: toApiTestimonials(draft.testimonials),
@@ -128,4 +130,11 @@ export function buildUpdateCommunityPageRequest(
       page: buildCommunityPageSettingsPayload(draft),
     },
   };
+}
+
+export function buildCommunityPageUpdate(
+  community: Community,
+  draft: SetupPageDraft,
+): UpdateCommunityPageRequest {
+  return buildUpdateCommunityPageRequest(community, draft);
 }

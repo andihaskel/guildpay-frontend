@@ -81,6 +81,7 @@ export type CommunityPublicPageViewProps = {
   ctaDisabled?: boolean;
   ctaLoading?: boolean;
   perks?: PublicPagePerk[];
+  plansLabel?: string;
   testimonials?: PublicPageTestimonial[];
   testimonialsLabel?: string;
   testimonialsHeadline?: string;

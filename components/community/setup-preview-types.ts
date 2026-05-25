@@ -18,6 +18,7 @@ export const DEFAULT_TESTIMONIALS_LABEL = 'Testimonials';
 export const DEFAULT_TESTIMONIALS_HEADLINE = 'What members are saying';
 export const DEFAULT_FAQ_LABEL = 'Common questions';
 export const DEFAULT_FAQ_HEADLINE = 'Everything you need to know';
+export const DEFAULT_PLANS_LABEL = 'Choose a plan';
 
 export type PlanSellingPoint = {
   id: string;
@@ -64,6 +65,7 @@ export type SetupPageDraft = {
   planOrderIds?: string[];
   /** Plan shown with the “Most popular” badge on the public page (optional) */
   featuredPlanId?: string | null;
+  plansLabel: string;
   testimonialsLabel: string;
   testimonialsHeadline: string;
   testimonials: PageTestimonial[];

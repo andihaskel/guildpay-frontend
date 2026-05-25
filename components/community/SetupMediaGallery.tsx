@@ -6,7 +6,7 @@ import {
   COMMUNITY_IMAGE_TYPES,
   isSupportedGalleryFile,
   isVideoFile,
-  uploadCommunityMedia,
+  uploadCommunityGalleryMedia,
 } from '@/lib/community-media-upload';
 import type { ApiError } from '@/lib/types';
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -195,7 +195,7 @@ export function SetupMediaGallery({
       try {
         for (const file of fileList) {
           if (!isSupportedGalleryFile(file)) {
-            errors.push(`${file.name}: unsupported file type (use JPG, PNG, WebP, or GIF)`);
+            errors.push(`${file.name}: unsupported file type (use JPG, PNG, WebP, GIF, MP4, MOV, or WebM)`);
             continue;
           }
 
@@ -209,7 +209,7 @@ export function SetupMediaGallery({
             continue;
           }
 
-          if (isVideo || !communityId) {
+          if (!communityId) {
             const url = URL.createObjectURL(file);
             let duration: string | undefined;
             if (isVideo) {
@@ -227,13 +227,16 @@ export function SetupMediaGallery({
           }
 
           try {
-            const url = await uploadCommunityMedia(communityId, file);
+            const durationPromise = isVideo ? getVideoDuration(file) : Promise.resolve(undefined);
+            const url = await uploadCommunityGalleryMedia(communityId, file);
+            const duration = (await durationPromise) || undefined;
             pending.push({
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-              type: 'image',
+              type: isVideo ? 'video' : 'image',
               url,
               filename: file.name,
               sizeBytes: file.size,
+              duration,
             });
           } catch (err) {
             errors.push(`${file.name}: ${formatUploadError(err)}`);
@@ -243,7 +246,7 @@ export function SetupMediaGallery({
         if (pending.length > 0) {
           onItemsChange(prev => [...(prev ?? []), ...pending]);
         } else if (errors.length === 0) {
-          errors.push('No files could be added. Try JPG, PNG, WebP, or GIF.');
+          errors.push('No files could be added. Try JPG, PNG, WebP, GIF, MP4, MOV, or WebM.');
         }
       } catch (err) {
         setUploadError(formatUploadError(err));
@@ -331,8 +334,8 @@ export function SetupMediaGallery({
         </span>
         <span className="setup-media-dropzone-sub">
           {communityId
-            ? 'JPG, PNG, WebP, GIF up to 10 MB · MP4, MOV up to 80 MB (preview only) · Recommended 1600×900'
-            : 'JPG, PNG, WebP up to 10 MB · MP4, MOV up to 80 MB · Recommended 1600×900'}
+            ? 'JPG, PNG, WebP, GIF up to 10 MB · MP4, MOV, WebM up to 80 MB · Recommended 1600×900'
+            : 'JPG, PNG, WebP up to 10 MB · MP4, MOV, WebM up to 80 MB · Recommended 1600×900'}
         </span>
         <input
           ref={inputRef}
