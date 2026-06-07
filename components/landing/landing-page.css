@@ -1,0 +1,30 @@
+/* Typography — matches accessgate-landing_8.html */
+.landing-page {
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-page h1,
+.landing-page h2,
+.landing-page h3,
+.landing-page .landing-font-display {
+  font-family: var(--font-outfit), Outfit, sans-serif;
+}
+
+.landing-page .landing-logo {
+  font-family: var(--font-outfit), Outfit, sans-serif;
+}
+
+.landing-page button,
+.landing-page input,
+.landing-page select,
+.landing-page textarea {
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+html.landing-scroll-locked,
+html.landing-scroll-locked body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  height: 100%;
+}

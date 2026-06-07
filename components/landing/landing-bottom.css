@@ -1,0 +1,239 @@
+/* FAQ */
+.landing-page .faq-section {
+  padding: 80px clamp(24px, 5vw, 56px) 96px;
+}
+
+.faq-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.faq-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #a78bfa;
+  margin-bottom: 14px;
+}
+
+.faq-title {
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: clamp(30px, 3.5vw, 44px);
+  font-weight: 500;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.faq-panel {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #0d0d18;
+  border: 1px solid #1a1a2e;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.faq-item {
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.landing-page .faq-question {
+  width: 100%;
+  text-align: left;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.faq-question:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.faq-question.open {
+  color: #f8fafc;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  color: #64748b;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.faq-question.open .faq-chevron {
+  transform: rotate(180deg);
+  color: #a78bfa;
+}
+
+.faq-answer {
+  padding: 0 28px 24px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #64748b;
+  max-width: 620px;
+}
+
+/* Final CTA */
+.landing-page .landing-cta {
+  text-align: center;
+  padding: 96px clamp(24px, 5vw, 56px) 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-cta::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(124, 58, 237, 0.09) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.landing-cta-inner {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-cta-title {
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: clamp(38px, 5vw, 64px);
+  font-weight: 500;
+  letter-spacing: -1.5px;
+  color: #f8fafc;
+  margin: 0 0 14px;
+  line-height: 1.1;
+}
+
+.landing-cta-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 auto 36px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.landing-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  padding: 13px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-inter), Inter, sans-serif;
+  transition: all 0.2s;
+  box-shadow: 0 0 28px rgba(124, 58, 237, 0.35);
+}
+
+.landing-cta-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 42px rgba(124, 58, 237, 0.55);
+}
+
+.landing-cta-skeleton {
+  height: 44px;
+  width: 200px;
+  background: rgba(124, 58, 237, 0.15);
+  border-radius: 100px;
+  margin: 0 auto;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+/* Footer */
+.landing-page .landing-footer {
+  border-top: 1px solid #1a1a2e;
+  padding: 28px clamp(24px, 5vw, 56px);
+}
+
+.landing-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.landing-footer-copy {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 24px;
+}
+
+.landing-footer-links a {
+  color: #64748b;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.landing-footer-links a:hover {
+  color: #f8fafc;
+}
+
+@media (max-width: 768px) {
+  .landing-footer-inner {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .faq-question {
+    padding: 18px 20px;
+    font-size: 14px;
+  }
+
+  .faq-answer {
+    padding: 0 20px 20px;
+  }
+}

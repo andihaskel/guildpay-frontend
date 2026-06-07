@@ -1,30 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, LogOut, ChevronDown, Check } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LandingNav } from '@/components/landing/LandingNav';
+import { LandingHero } from '@/components/landing/LandingHero';
+import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { FeaturesSection } from '@/components/landing/FeaturesSection';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { FaqSection } from '@/components/landing/FaqSection';
+import { LandingCtaSection } from '@/components/landing/LandingCtaSection';
+import { LandingFooter } from '@/components/landing/LandingFooter';
+import '@/components/landing/landing-page.css';
+import '@/components/landing/landing-bottom.css';
 
-const LogoMark = () => (
-  <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" style={{ display: 'inline-block', flexShrink: 0 }}>
-    <path d="M10 6 L5 6 L5 26 L10 26" fill="none" stroke="#f0f0f0" strokeWidth="1.8" />
-    <path d="M22 6 L27 6 L27 26 L22 26" fill="none" stroke="#f0f0f0" strokeWidth="1.8" />
-    <circle cx="16" cy="16" r="3.2" fill="#5865f2" />
-  </svg>
-);
-
-
-const CheckIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+const LANDING_DIVIDER = (
+  <hr
+    style={{
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
+      border: 0,
+      margin: 0,
+    }}
+  />
 );
 
 interface User {
@@ -33,230 +30,30 @@ interface User {
   avatar: string | null;
 }
 
-interface UserMenuProps {
-  user: User;
-  onSignOut: () => void;
-  onGoToDashboard: () => void;
-}
-
-function UserMenu({ user, onSignOut, onGoToDashboard }: UserMenuProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setMenuOpen(!menuOpen)}
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', transition: 'opacity 200ms ease' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-      >
-        <Avatar style={{ width: '32px', height: '32px', border: '0.5px solid rgba(255,255,255,0.12)' }}>
-          <AvatarImage src={user.avatar || undefined} alt={user.email || 'User'} />
-          <AvatarFallback style={{ background: '#5865f2', color: '#fff', fontSize: '12px', fontWeight: 600 }}>
-            {user.email?.[0]?.toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <span style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'none' }} className="md:block">
-          {user.email || 'User'}
-        </span>
-      </button>
-
-      {menuOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '200px', zIndex: 50,
-            background: 'var(--surface-1)', border: '0.5px solid var(--border)',
-            borderRadius: 'var(--radius)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            padding: '6px',
-          }}>
-            <button
-              onClick={() => { setMenuOpen(false); onGoToDashboard(); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
-                padding: '9px 12px', borderRadius: '6px', fontSize: '14px',
-                color: 'var(--text)', background: 'none', cursor: 'pointer',
-                transition: 'background 200ms ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              <LayoutDashboard size={14} style={{ color: 'var(--text-muted)' }} />
-              Dashboard
-            </button>
-            <button
-              onClick={() => { setMenuOpen(false); onSignOut(); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
-                padding: '9px 12px', borderRadius: '6px', fontSize: '14px',
-                color: '#ef4444', background: 'none', cursor: 'pointer',
-                transition: 'background 200ms ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              <LogOut size={14} />
-              Sign out
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-const HOW_IT_WORKS = [
-  {
-    num: '01',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M7 4l10 4v8l-10 4V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M17 8l4-1.5v11L17 16" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="1.3" fill="currentColor" />
-      </svg>
-    ),
-    title: 'Connect your Discord server',
-    desc: 'Authorize the bot with one click. No server config, no webhooks to manage.',
-  },
-  {
-    num: '02',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M7 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="17" cy="15" r="1.3" fill="currentColor" />
-      </svg>
-    ),
-    title: 'Set your price',
-    desc: 'Monthly, annual, or one-time. Paid through your own Stripe account.',
-  },
-  {
-    num: '03',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="18" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="12" cy="18" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 7.5l3 8.5M16 7.5l-3 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    title: 'Share your link',
-    desc: 'Members pay, get added, and lose access on cancel. We handle all of it.',
-  },
-];
-
-const FEATURES = [
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M4 7c0-1.1.9-2 2-2h12a2 2 0 0 1 2 2v2H4V7z" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M4 9h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9z" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 14.5l2 2 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: 'Stripe-native payments',
-    desc: 'Payments flow straight to your Stripe account. We never take a cut.',
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M6 20c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M17.5 7.5l1.8 1.8 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    title: 'Auto role management',
-    desc: 'Roles assigned on payment, revoked on cancel. Zero manual moderation.',
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="3" y="10.5" width="18" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="3" y="17" width="11" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    title: 'Multiple tiers',
-    desc: 'Free, monthly, annual, or one-time — stack tiers in a single server.',
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M3 8h18" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="5.5" cy="6" r="0.6" fill="currentColor" />
-        <circle cx="7.5" cy="6" r="0.6" fill="currentColor" />
-        <path d="M8 21h8M12 18v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    title: 'Custom landing page',
-    desc: 'Your brand, your copy, your domain. Looks like yours, not ours.',
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M3 17l5-5 4 3 5-7 4 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="8" cy="12" r="1.5" fill="currentColor" />
-        <circle cx="12" cy="15" r="1.5" fill="currentColor" />
-        <circle cx="17" cy="8" r="1.5" fill="currentColor" />
-        <path d="M3 21h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    title: 'Real-time analytics',
-    desc: 'Active members, MRR, and churn — all in a single quiet dashboard.',
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 10V7a4 4 0 0 1 7.5-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M10 14l4 4M14 14l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    title: 'Cancellation handling',
-    desc: 'If a member cancels, their access is revoked the moment it ends.',
-  },
-];
-
-const FAQS = [
-  {
-    q: 'Does AccessGate take a commission on my payments?',
-    a: 'No. You keep 100% of your revenue, minus Stripe\'s standard processing fees. Payments flow directly from your members into your Stripe account — we never touch the money.',
-  },
-  {
-    q: 'What happens if a member cancels their subscription?',
-    a: 'Their role and access are revoked automatically as soon as their billing period ends. If they cancel mid-cycle, access continues until the paid period is over — then it\'s removed without any action from you.',
-  },
-  {
-    q: 'Can I run multiple roles or tiers in the same server?',
-    a: 'Yes. Create as many tiers as you want — each mapped to its own Discord role. Members can upgrade, downgrade, or stack tiers, and role permissions update in real time.',
-  },
-  {
-    q: 'Do I need to know how to code to set this up?',
-    a: 'Not a line. Setup is three clicks: authorize the bot, connect Stripe, set your price. Most creators are live in about two minutes.',
-  },
-  {
-    q: 'Does it work alongside existing Discord bots?',
-    a: 'Yes. AccessGate only touches the roles you assign to it — your existing mod, music, or utility bots keep working normally. No permission conflicts.',
-  },
-  {
-    q: 'Can I use my own domain for the checkout page?',
-    a: 'On the Pro plan, yes. Point a subdomain at AccessGate with a single CNAME record and your checkout page lives on your brand — not ours.',
-  },
-];
-
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-
+  const [heroRevealed, setHeroRevealed] = useState(false);
   useEffect(() => {
     checkAuthAndRedirect();
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const applyScrollLock = () => {
+      const locked = mq.matches && !heroRevealed;
+      document.documentElement.classList.toggle('landing-scroll-locked', locked);
+    };
+
+    applyScrollLock();
+    mq.addEventListener('change', applyScrollLock);
+    return () => {
+      document.documentElement.classList.remove('landing-scroll-locked');
+      mq.removeEventListener('change', applyScrollLock);
+    };
+  }, [heroRevealed]);
 
   const checkAuthAndRedirect = async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -327,642 +124,56 @@ export default function Home() {
     );
   }
 
-  const navStyle: React.CSSProperties = {
-    position: 'sticky',
-    top: 0,
-    zIndex: 50,
-    background: 'rgba(10, 10, 10, 0.82)',
-    backdropFilter: 'saturate(140%) blur(10px)',
-    WebkitBackdropFilter: 'saturate(140%) blur(10px)',
-    borderBottom: '0.5px solid var(--border-soft)',
-  };
-
-  const containerStyle: React.CSSProperties = {
-    maxWidth: 'var(--container)',
-    margin: '0 auto',
-    padding: '0 24px',
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div className="landing-page" style={{ minHeight: '100vh', background: '#05050a', color: 'var(--text)' }}>
 
-      {/* NAV */}
-      <header style={navStyle} role="banner">
-        <div style={{ ...containerStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '15px', letterSpacing: '-0.01em', color: 'var(--text)', textDecoration: 'none' }} aria-label="AccessGate home">
-            <LogoMark />
-            AccessGate
-          </Link>
+      <LandingNav
+        loading={loading}
+        user={user}
+        heroRevealed={heroRevealed}
+        onLogin={handleLogin}
+        onGoToDashboard={handleGoToDashboard}
+        onSignOut={handleSignOut}
+      />
 
-          <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: 'var(--text-secondary)' }} aria-label="Primary" className="hidden md:flex">
-            <a href="#features" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>Features</a>
-            <a href="#pricing" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>Pricing</a>
-            <a href="#faq" style={{ color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>FAQ</a>
-          </nav>
+      <LandingHero
+        loading={loading}
+        isAuthenticated={!!user}
+        onLogin={handleLogin}
+        onGoToDashboard={handleGoToDashboard}
+        onRevealed={() => setHeroRevealed(true)}
+        scrollLocked={!heroRevealed}
+      />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {loading ? (
-              <div style={{ height: '36px', width: '120px', background: 'var(--surface-1)', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            ) : user ? (
-              <UserMenu user={user} onSignOut={handleSignOut} onGoToDashboard={handleGoToDashboard} />
-            ) : (
-              <>
-                <button
-                  onClick={() => router.push('/login')}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', padding: '9px 12px',
-                    fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)',
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    borderRadius: '6px', transition: 'color 200ms ease',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                >
-                  Sign in
-                </button>
-                <button
-                  onClick={handleLogin}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center',
-                    padding: '9px 16px', fontSize: '14px', fontWeight: 500,
-                    background: '#ffffff', color: '#0a0a0a',
-                    border: '0.5px solid #ffffff', borderRadius: '6px',
-                    cursor: 'pointer', transition: 'transform 200ms ease, opacity 200ms ease',
-                    letterSpacing: '-0.005em',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-                >
-                  Get started
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      {LANDING_DIVIDER}
 
-      {/* HERO */}
-      <section style={{ position: 'relative', padding: '140px 0 160px', textAlign: 'center', overflow: 'hidden' }}>
-        {/* grid */}
-        <div aria-hidden="true" style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px)',
-          backgroundSize: '72px 72px',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, black 0%, black 40%, transparent 75%)',
-          maskImage: 'radial-gradient(ellipse at center, black 0%, black 40%, transparent 75%)',
-        }} />
-        {/* glow orbs */}
-        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <div style={{
-            position: 'absolute', left: '18%', top: '10%', width: '480px', height: '480px',
-            borderRadius: '50%', filter: 'blur(60px)', opacity: 0.4,
-            background: 'radial-gradient(circle, rgba(88,101,242,0.5) 0%, transparent 70%)',
-          }} />
-          <div style={{
-            position: 'absolute', bottom: '6%', right: '14%', width: '480px', height: '480px',
-            borderRadius: '50%', filter: 'blur(60px)', opacity: 0.35,
-            background: 'radial-gradient(circle, rgba(139,146,248,0.4) 0%, transparent 70%)',
-          }} />
-          <div style={{
-            position: 'absolute', left: '50%', top: '50%',
-            width: '760px', height: '760px',
-            transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, rgba(88,101,242,0.18) 0%, rgba(88,101,242,0.04) 38%, transparent 65%)',
-            filter: 'blur(6px)',
-          }} />
-        </div>
+      <HowItWorksSection />
 
-        <div style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '6px 12px',
-            background: 'var(--accent-soft-bg)',
-            border: '0.5px solid var(--accent-soft-border)',
-            color: 'var(--accent-soft-text)',
-            borderRadius: '999px', fontSize: '12px', fontWeight: 500,
-            letterSpacing: '-0.005em', whiteSpace: 'nowrap', marginBottom: '28px',
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-soft-text)', boxShadow: '0 0 8px var(--accent-soft-text)' }} aria-hidden="true" />
-            Now in public beta
-            <span style={{ width: '1px', height: '10px', background: 'var(--accent-soft-border)' }} aria-hidden="true" />
-            Free to start
-          </span>
+      {LANDING_DIVIDER}
 
-          <h1 style={{
-            fontSize: 'clamp(44px, 6vw, 72px)',
-            fontWeight: 500,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.08,
-            margin: '0 auto 20px',
-            maxWidth: '880px',
-            color: 'var(--text)',
-          }}>
-            Turn your Discord<br />
-            into a paid community.
-          </h1>
+      <FeaturesSection />
 
-          <p style={{
-            fontSize: 'clamp(18px, 2vw, 20px)',
-            lineHeight: 1.55,
-            color: 'var(--text-secondary)',
-            maxWidth: '560px',
-            margin: '0 auto 36px',
-          }}>
-            Connect Stripe, set a price, done. AccessGate handles payments, access, and cancellations — automatically.
-          </p>
+      {LANDING_DIVIDER}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '56px' }}>
-            {loading ? (
-              <div style={{ height: '50px', width: '180px', background: 'var(--surface-1)', borderRadius: '6px' }} />
-            ) : user ? (
-              <button
-                onClick={handleGoToDashboard}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  padding: '14px 22px', fontSize: '15px', fontWeight: 500,
-                  background: '#ffffff', color: '#0a0a0a',
-                  border: '0.5px solid #ffffff', borderRadius: '6px',
-                  cursor: 'pointer', transition: 'transform 200ms ease, opacity 200ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-              >
-                <LayoutDashboard size={16} />
-                Go to dashboard
-              </button>
-            ) : (
-              <button
-                onClick={handleLogin}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  padding: '14px 22px', fontSize: '15px', fontWeight: 500,
-                  background: '#ffffff', color: '#0a0a0a',
-                  border: '0.5px solid #ffffff', borderRadius: '6px',
-                  cursor: 'pointer', transition: 'transform 200ms ease, opacity 200ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-              >
-                Start for free
-              </button>
-            )}
-            <a
-              href="#how-it-works"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500,
-                padding: '9px 8px', textDecoration: 'none',
-                transition: 'color 200ms ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-            >
-              See how it works
-              <ArrowIcon />
-            </a>
-          </div>
+      <PricingSection
+        loading={loading}
+        isAuthenticated={!!user}
+        onLogin={handleLogin}
+        onGoToDashboard={handleGoToDashboard}
+      />
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '14px', color: 'var(--text-muted)', fontSize: '13px' }}>
-            <div style={{ display: 'inline-flex' }}>
-              {[
-                { initials: 'MK', bg: 'linear-gradient(135deg, #5865f2, #7983f5)' },
-                { initials: 'JT', bg: 'linear-gradient(135deg, #2b7a4b, #3fb27a)' },
-                { initials: 'AR', bg: 'linear-gradient(135deg, #b84a3a, #e0735a)' },
-                { initials: 'SN', bg: 'linear-gradient(135deg, #6b3fb2, #9b6de0)' },
-                { initials: 'DV', bg: 'linear-gradient(135deg, #c4963a, #e8b85a)', color: '#1a1500' },
-              ].map((av, i) => (
-                <span key={av.initials} aria-hidden="true" style={{
-                  width: '26px', height: '26px', borderRadius: '50%',
-                  border: '1.5px solid var(--bg)',
-                  marginLeft: i === 0 ? 0 : '-8px',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '10px', fontWeight: 600, color: av.color || '#fff',
-                  background: av.bg, letterSpacing: '-0.01em',
-                }}>{av.initials}</span>
-              ))}
-            </div>
-            <span>Trusted by 1,200+ Discord creators</span>
-          </div>
-        </div>
-      </section>
+      {LANDING_DIVIDER}
 
-      <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
+      <FaqSection />
 
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" style={{ padding: '120px 0' }}>
-        <div style={containerStyle}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent-soft-text)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>How it works</div>
-            <h2 style={{ fontSize: 'clamp(36px, 4vw, 48px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>Up and running in minutes.</h2>
-          </div>
+      <LandingCtaSection
+        loading={loading}
+        isAuthenticated={!!user}
+        onLogin={handleLogin}
+        onGoToDashboard={handleGoToDashboard}
+      />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '56px', position: 'relative' }}>
-            {HOW_IT_WORKS.map((step) => (
-              <div key={step.num} style={{ position: 'relative' }}>
-                <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '48px', fontWeight: 400, color: 'var(--text-faint)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: '24px', display: 'block' }}>{step.num}</span>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  width: '36px', height: '36px', borderRadius: '8px',
-                  background: 'var(--surface-1)', border: '0.5px solid var(--border)',
-                  color: 'var(--accent)', marginBottom: '18px',
-                }}>{step.icon}</span>
-                <h3 style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em', color: 'var(--text)', margin: '0 0 8px' }}>{step.title}</h3>
-                <p style={{ fontSize: '14.5px', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
-
-      {/* FEATURES */}
-      <section id="features" style={{ padding: '120px 0' }}>
-        <div style={containerStyle}>
-          <div style={{ marginBottom: '64px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent-soft-text)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Features</div>
-            <h2 style={{ fontSize: 'clamp(36px, 4vw, 48px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)', margin: '0 0 12px' }}>Everything you need. Nothing you don't.</h2>
-            <p style={{ fontSize: '17px', color: 'var(--text-secondary)', maxWidth: '540px', margin: 0, lineHeight: 1.55 }}>Every tool needed to run a paid Discord community — without the bloat, the fees, or the learning curve.</p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gap: '1px',
-            background: 'var(--border-soft)',
-            border: '0.5px solid var(--border-soft)',
-            borderRadius: '10px',
-            overflow: 'hidden',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          }}>
-            {FEATURES.map((f) => (
-              <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
-
-      {/* PRICING */}
-      <section id="pricing" style={{ padding: '120px 0' }}>
-        <div style={containerStyle}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent-soft-text)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>Pricing</div>
-            <h2 style={{ fontSize: 'clamp(36px, 4vw, 48px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)', margin: '0 0 12px' }}>Simple pricing. No surprises.</h2>
-            <p style={{ fontSize: '17px', color: 'var(--text-secondary)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.55 }}>Free until you have real revenue. You keep 100% — we never take a cut.</p>
-          </div>
-
-          {/* Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '56px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', padding: '4px', background: 'var(--surface-1)', border: '0.5px solid var(--border)', borderRadius: '999px' }}>
-              <button
-                onClick={() => setBillingPeriod('monthly')}
-                style={{
-                  padding: '8px 18px', fontSize: '13px', fontWeight: 500, borderRadius: '999px',
-                  color: billingPeriod === 'monthly' ? '#0a0a0a' : 'var(--text-secondary)',
-                  background: billingPeriod === 'monthly' ? '#fff' : 'transparent',
-                  border: 'none', cursor: 'pointer', transition: 'background 200ms ease, color 200ms ease',
-                }}
-              >Monthly</button>
-              <button
-                onClick={() => setBillingPeriod('annual')}
-                style={{
-                  padding: '8px 18px', fontSize: '13px', fontWeight: 500, borderRadius: '999px',
-                  color: billingPeriod === 'annual' ? '#0a0a0a' : 'var(--text-secondary)',
-                  background: billingPeriod === 'annual' ? '#fff' : 'transparent',
-                  border: 'none', cursor: 'pointer', transition: 'background 200ms ease, color 200ms ease',
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                }}
-              >
-                Annual
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', padding: '2px 7px',
-                  fontSize: '10.5px', fontWeight: 500, borderRadius: '999px',
-                  background: billingPeriod === 'annual' ? 'rgba(88,101,242,0.18)' : 'var(--accent-soft-bg)',
-                  border: `0.5px solid ${billingPeriod === 'annual' ? 'rgba(88,101,242,0.35)' : 'var(--accent-soft-border)'}`,
-                  color: billingPeriod === 'annual' ? '#5865f2' : 'var(--accent-soft-text)',
-                  letterSpacing: '0.01em',
-                }}>Save 20%</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Plans grid */}
-          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '1060px', margin: '0 auto' }}>
-            {/* Free */}
-            <PlanCard
-              name="Free"
-              tagline="For new communities testing the waters."
-              price="$0"
-              period="/ forever"
-              features={[
-                'Up to 50 members',
-                '1 Discord server',
-                '1 access page',
-                'Standard Stripe fees only',
-                'Email support',
-              ]}
-              ctaLabel="Start free"
-              ctaVariant="secondary"
-              onCtaClick={handleLogin}
-              loading={loading}
-              user={user}
-            />
-
-            {/* Standard */}
-            <PlanCard
-              name="Pro"
-              tagline="For growing communities ready to scale."
-              price={billingPeriod === 'monthly' ? '$9' : '$7'}
-              period={billingPeriod === 'monthly' ? '/ month' : '/ month, billed annually'}
-              features={[
-                'Up to 500 members',
-                '3 Discord servers',
-                'Unlimited access pages',
-                'Basic analytics',
-                'Priority email support',
-              ]}
-              ctaLabel="Get Standard"
-              ctaVariant="secondary"
-              onCtaClick={handleLogin}
-              loading={loading}
-              user={user}
-            />
-
-            {/* Pro */}
-            <PlanCard
-              name="Scale"
-              nameColor="var(--accent-soft-text)"
-              tagline="For creators running a serious community."
-              price={billingPeriod === 'monthly' ? '$19' : '$15'}
-              period={billingPeriod === 'monthly' ? '/ month' : '/ month, billed annually'}
-              features={[
-                'Unlimited members',
-                'Unlimited Discord servers',
-                'Custom domain',
-                'Advanced analytics & exports',
-                'Priority support',
-              ]}
-              ctaLabel="Get Pro"
-              ctaVariant="primary"
-              featured
-              onCtaClick={handleLogin}
-              loading={loading}
-              user={user}
-            />
-          </div>
-
-          <p style={{
-            maxWidth: '640px', margin: '40px auto 0', textAlign: 'center',
-            fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6,
-            padding: '16px 24px',
-            borderTop: '1px solid transparent',
-            borderImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent) 1',
-          }}>
-            <strong style={{ color: 'var(--text)', fontWeight: 500 }}>We never take a cut of your revenue.</strong> You keep 100%, minus Stripe&apos;s standard fees. That&apos;s the whole deal.
-          </p>
-        </div>
-      </section>
-
-      <hr style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)', border: 0, margin: 0 }} />
-
-      {/* FAQ */}
-      <section id="faq" style={{ padding: '120px 0', background: 'var(--bg-alt)' }}>
-        <div style={containerStyle}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent-soft-text)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px' }}>FAQ</div>
-            <h2 style={{ fontSize: 'clamp(36px, 4vw, 48px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>Common questions.</h2>
-          </div>
-
-          <div style={{ maxWidth: '760px', margin: '0 auto', background: 'var(--bg-alt)', border: '0.5px solid var(--border-soft)', borderRadius: '14px', overflow: 'hidden' }}>
-            {FAQS.map((faq, i) => (
-              <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '22px 28px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px',
-                    fontSize: '15.5px', fontWeight: 500, color: 'var(--text)',
-                    letterSpacing: '-0.01em', background: 'none', cursor: 'pointer',
-                    transition: 'background 200ms ease',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.015)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                >
-                  {faq.q}
-                  <ChevronDown size={16} style={{ flexShrink: 0, color: 'var(--text-muted)', transition: 'transform 200ms ease', transform: openFaq === i ? 'rotate(180deg)' : 'none' }} />
-                </button>
-                {openFaq === i && (
-                  <div style={{ padding: '0 28px 24px', fontSize: '14.5px', lineHeight: 1.65, color: 'var(--text-secondary)', maxWidth: '620px' }}>
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section style={{
-        borderTop: '0.5px solid var(--border-soft)', background: 'var(--bg-cta)',
-        padding: '140px 0', textAlign: 'center', position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{ ...containerStyle, position: 'relative' }}>
-          <h2 style={{ fontSize: 'clamp(44px, 5vw, 56px)', fontWeight: 500, letterSpacing: '-0.03em', lineHeight: 1.1, margin: '0 0 16px', color: 'var(--text)' }}>
-            Start monetizing today.
-          </h2>
-          <p style={{ fontSize: '17px', color: 'var(--text-secondary)', margin: '0 auto 36px', maxWidth: '480px' }}>
-            Free to start. No credit card required. Setup in 2 minutes — and you keep 100% of your revenue.
-          </p>
-          {loading ? (
-            <div style={{ height: '54px', width: '220px', background: 'var(--surface-1)', borderRadius: '6px', margin: '0 auto' }} />
-          ) : user ? (
-            <button
-              onClick={handleGoToDashboard}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '18px 28px', fontSize: '16px', fontWeight: 500,
-                background: '#ffffff', color: '#0a0a0a',
-                border: '0.5px solid #ffffff', borderRadius: '6px',
-                cursor: 'pointer', transition: 'transform 200ms ease, opacity 200ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-            >
-              <LayoutDashboard size={18} />
-              Go to dashboard
-            </button>
-          ) : (
-            <button
-              onClick={handleLogin}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '18px 28px', fontSize: '16px', fontWeight: 500,
-                background: '#ffffff', color: '#0a0a0a',
-                border: '0.5px solid #ffffff', borderRadius: '6px',
-                cursor: 'pointer', transition: 'transform 200ms ease, opacity 200ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-            >
-              Create your AccessGate
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{ borderTop: '0.5px solid var(--border-soft)', padding: '32px 0', background: 'var(--bg)' }}>
-        <div style={{ ...containerStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '15px', letterSpacing: '-0.01em', color: 'var(--text)', textDecoration: 'none' }}>
-            <LogoMark />
-            AccessGate
-          </Link>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '28px', fontSize: '13px', color: 'var(--text-muted)' }} aria-label="Footer">
-            {['Terms', 'Privacy', 'Contact'].map(label => (
-              <a key={label} href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 200ms ease' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>{label}</a>
-            ))}
-          </nav>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>© {new Date().getFullYear()} AccessGate</p>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
-  );
-}
-
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <article
-      style={{
-        background: hovered ? 'var(--surface-2)' : 'var(--surface-1)',
-        padding: '32px 28px',
-        display: 'flex', flexDirection: 'column', gap: '14px',
-        transition: 'background 200ms ease',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <span style={{
-        width: '36px', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        color: 'var(--accent-soft-text)', background: 'var(--accent-soft-bg)',
-        border: '0.5px solid var(--accent-soft-border)', borderRadius: '8px',
-      }}>{icon}</span>
-      <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em', margin: 0 }}>{title}</h3>
-      <p style={{ fontSize: '14.5px', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>{desc}</p>
-    </article>
-  );
-}
-
-interface PlanCardProps {
-  name: string;
-  nameColor?: string;
-  tagline: string;
-  price: string;
-  period: string;
-  features: string[];
-  ctaLabel: string;
-  ctaVariant: 'primary' | 'secondary';
-  featured?: boolean;
-  onCtaClick: () => void;
-  loading: boolean;
-  user: User | null;
-}
-
-function PlanCard({ name, nameColor, tagline, price, period, features, ctaLabel, ctaVariant, featured, onCtaClick, loading, user }: PlanCardProps) {
-  const [hovered, setHovered] = useState(false);
-
-  const cardStyle: React.CSSProperties = {
-    background: featured ? 'var(--surface-2)' : 'var(--surface-1)',
-    border: `0.5px solid ${featured ? 'var(--border-strong)' : 'var(--border)'}`,
-    borderRadius: '14px',
-    padding: '36px 32px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
-    position: 'relative',
-    overflow: 'hidden',
-  };
-
-  const btnBase: React.CSSProperties = {
-    width: '100%', padding: '12px 16px', fontSize: '14px', fontWeight: 500,
-    borderRadius: '6px', cursor: 'pointer',
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-    letterSpacing: '-0.005em',
-    transition: 'transform 200ms ease, opacity 200ms ease, background 200ms ease, border-color 200ms ease',
-  };
-
-  const btnStyle: React.CSSProperties = ctaVariant === 'primary'
-    ? { ...btnBase, background: '#ffffff', color: '#0a0a0a', border: '0.5px solid #ffffff' }
-    : { ...btnBase, background: 'transparent', color: 'var(--text)', border: '0.5px solid rgba(255,255,255,0.2)' };
-
-  return (
-    <article
-      style={cardStyle}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {featured && (
-        <div style={{
-          position: 'absolute', inset: '-1px', borderRadius: 'inherit', padding: '1px',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02))',
-          WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-          WebkitMaskComposite: 'xor',
-          mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-          maskComposite: 'exclude',
-          pointerEvents: 'none',
-        }} />
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <p style={{ fontSize: '13px', fontWeight: 500, color: nameColor || 'var(--text-secondary)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>{name}</p>
-        <p style={{ fontSize: '14.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{tagline}</p>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '4px 0 8px' }}>
-        <span style={{ fontSize: '48px', fontWeight: 500, letterSpacing: '-0.035em', color: 'var(--text)', lineHeight: 1 }}>{price}</span>
-        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{period}</span>
-      </div>
-
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {features.map(f => (
-          <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '14.5px', color: 'var(--text)', lineHeight: 1.5 }}>
-            <Check size={14} style={{ flexShrink: 0, color: 'var(--accent-soft-text)', marginTop: '4px' }} />
-            {f}
-          </li>
-        ))}
-      </ul>
-
-      {loading ? (
-        <div style={{ height: '42px', background: 'var(--surface-2)', borderRadius: '6px' }} />
-      ) : user ? (
-        <button
-          onClick={() => window.location.href = '/dashboard/overview'}
-          style={btnStyle}
-          onMouseEnter={e => {
-            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }
-            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }
-          }}
-          onMouseLeave={e => {
-            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }
-            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }
-          }}
-        >Go to dashboard</button>
-      ) : (
-        <button
-          onClick={onCtaClick}
-          style={btnStyle}
-          onMouseEnter={e => {
-            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.opacity = '0.95'; }
-            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }
-          }}
-          onMouseLeave={e => {
-            if (ctaVariant === 'primary') { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }
-            else { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }
-          }}
-        >{ctaLabel}</button>
-      )}
-    </article>
   );
 }

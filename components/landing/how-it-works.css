@@ -1,0 +1,100 @@
+.hiw-section {
+  padding: 120px 0;
+}
+
+.hiw-container {
+  max-width: var(--container, 1100px);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hiw-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.hiw-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-soft-text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.hiw-title {
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: clamp(36px, 4vw, 48px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+}
+
+.hiw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 56px;
+  position: relative;
+}
+
+.hiw-step {
+  position: relative;
+}
+
+.hiw-step-num {
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: clamp(48px, 6vw, 64px);
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 24px;
+  display: block;
+  transition: color 1.6s ease, text-shadow 1.6s ease;
+  text-shadow: none;
+}
+
+.hiw-step-num.is-lit {
+  color: #7c3aed;
+  text-shadow: 0 0 32px rgba(124, 58, 237, 0.28);
+}
+
+.hiw-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  margin-bottom: 14px;
+}
+
+.hiw-step-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: #a78bfa;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hiw-step-heading {
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.hiw-step-desc {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}

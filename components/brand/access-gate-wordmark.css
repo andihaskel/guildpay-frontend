@@ -1,0 +1,77 @@
+.access-gate-wordmark {
+  --wordmark-ccess-duration: 1.8s;
+  --wordmark-ate-duration: 1.8s;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-outfit, 'Outfit', sans-serif);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: #f8fafc;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.access-gate-wordmark-text {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.access-gate-wordmark-a,
+.access-gate-wordmark-ccess,
+.access-gate-wordmark-g,
+.access-gate-wordmark-ate {
+  display: inline-block;
+}
+
+.access-gate-wordmark-ccess,
+.access-gate-wordmark-ate {
+  max-width: 0;
+  overflow: hidden;
+  vertical-align: baseline;
+}
+
+.access-gate-wordmark-ccess {
+  transition: max-width var(--wordmark-ccess-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.access-gate-wordmark-ate {
+  transition: max-width var(--wordmark-ate-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.access-gate-wordmark-text.expanded .access-gate-wordmark-ccess {
+  max-width: 5.5ch;
+}
+
+.access-gate-wordmark-text.expanded .access-gate-wordmark-ate {
+  max-width: 3.2ch;
+}
+
+.access-gate-wordmark-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-gate-wordmark-ccess,
+  .access-gate-wordmark-ate {
+    max-width: none;
+    transition: none;
+  }
+
+  .access-gate-wordmark-text.expanded .access-gate-wordmark-ccess,
+  .access-gate-wordmark-text.expanded .access-gate-wordmark-ate {
+    max-width: none;
+  }
+}
